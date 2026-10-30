@@ -8,6 +8,8 @@ import {
   uninstallClaude,
   uninstallHermes,
 } from "./install.js";
+import { printBanner } from "./banner.js";
+import { getVersion } from "./version.js";
 
 const USAGE = `Usage:
   cephalo test "<command>"            Check a shell command against the rules
@@ -27,6 +29,8 @@ async function main(): Promise<number> {
   const [cmd, ...rest] = process.argv.slice(2);
 
   if (cmd === "hook") {
+    // NEVER print the banner (or any non-JSON text) here: Claude Code and
+    // Hermes parse hook stdout as JSON, so extra output breaks the decision.
     const agent = rest[0];
     if (agent !== "claude" && agent !== "hermes") {
       process.stderr.write(USAGE);
@@ -106,8 +110,22 @@ async function main(): Promise<number> {
     }
   }
 
+  if (cmd === "init") {
+    printBanner(getVersion());
+    console.log(
+      "cephalo init is not implemented yet. To protect your agents run: cephalo install claude, cephalo install hermes",
+    );
+    return 0;
+  }
+
+  if (cmd === undefined || cmd === "help" || cmd === "--help" || cmd === "-h") {
+    printBanner(getVersion());
+    process.stdout.write(USAGE);
+    return 0;
+  }
+
   process.stderr.write(USAGE);
-  return cmd === undefined || cmd === "help" || cmd === "--help" ? 0 : 1;
+  return 1;
 }
 
 main().then(
