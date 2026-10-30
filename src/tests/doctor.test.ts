@@ -57,6 +57,14 @@ test("doctor after init: all green except an unconfirmed Hermes approval", async
   assert.equal(r.exitCode, 0);
   assert.equal(level(r.checks, "Hermes approval"), "ok");
   assert.match(formatChecks(r.checks).join("\n"), /All good|No problems/);
+
+  // Real `hermes hooks list` wording: "✓ allowed" / "✗ not allowed"
+  const allowed = `[pre_tool_call]\n  - node ${abs}/dist/cli.js hook hermes matcher='${HERMES_MATCHER}' (timeout=10s, ✓ allowed)`;
+  r = runDoctor({ ...files, abs, hermesList: () => allowed });
+  assert.equal(level(r.checks, "Hermes approval"), "ok");
+  const notAllowed = allowed.replace("✓ allowed", "✗ not allowed");
+  r = runDoctor({ ...files, abs, hermesList: () => notAllowed });
+  assert.equal(level(r.checks, "Hermes approval"), "fail");
   fs.rmSync(dir, { recursive: true, force: true });
 });
 

@@ -147,9 +147,10 @@ export function runDoctor(o: DoctorOptions = {}): { checks: Check[]; exitCode: n
     const listing = (o.hermesList ?? defaultHermesList)();
     const line = listing?.split(/\r?\n/).find((l) => HERMES_CMD_RE.test(l));
     if (line) {
-      if (/not allowlisted/i.test(line)) {
+      // Hermes prints "✓ allowed" (older/other builds: "allowlisted"); negatives are "not allowed"/"not allowlisted"
+      if (/not[ -](allowlisted|allowed|approved)/i.test(line)) {
         checks.push({ level: "fail", name: "Hermes approval", detail: "Hermes lists the hook as NOT allowlisted, so it skips it and nothing is blocked", fix: "Start an interactive `hermes` and accept the hook prompt, then re-run: cephalo doctor" });
-      } else if (/allowlisted/i.test(line)) {
+      } else if (/allowlisted|allowed|approved/i.test(line)) {
         checks.push({ level: "ok", name: "Hermes approval", detail: "hook is allowlisted" });
       } else {
         checks.push({ level: "warn", name: "Hermes approval", detail: `could not interpret: ${line.trim()}`, fix: "Run: hermes hooks list" });
