@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { getPlatform } from "./platform.js";
+import { getPlatform, type PlatformAdapter } from "./platform.js";
 import { parse, stringify } from "yaml";
 
 export type RuleType = "command" | "path";
@@ -58,6 +58,18 @@ export function loadRules(file: string = defaultRulesPath()): Rule[] {
   const { rules, problems } = parseRules(fs.readFileSync(file, "utf8"));
   for (const p of problems) process.stderr.write(`cephalo: ${p}\n`);
   return rules;
+}
+
+/** Platform rules that are not overridden (same id) by the user's rules file. */
+export function activePlatformRules(fileRules: Rule[], platform: PlatformAdapter = getPlatform()): Rule[] {
+  const ids = new Set(fileRules.map((r) => r.id));
+  return platform.rules().filter((r) => !ids.has(r.id));
+}
+
+/** What actually gets enforced: the user's rules file plus this OS's built-in rules. */
+export function loadEffectiveRules(file: string = defaultRulesPath(), platform: PlatformAdapter = getPlatform()): Rule[] {
+  const fileRules = loadRules(file);
+  return [...fileRules, ...activePlatformRules(fileRules, platform)];
 }
 
 /** Parse rules.yml text. Malformed entries and uncompilable patterns are reported in `problems` (and skipped for malformed ones). */

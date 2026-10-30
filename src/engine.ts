@@ -1,5 +1,5 @@
 import { getPlatform, type PlatformAdapter } from "./platform.js";
-import { loadRules, type Rule } from "./rules.js";
+import { loadEffectiveRules, type Rule } from "./rules.js";
 
 export interface EvalInput {
   command?: string;
@@ -29,7 +29,7 @@ function variants(raw: string, norm: (s: string) => string): string[] {
  */
 export function evaluate(
   input: EvalInput,
-  rules: Rule[] = loadRules(),
+  rules: Rule[] = loadEffectiveRules(),
   platform: PlatformAdapter = getPlatform(),
 ): EvalResult {
   const commands = input.command !== undefined ? variants(input.command, (s) => platform.normalizeCommand(s)) : [];

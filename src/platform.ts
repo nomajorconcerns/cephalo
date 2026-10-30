@@ -1,5 +1,7 @@
 import os from "node:os";
 import path from "node:path";
+import { LINUX_RULES, MACOS_RULES, WINDOWS_RULES } from "./platform-rules.js";
+import type { Rule } from "./rules.js";
 
 export type PlatformId = "win32" | "darwin" | "linux";
 
@@ -24,6 +26,8 @@ export interface PlatformAdapter {
   dataDir(p?: PlatformEnv): string;
   /** Extra spawnSync options needed to run npm-style CLI shims (hermes.cmd on Windows). */
   spawnOptions(): { shell: boolean; windowsHide: boolean };
+  /** Built-in rules that only make sense on this OS. Applied at runtime, never written to rules.yml. */
+  rules(): Rule[];
   /** Canonical form of a file path for rule matching: forward slashes, ~ and env vars expanded, dot segments resolved. */
   normalizePath(raw: string, p?: PlatformEnv): string;
   /** A de-obfuscated variant of a shell command (shell escapes/empty quotes removed). Rules are matched against the raw AND this variant. */
@@ -65,6 +69,7 @@ const win32: PlatformAdapter = {
   },
   dataDir: (p) => path.join(homeOf(p), ".cephalo"),
   spawnOptions: () => ({ shell: true, windowsHide: true }),
+  rules: () => WINDOWS_RULES,
   normalizePath(raw, p) {
     const e = envOf(p);
     const home = homeOf(p);
@@ -94,6 +99,7 @@ const darwin: PlatformAdapter = {
   hermesConfigPath: (p) => path.join(homeOf(p), ".hermes", "config.yaml"),
   dataDir: (p) => path.join(homeOf(p), ".cephalo"),
   spawnOptions: () => ({ shell: false, windowsHide: false }),
+  rules: () => MACOS_RULES,
   normalizePath(raw, p) {
     let s = expandPosixHome(raw.trim(), homeOf(p));
     s = cleanSlashes(s.replace(/\\/g, "/"));
@@ -110,6 +116,7 @@ const linux: PlatformAdapter = {
   hermesConfigPath: (p) => path.join(homeOf(p), ".hermes", "config.yaml"),
   dataDir: (p) => path.join(homeOf(p), ".cephalo"),
   spawnOptions: () => ({ shell: false, windowsHide: false }),
+  rules: () => LINUX_RULES,
   normalizePath(raw, p) {
     return cleanSlashes(expandPosixHome(raw.trim(), homeOf(p)).replace(/\\/g, "/"));
   },

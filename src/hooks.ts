@@ -1,6 +1,6 @@
 import { appendAudit, type AuditEntry } from "./audit.js";
 import { evaluate, type EvalInput } from "./engine.js";
-import { loadRules, type Rule } from "./rules.js";
+import { loadEffectiveRules, type Rule } from "./rules.js";
 
 export type Agent = "claude" | "hermes";
 
@@ -77,7 +77,7 @@ export function runHook(agent: Agent, raw: string, opts: HookOptions = {}): stri
       return allowOut;
     }
     tool = ex.tool;
-    const res = evaluate(ex, opts.rules ?? loadRules());
+    const res = evaluate(ex, opts.rules ?? loadEffectiveRules());
     log({
       tool,
       ...(ex.command !== undefined ? { command: ex.command } : {}),

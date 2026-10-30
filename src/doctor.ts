@@ -6,7 +6,7 @@ import { auditPath } from "./audit.js";
 import { runHook } from "./hooks.js";
 import { getPlatform } from "./platform.js";
 import { claudeSettingsPath, hermesConfigPath, projectRoot, HERMES_CMD_RE } from "./install.js";
-import { DEFAULT_RULES, defaultRulesPath, parseRules, type Rule } from "./rules.js";
+import { DEFAULT_RULES, activePlatformRules, defaultRulesPath, parseRules, type Rule } from "./rules.js";
 import { claudeStatus, hermesStatus, type HookStatus } from "./status.js";
 
 export type Level = "ok" | "warn" | "fail" | "info";
@@ -105,6 +105,12 @@ export function runDoctor(o: DoctorOptions = {}): { checks: Check[]; exitCode: n
     } catch (e) {
       checks.push({ level: "fail", name: "Rules file", detail: `${rulesFile} cannot be parsed: ${(e as Error).message}` });
     }
+  }
+
+  {
+    const plat = getPlatform();
+    const active = activePlatformRules(rules, plat);
+    checks.push({ level: "info", name: "Platform rules", detail: `${active.length} built-in ${plat.label} rule(s) active on top of the rules file` });
   }
 
   // Self-test with the user's real rules, in-process, with a throwaway audit file (nothing is written to the real log)
