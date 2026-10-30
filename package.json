@@ -1,0 +1,20 @@
+{
+  "name": "cephalo",
+  "version": "0.1.0",
+  "description": "Guards AI coding agents by blocking dangerous tool calls before they run",
+  "type": "module",
+  "bin": {
+    "cephalo": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "npm run build && node --test dist/tests/"
+  },
+  "dependencies": {
+    "yaml": "^2.9.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "typescript": "^5.9.3"
+  }
+}
