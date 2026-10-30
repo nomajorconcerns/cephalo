@@ -85,7 +85,7 @@ test("hermes hook: malformed JSON stays clean", () => {
   assertClean(hook("hermes", "{not json"));
 });
 
-for (const args of [[], ["--help"], ["-h"], ["help"], ["init"]]) {
+for (const args of [[], ["--help"], ["-h"], ["help"], ["init", "--yes"]]) {
   const name = args.join(" ") || "(no args)";
   test(`positive control: cephalo ${name} shows banner`, () => {
     const colored = run(args, "", { FORCE_COLOR: "1", NO_COLOR: "" });

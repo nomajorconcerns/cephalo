@@ -25,8 +25,8 @@ export function hermesConfigPath(): string {
 
 export const HERMES_MATCHER = "terminal|read_file|write_file|patch|search_files|execute_code";
 export const CLAUDE_MATCHER = "Bash|Read|Write|Edit|MultiEdit|NotebookEdit";
-const CLAUDE_CMD_RE = /cli\.js["']?\s+hook\s+claude\b/;
-const HERMES_CMD_RE = /cli\.js["']?\s+hook\s+hermes\b/;
+export const CLAUDE_CMD_RE = /cli\.js["']?\s+hook\s+claude\b/;
+export const HERMES_CMD_RE = /cli\.js["']?\s+hook\s+hermes\b/;
 
 export const claudeCommand = (abs: string) => `node ${abs}/dist/cli.js hook claude`;
 export const hermesCommand = (abs: string) => `node ${abs}/dist/cli.js hook hermes`;

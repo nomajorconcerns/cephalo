@@ -8,7 +8,9 @@ import {
   uninstallClaude,
   uninstallHermes,
 } from "./install.js";
+import { createInterface } from "node:readline";
 import { printBanner } from "./banner.js";
+import { runInit } from "./init.js";
 import { getVersion } from "./version.js";
 
 const USAGE = `Usage:
@@ -17,6 +19,7 @@ const USAGE = `Usage:
   cephalo log [--blocked] [--limit N] Show recent audit entries
   cephalo install claude|hermes       Add Cephalo's hook to the agent's config
   cephalo uninstall claude|hermes     Remove Cephalo's hook from the agent's config
+  cephalo init [--yes]                Set up rules and install hooks for the agents found
 `;
 
 async function readStdin(): Promise<string> {
@@ -112,10 +115,17 @@ async function main(): Promise<number> {
 
   if (cmd === "init") {
     printBanner(getVersion());
-    console.log(
-      "cephalo init is not implemented yet. To protect your agents run: cephalo install claude, cephalo install hermes",
-    );
-    return 0;
+    return runInit({
+      yes: rest.includes("--yes") || rest.includes("-y"),
+      interactive: Boolean(process.stdin.isTTY),
+      confirm: async () => {
+        const rl = createInterface({ input: process.stdin, output: process.stdout });
+        const answer = await new Promise<string>((resolve) => rl.question("Apply these changes? [y/N] ", resolve));
+        rl.close();
+        return /^y(es)?$/i.test(answer.trim());
+      },
+      log: (line) => console.log(line),
+    });
   }
 
   if (cmd === undefined || cmd === "help" || cmd === "--help" || cmd === "-h") {
