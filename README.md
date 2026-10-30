@@ -50,6 +50,7 @@ Then:
 | `cephalo rules path` | Print the rules file location |
 | `cephalo rules reset [--yes]` | Back up `rules.yml`, then rewrite it from the built-in defaults |
 | `cephalo log [--blocked] [--limit N]` | Recent audit entries, newest last (default 20) |
+| `cephalo watch [--blocked] [--last N] [--no-color]` | Follow the audit log live: last N entries (default 10), then new ones as they happen. ALLOW green, BLOCK red. Ctrl+C stops |
 | `cephalo install claude\|hermes` | Add the hook to one agent (idempotent; upgrades an old matcher in place) |
 | `cephalo uninstall claude\|hermes` | Remove only Cephalo's entries, after a backup |
 | `cephalo hook claude\|hermes` | The hook entry point the agents call. Not for humans |
@@ -80,6 +81,28 @@ Default rules: `no-drop`, `no-truncate`, `no-delete-all` (DELETE without WHERE),
 `no-secret-read`, `no-secret-file` (`.env`, but not `.env.example`) and `protect-config`
 (writes to Claude's `settings.json` and Hermes's `config.yaml`).
 
+### Platform adapters and built-in OS rules
+
+Cephalo has an adapter for Windows, macOS and Linux (other POSIX systems use the Linux one). It
+decides where the agent configs live, how paths and commands are normalized before matching, and
+which extra built-in rules apply. Rules are matched against the raw text **and** a cleaned copy
+(for example `r''m`, `\rm`, `r^d /s`, ``Remove`-Item``, `~/x/../.env`, `%USERPROFILE%\.env`).
+
+Built-in OS rules are applied at runtime and are **not** written to `rules.yml`. `cephalo rules`
+lists them with origin `platform`. To change or disable one, add a rule with the **same id** to
+`rules.yml` (yours wins).
+
+| OS | Rule ids |
+|---|---|
+| Windows | `win-format-drive`, `win-disk-wipe`, `win-registry-delete`, `win-shadow-delete`, `win-power` |
+| macOS | `mac-diskutil-erase`, `mac-disable-protection`, `mac-tmutil-delete`, `mac-keychain-secrets` + POSIX |
+| Linux | `linux-mkfs`, `linux-dd-device`, `linux-write-device`, `linux-shred-device`, `linux-fork-bomb` + POSIX |
+| POSIX (macOS + Linux) | `rm-long-flags`, `no-preserve-root`, `pipe-to-shell`, `chmod-chown-system` |
+
+Config locations: Claude `~/.claude/settings.json` everywhere; Hermes `%LOCALAPPDATA%\hermes\config.yaml`
+on Windows and `~/.hermes/config.yaml` on macOS/Linux; Cephalo's own data in `~/.cephalo` on all three.
+Only the Windows adapter has been run on a real machine; macOS and Linux are covered by unit tests.
+
 ## What each hook covers
 
 | Agent | Tools checked | Field used |
@@ -102,7 +125,8 @@ When a call is blocked the agent sees:
 ## Audit log
 
 Every evaluation appends one JSON line to `~/.cephalo/audit.jsonl`:
-`{ts, agent, tool, command | path, decision, rule}`. Read it with `cephalo log`.
+`{ts, agent, tool, command | path, decision, rule}`. Read it with `cephalo log`, or follow it live
+with `cephalo watch` (terminal control characters in logged commands are neutralized before printing).
 
 ## Safety model and limits
 

@@ -105,7 +105,7 @@ function gradientText(text: string): string {
   );
 }
 
-function supportsColor(): boolean {
+export function supportsColor(): boolean {
   if (process.env.NO_COLOR) return false;
   if (process.env.FORCE_COLOR) return true;
   return Boolean(process.stdout.isTTY) && process.env.TERM !== "dumb";

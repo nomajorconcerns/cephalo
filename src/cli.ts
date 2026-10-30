@@ -9,7 +9,8 @@ import {
   uninstallHermes,
 } from "./install.js";
 import { createInterface } from "node:readline";
-import { printBanner } from "./banner.js";
+import { printBanner, supportsColor } from "./banner.js";
+import { runWatch } from "./watch.js";
 import { formatChecks, runDoctor } from "./doctor.js";
 import { runInit } from "./init.js";
 import { listRules, resetRules, showRule } from "./rulescmd.js";
@@ -20,6 +21,8 @@ const USAGE = `Usage:
   cephalo test "<command>"            Check a shell command against the rules
   cephalo hook claude|hermes          Hook entry point (reads JSON on stdin)
   cephalo log [--blocked] [--limit N] Show recent audit entries
+  cephalo watch [--blocked] [--last N] [--no-color]
+                                      Follow the audit log live (Ctrl+C to stop)
   cephalo install claude|hermes       Add Cephalo's hook to the agent's config
   cephalo uninstall claude|hermes     Remove Cephalo's hook from the agent's config
   cephalo init [--yes]                Set up rules and install hooks for the agents found
@@ -97,6 +100,31 @@ async function main(): Promise<number> {
     const entries = readAudit({ blocked, limit });
     if (entries.length === 0) console.log("No audit entries.");
     for (const e of entries) console.log(formatAudit(e));
+    return 0;
+  }
+
+  if (cmd === "watch") {
+    let last = 10;
+    const li = rest.indexOf("--last");
+    if (li >= 0) {
+      last = Number(rest[li + 1]);
+      if (!Number.isInteger(last) || last < 0) {
+        process.stderr.write("cephalo: --last needs a non-negative integer\n");
+        return 1;
+      }
+    }
+    const color = rest.includes("--no-color") ? false : supportsColor();
+    const ac = new AbortController();
+    process.once("SIGINT", () => ac.abort());
+    process.once("SIGTERM", () => ac.abort());
+    await runWatch({
+      blocked: rest.includes("--blocked"),
+      last,
+      color,
+      width: process.stdout.isTTY ? process.stdout.columns : undefined,
+      write: (line) => console.log(line),
+      signal: ac.signal,
+    });
     return 0;
   }
 
