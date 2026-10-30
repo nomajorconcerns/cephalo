@@ -24,7 +24,10 @@ function extractClaude(p: any): Extracted | null {
       return { tool, path: str(ti.file_path), access: "read" };
     case "Write":
     case "Edit":
+    case "MultiEdit":
       return { tool, path: str(ti.file_path), access: "write" };
+    case "NotebookEdit":
+      return { tool, path: str(ti.notebook_path), access: "write" };
     default:
       return null;
   }
@@ -36,7 +39,11 @@ function extractHermes(p: any): Extracted | null {
   switch (tool) {
     case "terminal":
       return { tool, command: str(ti.command) };
+    case "execute_code":
+      // Heuristic: scan the code text with the command rules (catches rm -rf, DROP TABLE, etc. inside scripts)
+      return { tool, command: str(ti.code) };
     case "read_file":
+    case "search_files":
       return { tool, path: str(ti.path), access: "read" };
     case "write_file":
     case "patch":

@@ -23,8 +23,8 @@ export function hermesConfigPath(): string {
   return path.join(os.homedir(), ".hermes", "config.yaml");
 }
 
-const HERMES_MATCHER = "terminal|read_file|write_file|patch";
-const CLAUDE_MATCHER = "Bash|Read|Write|Edit";
+export const HERMES_MATCHER = "terminal|read_file|write_file|patch|search_files|execute_code";
+export const CLAUDE_MATCHER = "Bash|Read|Write|Edit|MultiEdit|NotebookEdit";
 const CLAUDE_CMD_RE = /cli\.js["']?\s+hook\s+claude\b/;
 const HERMES_CMD_RE = /cli\.js["']?\s+hook\s+hermes\b/;
 
@@ -69,8 +69,14 @@ export function installClaude(file = claudeSettingsPath(), abs = projectRoot()):
   if (settings.hooks.PreToolUse === undefined) settings.hooks.PreToolUse = [];
   const pre = settings.hooks.PreToolUse;
   if (!Array.isArray(pre)) throw new Error(`"hooks.PreToolUse" in ${file} is not an array.`);
-  if (pre.some((e) => Array.isArray(e?.hooks) && e.hooks.some((h: any) => h?.command === cmd))) {
-    return [`Already installed in ${file}. No changes made.`];
+  const existing = pre.find((e) => Array.isArray(e?.hooks) && e.hooks.some((h: any) => h?.command === cmd));
+  if (existing) {
+    if (existing.matcher === CLAUDE_MATCHER) return [`Already installed in ${file}. No changes made.`];
+    const old = existing.matcher;
+    existing.matcher = CLAUDE_MATCHER;
+    const bk = backup(file);
+    writeClaude(file, settings);
+    return [`Backup: ${bk}`, `Changed: ${file}`, `Updated Cephalo matcher in hooks.PreToolUse: "${old}" -> "${CLAUDE_MATCHER}"`];
   }
   const out: string[] = [];
   if (existed) out.push(`Backup: ${backup(file)}`);
@@ -134,8 +140,17 @@ export function installHermes(file = hermesConfigPath(), abs = projectRoot()): s
   }
   const seq = doc.getIn(["hooks", "pre_tool_call"], true);
   if (!isSeq(seq)) throw new Error(`"hooks.pre_tool_call" in ${file} is not a list.`);
-  const dup = (seq as YAMLSeq).items.some((it) => isMap(it) && it.toJSON()?.command === cmd);
-  if (dup) return [`Already installed in ${file}. No changes made.`];
+  const dup = (seq as YAMLSeq).items.find((it) => isMap(it) && it.toJSON()?.command === cmd) as YAMLMap | undefined;
+  if (dup) {
+    const old = dup.toJSON().matcher;
+    if (old === HERMES_MATCHER) return [`Already installed in ${file}. No changes made.`];
+    dup.set("matcher", doc.createNode(HERMES_MATCHER));
+    const m = dup.get("matcher", true);
+    if (isScalar(m)) m.type = "QUOTE_DOUBLE";
+    const bk = backup(file);
+    fs.writeFileSync(file, doc.toString({ lineWidth: 0 }), "utf8");
+    return [`Backup: ${bk}`, `Changed: ${file}`, `Updated Cephalo matcher in hooks.pre_tool_call: "${old}" -> "${HERMES_MATCHER}"`];
+  }
   const item = doc.createNode({ matcher: HERMES_MATCHER, command: cmd, timeout: 10 }) as YAMLMap;
   for (const pair of item.items) {
     if (isScalar(pair.value) && typeof pair.value.value === "string") pair.value.type = "QUOTE_DOUBLE";

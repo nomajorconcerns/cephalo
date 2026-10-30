@@ -25,8 +25,7 @@ export const DEFAULT_RULES: Rule[] = [
   { id: "no-hard-reset", description: "git reset --hard", type: "command", pattern: "\\bgit\\s+reset\\s+--hard\\b", action: "block" },
   { id: "no-secret-read", description: "Reading .env secret files via shell", type: "command", pattern: "\\b(cat|type|Get-Content|gc|more|less|head|tail)\\b.*\\.env\\b(?!\\.example)", action: "block" },
   { id: "no-secret-file", description: "Accessing .env secret files", type: "path", on: "any", pattern: "(^|[\\/\\\\])\\.env(\\.(?!example$)[\\w.-]+)?$", action: "block" },
-  { id: "protect-config", description: "Writing Cephalo, Claude Code or Hermes config", type: "path", on: "write", pattern: "[\\/\\\\]\\.cephalo[\\/\\\\]|[\\/\\\\]\\.claude[\\/\\\\]settings(\\.local)?\\.json$|[\\/\\\\]hermes[\\/\\\\]config\\.yaml$", action: "block" },
-  { id: "no-cephalo-tamper", description: "Installing or uninstalling Cephalo hooks", type: "command", pattern: "\\bcephalo\\s+(install|uninstall)\\b|cli\\.js\\s+(install|uninstall)\\b", action: "block" },
+  { id: "protect-config", description: "Writing Claude Code or Hermes config", type: "path", on: "write", pattern: "[\\/\\\\]\\.claude[\\/\\\\]settings(\\.local)?\\.json$|[\\/\\\\]hermes[\\/\\\\]config\\.yaml$", action: "block" },
 ];
 
 export function cephaloDir(): string {

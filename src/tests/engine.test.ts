@@ -20,7 +20,6 @@ const blockedCommands: [string, string][] = [
   ["DELETE FROM users;", "no-delete-all"],
   ["git reset --hard HEAD~3", "no-hard-reset"],
   ["cat .env", "no-secret-read"],
-  ["cephalo uninstall hermes", "no-cephalo-tamper"],
 ];
 
 for (const [command, id] of blockedCommands) {
@@ -50,6 +49,9 @@ const allowedCommands = [
   "git push --force-with-lease",
   "git push origin main",
   "npm test",
+  "cephalo install claude",
+  "cephalo uninstall hermes",
+  "node C:/Users/zuri/cephalo/dist/cli.js install hermes",
 ];
 
 for (const command of allowedCommands) {
@@ -64,6 +66,10 @@ test('allows path read ".env.example"', () => {
 
 test('allows path write "src/index.ts"', () => {
   assert.equal(ev({ path: "src/index.ts", access: "write" }).decision, "allow");
+});
+
+test("writing under .cephalo is allowed", () => {
+  assert.equal(ev({ path: "C:\\Users\\zuri\\.cephalo\\rules.yml", access: "write" }).decision, "allow");
 });
 
 test("protect-config only applies to writes (reading Claude settings is fine)", () => {

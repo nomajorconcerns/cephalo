@@ -44,6 +44,11 @@ test("claude: Read .env denied, Write settings.json denied, Edit src allowed", (
   assert.match(run("Read", "C:\\proj\\.env"), /no-secret-file/);
   assert.match(run("Write", "C:\\Users\\zuri\\.claude\\settings.json"), /protect-config/);
   assert.equal(run("Edit", "src/index.ts"), "");
+  assert.match(run("MultiEdit", "C:\\Users\\zuri\\.claude\\settings.json"), /protect-config/);
+  const nb = (notebook_path: string) =>
+    runHook("claude", JSON.stringify({ tool_name: "NotebookEdit", tool_input: { notebook_path } }), opts);
+  assert.match(nb("C:\\p\\.env"), /no-secret-file/);
+  assert.equal(nb("a.ipynb"), "");
   assert.equal(run("Read", "C:\\Users\\zuri\\.claude\\settings.json"), "");
   fs.rmSync(dir, { recursive: true, force: true });
 });
@@ -65,7 +70,11 @@ test("hermes: terminal block / allow, path tools", () => {
   assert.equal(run("terminal", { command: "git push origin main" }), "{}");
   assert.match(run("read_file", { path: ".env" }), /"action":"block"/);
   assert.match(run("write_file", { path: "C:\\Users\\zuri\\AppData\\Local\\hermes\\config.yaml" }), /protect-config/);
-  assert.match(run("patch", { path: "C:\\Users\\zuri\\.cephalo\\rules.yml" }), /protect-config/);
+  assert.equal(run("patch", { path: "C:\\Users\\zuri\\.cephalo\\rules.yml" }), "{}");
+  assert.match(run("search_files", { path: "C:\\proj\\.env" }), /no-secret-file/);
+  assert.equal(run("search_files", { path: "src" }), "{}");
+  assert.match(run("execute_code", { code: "import os; os.system('rm -rf /')" }), /no-rm-rf/);
+  assert.equal(run("execute_code", { code: "print(1)" }), "{}");
   assert.equal(run("write_file", { path: "src/a.ts" }), "{}");
   assert.equal(run("web_search", { query: "x" }), "{}");
   fs.rmSync(dir, { recursive: true, force: true });

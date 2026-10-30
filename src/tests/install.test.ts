@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { installClaude, uninstallClaude, installHermes, uninstallHermes } from "../install.js";
+import { installClaude, uninstallClaude, installHermes, uninstallHermes, CLAUDE_MATCHER, HERMES_MATCHER } from "../install.js";
 
 const ABS = "C:/Users/zuri/cephalo";
 const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), "cephalo-inst-"));
@@ -15,7 +15,7 @@ test("claude: install creates missing file, no duplicate on second run", () => {
   installClaude(f, ABS);
   const s = JSON.parse(fs.readFileSync(f, "utf8"));
   assert.deepEqual(s.hooks.PreToolUse, [
-    { matcher: "Bash|Read|Write|Edit", hooks: [{ type: "command", command: "node C:/Users/zuri/cephalo/dist/cli.js hook claude" }] },
+    { matcher: CLAUDE_MATCHER, hooks: [{ type: "command", command: "node C:/Users/zuri/cephalo/dist/cli.js hook claude" }] },
   ]);
   const again = installClaude(f, ABS);
   assert.match(again[0]!, /Already installed/);
@@ -42,6 +42,24 @@ test("claude: install preserves existing settings and backs up; uninstall remove
 
   uninstallClaude(f);
   assert.deepEqual(JSON.parse(fs.readFileSync(f, "utf8")), original);
+  fs.rmSync(dir, { recursive: true, force: true });
+});
+
+test("claude/hermes: install upgrades an old narrower matcher in place", () => {
+  const dir = tmp();
+  const c = path.join(dir, "settings.json");
+  fs.writeFileSync(c, JSON.stringify({ hooks: { PreToolUse: [{ matcher: "Bash|Read|Write|Edit", hooks: [{ type: "command", command: `node ${ABS}/dist/cli.js hook claude` }] }] } }));
+  assert.match(installClaude(c, ABS).join("\n"), /Updated Cephalo matcher/);
+  const s = JSON.parse(fs.readFileSync(c, "utf8"));
+  assert.equal(s.hooks.PreToolUse.length, 1);
+  assert.equal(s.hooks.PreToolUse[0].matcher, CLAUDE_MATCHER);
+
+  const h = path.join(dir, "config.yaml");
+  fs.writeFileSync(h, `hooks:\n  pre_tool_call:\n    - matcher: "terminal|read_file|write_file|patch"\n      command: "node ${ABS}/dist/cli.js hook hermes"\n      timeout: 10\n`);
+  assert.match(installHermes(h, ABS).join("\n"), /Updated Cephalo matcher/);
+  const t = fs.readFileSync(h, "utf8");
+  assert.ok(t.includes(`matcher: "${HERMES_MATCHER}"`));
+  assert.equal((t.match(/hook hermes/g) ?? []).length, 1);
   fs.rmSync(dir, { recursive: true, force: true });
 });
 
@@ -76,7 +94,7 @@ test("hermes: install preserves comments, adds entry once, uninstall restores", 
   assert.match(text, /# my hermes config/);
   assert.match(text, /# keep this comment/);
   assert.match(text, /# existing hooks/);
-  assert.match(text, /matcher: "terminal\|read_file\|write_file\|patch"/);
+  assert.ok(text.includes(`matcher: "${HERMES_MATCHER}"`));
   assert.match(text, /command: "node C:\/Users\/zuri\/cephalo\/dist\/cli\.js hook hermes"/);
   assert.match(text, /timeout: 10/);
   assert.equal(backups(dir, "config.yaml").length, 1);
