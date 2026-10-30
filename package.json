@@ -8,7 +8,7 @@
   },
   "scripts": {
     "build": "tsc",
-    "test": "npm run build && node --test dist/tests/"
+    "test": "npm run build && node --test dist/tests/*.test.js"
   },
   "dependencies": {
     "yaml": "^2.9.1"
