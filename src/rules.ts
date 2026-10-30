@@ -43,6 +43,11 @@ const HEADER =
 /** Create the rules file from built-in defaults if it does not exist. */
 export function ensureRulesFile(file: string = defaultRulesPath()): void {
   if (fs.existsSync(file)) return;
+  writeDefaultRules(file);
+}
+
+/** Write the built-in default rules to `file`, replacing its content. Callers must back up first. */
+export function writeDefaultRules(file: string = defaultRulesPath()): void {
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, HEADER + stringify({ rules: DEFAULT_RULES }), "utf8");
 }

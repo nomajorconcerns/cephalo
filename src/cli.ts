@@ -12,6 +12,8 @@ import { createInterface } from "node:readline";
 import { printBanner } from "./banner.js";
 import { formatChecks, runDoctor } from "./doctor.js";
 import { runInit } from "./init.js";
+import { listRules, resetRules, showRule } from "./rulescmd.js";
+import { defaultRulesPath } from "./rules.js";
 import { getVersion } from "./version.js";
 
 const USAGE = `Usage:
@@ -22,6 +24,8 @@ const USAGE = `Usage:
   cephalo uninstall claude|hermes     Remove Cephalo's hook from the agent's config
   cephalo init [--yes]                Set up rules and install hooks for the agents found
   cephalo doctor                      Check rules, hooks, approvals and the audit log
+  cephalo rules [list|show <id>|path|reset [--yes]]
+                                      Inspect the rules file, or reset it to the defaults (with backup)
 `;
 
 async function readStdin(): Promise<string> {
@@ -113,6 +117,39 @@ async function main(): Promise<number> {
       process.stderr.write(`cephalo: ${(e as Error).message}\n`);
       return 1;
     }
+  }
+
+  if (cmd === "rules") {
+    const sub = rest[0] ?? "list";
+    if (sub === "list" || sub === "ls") {
+      const r = listRules();
+      for (const line of r.lines) console.log(line);
+      return r.exitCode;
+    }
+    if (sub === "show") {
+      const r = showRule(rest[1]);
+      for (const line of r.lines) console.log(line);
+      return r.exitCode;
+    }
+    if (sub === "path") {
+      console.log(defaultRulesPath());
+      return 0;
+    }
+    if (sub === "reset") {
+      return resetRules({
+        yes: rest.includes("--yes") || rest.includes("-y"),
+        interactive: Boolean(process.stdin.isTTY),
+        confirm: async () => {
+          const rl = createInterface({ input: process.stdin, output: process.stdout });
+          const answer = await new Promise<string>((resolve) => rl.question("Back up and reset the rules? [y/N] ", resolve));
+          rl.close();
+          return /^y(es)?$/i.test(answer.trim());
+        },
+        log: (line) => console.log(line),
+      });
+    }
+    process.stderr.write("Usage: cephalo rules [list | show <id> | path | reset [--yes]]\n");
+    return 1;
   }
 
   if (cmd === "doctor") {
