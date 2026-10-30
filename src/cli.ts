@@ -10,6 +10,7 @@ import {
 } from "./install.js";
 import { createInterface } from "node:readline";
 import { printBanner } from "./banner.js";
+import { formatChecks, runDoctor } from "./doctor.js";
 import { runInit } from "./init.js";
 import { getVersion } from "./version.js";
 
@@ -20,6 +21,7 @@ const USAGE = `Usage:
   cephalo install claude|hermes       Add Cephalo's hook to the agent's config
   cephalo uninstall claude|hermes     Remove Cephalo's hook from the agent's config
   cephalo init [--yes]                Set up rules and install hooks for the agents found
+  cephalo doctor                      Check rules, hooks, approvals and the audit log
 `;
 
 async function readStdin(): Promise<string> {
@@ -111,6 +113,12 @@ async function main(): Promise<number> {
       process.stderr.write(`cephalo: ${(e as Error).message}\n`);
       return 1;
     }
+  }
+
+  if (cmd === "doctor") {
+    const { checks, exitCode } = runDoctor();
+    for (const line of formatChecks(checks)) console.log(line);
+    return exitCode;
   }
 
   if (cmd === "init") {

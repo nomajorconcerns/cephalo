@@ -50,17 +50,32 @@ export function ensureRulesFile(file: string = defaultRulesPath()): void {
 /** Load rules from file (creating it from defaults if missing). Invalid entries are skipped with a warning. */
 export function loadRules(file: string = defaultRulesPath()): Rule[] {
   ensureRulesFile(file);
-  const doc = parse(fs.readFileSync(file, "utf8")) as { rules?: unknown } | null;
-  const list = Array.isArray(doc?.rules) ? (doc!.rules as Record<string, unknown>[]) : [];
+  const { rules, problems } = parseRules(fs.readFileSync(file, "utf8"));
+  for (const p of problems) process.stderr.write(`cephalo: ${p}\n`);
+  return rules;
+}
+
+/** Parse rules.yml text. Malformed entries and uncompilable patterns are reported in `problems` (and skipped for malformed ones). */
+export function parseRules(text: string): { rules: Rule[]; problems: string[] } {
+  const problems: string[] = [];
+  const doc = parse(text) as { rules?: unknown } | null;
+  if (!Array.isArray(doc?.rules)) {
+    return { rules: [], problems: ["rules.yml has no 'rules:' list"] };
+  }
   const out: Rule[] = [];
-  for (const r of list) {
+  for (const r of doc!.rules as Record<string, unknown>[]) {
     if (
       typeof r?.id !== "string" ||
       typeof r.pattern !== "string" ||
       (r.type !== "command" && r.type !== "path")
     ) {
-      process.stderr.write(`cephalo: skipping malformed rule ${JSON.stringify(r)}\n`);
+      problems.push(`skipping malformed rule ${JSON.stringify(r)}`);
       continue;
+    }
+    try {
+      new RegExp(r.pattern, "i");
+    } catch (e) {
+      problems.push(`rule ${r.id} has an invalid pattern: ${(e as Error).message}`);
     }
     out.push({
       id: r.id,
@@ -71,5 +86,5 @@ export function loadRules(file: string = defaultRulesPath()): Rule[] {
       action: "block",
     });
   }
-  return out;
+  return { rules: out, problems };
 }
