@@ -1,0 +1,1053 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cephalo — the seatbelt for AI coding agents</title>
+<meta name="description" content="Cephalo blocks dangerous tool calls from Claude Code and Hermes Agent before they run. See how it works, try it live, and install it.">
+<meta name="color-scheme" content="dark">
+<style>
+:root{
+  --bg:#0d0f14; --bg2:#12151c; --panel:#171a23; --panel2:#1d212c; --line:#2a2f3d; --line2:#363c4d;
+  --text:#e8ebf2; --muted:#98a1b3; --faint:#667087;
+  --accent:#2dd4bf; --accent-ink:#06211d; --allow:#8be28f; --block:#ff6b6b; --warn:#f5c46b; --coral:#ff5c8a;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+  --sans:"Segoe UI Variable Text","Segoe UI","Helvetica Neue",Arial,system-ui,sans-serif;
+  --mono:"Cascadia Code","SF Mono","JetBrains Mono",ui-monospace,Consolas,"Liberation Mono",monospace;
+  --r:10px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:72px}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{animation:none!important;transition:none!important}}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 var(--sans);-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+code,kbd,pre{font-family:var(--mono)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+button{font:inherit;color:inherit;cursor:pointer}
+.wrap{max-width:1160px;margin:0 auto;padding:0 28px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* nav */
+nav.top{position:sticky;top:0;z-index:20;background:rgba(13,15,20,.86);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+nav.top .wrap{display:flex;align-items:center;gap:28px;height:56px}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--serif);font-size:20px;font-weight:700;color:var(--text);letter-spacing:.01em}
+.brand:hover{text-decoration:none}
+.brand svg{width:26px;height:20px;image-rendering:pixelated}
+nav.top .links{display:flex;gap:22px;margin-left:auto}
+nav.top .links a{color:var(--muted);font-size:14px}
+nav.top .links a:hover{color:var(--text);text-decoration:none}
+nav.top .cta{padding:7px 14px;border:1px solid var(--accent);border-radius:8px;color:var(--accent);font-size:14px}
+nav.top .cta:hover{background:var(--accent);color:var(--accent-ink);text-decoration:none}
+@media(max-width:820px){nav.top .links a:not(.cta){display:none}}
+
+/* sections */
+section{padding:84px 0;border-top:1px solid var(--line)}
+section.hero{border-top:0;padding:72px 0 80px}
+.eyebrow{font:600 12px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin:0 0 14px}
+h1,h2,h3{font-family:var(--serif);line-height:1.12;margin:0;font-weight:700}
+h1{font-size:clamp(40px,5.6vw,66px);letter-spacing:-.015em}
+h2{font-size:clamp(30px,3.6vw,42px);letter-spacing:-.01em}
+h3{font-size:20px}
+.lede{font-size:19px;color:var(--muted);max-width:60ch;margin:18px 0 0}
+.sec-head{max-width:70ch;margin-bottom:36px}
+.sec-head p{color:var(--muted);margin:14px 0 0;font-size:17px}
+
+/* hero */
+.hero-grid{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:48px;align-items:center}
+@media(max-width:940px){.hero-grid{grid-template-columns:1fr}}
+.hero h1 em{font-style:normal;color:var(--accent)}
+.installpill{display:flex;align-items:center;gap:0;margin-top:30px;max-width:520px;border:1px solid var(--line2);border-radius:10px;background:var(--panel);overflow:hidden}
+.installpill code{flex:1;padding:13px 16px;font-size:14px;white-space:nowrap;overflow-x:auto;color:var(--text)}
+.installpill code i{color:var(--faint);font-style:normal}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:12px 20px;border-radius:9px;border:1px solid var(--line2);background:var(--panel2);font-weight:600;font-size:15px}
+.btn:hover{border-color:var(--accent);text-decoration:none}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(1.08)}
+.hero-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:22px}
+.copy{border:0;border-left:1px solid var(--line2);background:var(--panel2);padding:0 16px;align-self:stretch;font-size:13px;color:var(--muted)}
+.copy:hover{color:var(--text)}
+.copy.done{color:var(--allow)}
+.compat{margin-top:26px;color:var(--faint);font-size:14px}
+.compat b{color:var(--muted);font-weight:600}
+
+/* terminal */
+.term{background:#0a0c10;border:1px solid var(--line2);border-radius:12px;overflow:hidden;box-shadow:0 18px 50px rgba(0,0,0,.45)}
+.term-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--panel);border-bottom:1px solid var(--line);font:12px var(--mono);color:var(--muted)}
+.term-bar .dots{display:flex;gap:6px}
+.term-bar .dots i{width:10px;height:10px;border-radius:50%;background:var(--line2)}
+.term-bar .t{flex:1}
+.term-bar button{border:1px solid var(--line2);background:transparent;border-radius:6px;padding:2px 10px;font:12px var(--mono);color:var(--muted)}
+.term-bar button:hover{color:var(--text);border-color:var(--accent)}
+.term-body{color:#d3d9e6;padding:16px 18px;font:13px/1.65 var(--mono);min-height:300px;max-height:420px;overflow:auto;white-space:pre-wrap;word-break:break-word}
+.term-body .ln{display:block;min-height:1.65em}
+.term-body .caret{display:inline-block;width:.6em;height:1.1em;background:var(--accent);vertical-align:text-bottom;animation:blink 1s steps(2) infinite}
+@keyframes blink{50%{opacity:0}}
+.ok{color:var(--allow)} .bad{color:var(--block)} .warn{color:var(--warn)} .dim{color:var(--faint)} .acc{color:var(--accent)} .b{font-weight:700} .cmdc{color:var(--text)}
+.prompt{color:var(--accent)}
+
+/* playground */
+.lab{display:grid;grid-template-columns:minmax(300px,380px) minmax(0,1fr);gap:20px;align-items:start}
+@media(max-width:980px){.lab{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r)}
+.card .hd{padding:12px 16px;border-bottom:1px solid var(--line);font:600 12px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:8px}
+.card .hd .sp{flex:1}
+.card .bd{padding:16px}
+.field{margin-bottom:16px}
+.field label,.field .lbl{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;font-weight:600;letter-spacing:.04em}
+.seg{display:inline-flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden;background:var(--bg2);flex-wrap:wrap}
+.seg button{border:0;background:transparent;padding:7px 13px;font-size:14px;color:var(--muted)}
+.seg button+button{border-left:1px solid var(--line2)}
+.seg button[aria-pressed=true]{background:var(--accent);color:var(--accent-ink);font-weight:600}
+.seg button:not([aria-pressed=true]):hover{color:var(--text)}
+select,input[type=text]{width:100%;background:var(--bg2);border:1px solid var(--line2);border-radius:8px;color:var(--text);padding:10px 12px;font:14px var(--mono)}
+select:focus,input[type=text]:focus{border-color:var(--accent);outline:none}
+.runrow{display:flex;gap:10px}
+.runrow .btn{flex:1;justify-content:center;cursor:pointer}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line2);background:var(--bg2);border-radius:999px;padding:5px 11px;font:12px var(--mono);color:var(--muted)}
+.chip:hover{color:var(--text);border-color:var(--accent)}
+.chip.b-bad{border-left:3px solid var(--block)} .chip.b-ok{border-left:3px solid var(--allow)}
+details.rules summary{cursor:pointer;font-size:13px;color:var(--muted);list-style:none;display:flex;justify-content:space-between}
+details.rules summary::-webkit-details-marker{display:none}
+details.rules[open] summary{margin-bottom:10px}
+.rulelist{max-height:250px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+.rulelist label{display:flex;align-items:center;gap:10px;padding:7px 10px;font-size:12.5px;border-bottom:1px solid var(--line);cursor:pointer}
+.rulelist label:last-child{border-bottom:0}
+.rulelist label:hover{background:var(--panel2)}
+.rulelist code{color:var(--text);font-size:12px}
+.rulelist .o{margin-left:auto;font:10.5px var(--mono);color:var(--faint);text-transform:uppercase}
+.rulelist input{accent-color:var(--accent)}
+
+.stage{border:1px solid var(--line);border-radius:var(--r);background:var(--panel);margin-bottom:14px;overflow:hidden;transition:opacity .25s,transform .25s}
+.stage.pending{opacity:.28;transform:translateY(4px)}
+.stage .hd{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--line);font:600 12px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.stage .hd .n{width:20px;height:20px;border-radius:50%;background:var(--panel2);border:1px solid var(--line2);display:grid;place-items:center;font-size:11px;color:var(--text)}
+.stage.live .hd .n{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.stage pre{margin:0;padding:14px 16px;font-size:13px;line-height:1.6;overflow:auto;white-space:pre-wrap;word-break:break-word}
+.k{color:#7fb7ff} .s{color:#e7c98a}
+.norm{display:grid;grid-template-columns:70px 1fr;gap:6px 12px;padding:14px 16px;font:13px/1.6 var(--mono)}
+.norm span.l{color:var(--faint)}
+.norm .v{word-break:break-all}
+mark{background:rgba(45,212,191,.18);color:var(--accent);padding:0 2px;border-radius:3px}
+mark.gap{display:inline-block;width:3px;height:1.05em;vertical-align:text-bottom;margin:0 1px;padding:0;background:var(--accent);border-radius:2px}
+.trace{max-height:262px;overflow:auto;font:12.5px var(--mono)}
+.trace .row{display:flex;gap:10px;align-items:baseline;padding:6px 16px;border-bottom:1px solid var(--line);color:var(--muted)}
+.trace .row:last-child{border-bottom:0}
+.trace .ic{width:14px;text-align:center;flex:none}
+.trace .row.hit{background:rgba(255,107,107,.12);color:var(--text)}
+.trace .row.hit .ic{color:var(--block)}
+.trace .row.pass .ic{color:var(--allow)}
+.trace .row.na,.trace .row.off,.trace .row.skip{color:var(--faint)}
+.trace .d{margin-left:auto;font-size:11px;color:var(--faint);text-align:right}
+.trace .row.hit .d{color:var(--text)}
+.verdict{display:grid;grid-template-columns:auto 1fr;gap:18px;padding:18px;align-items:start}
+.badge{font:700 15px var(--mono);letter-spacing:.08em;padding:10px 16px;border-radius:8px;border:1px solid}
+.badge.allow{color:var(--allow);border-color:rgba(139,226,143,.5);background:rgba(139,226,143,.08)}
+.badge.block{color:var(--block);border-color:rgba(255,107,107,.55);background:rgba(255,107,107,.1)}
+.verdict p{margin:0 0 8px;color:var(--muted);font-size:14px}
+.verdict pre{padding:10px 12px;margin:0 0 8px;background:#0a0c10;border:1px solid var(--line);border-radius:8px;font-size:12px}
+.verdict .lab-s{font:600 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin:10px 0 4px}
+@media(max-width:560px){.verdict{grid-template-columns:1fr}}
+
+/* explorer */
+.explorer{display:grid;grid-template-columns:260px minmax(0,1fr);gap:20px}
+@media(max-width:900px){.explorer{grid-template-columns:1fr}}
+.cmdlist{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--panel)}
+@media(max-width:900px){.cmdlist{flex-direction:row;overflow-x:auto}}
+.cmdlist button{text-align:left;border:0;background:transparent;padding:13px 16px;border-bottom:1px solid var(--line);display:block;min-width:140px}
+@media(max-width:900px){.cmdlist button{border-bottom:0;border-right:1px solid var(--line)}}
+.cmdlist button:last-child{border:0}
+.cmdlist button .c{font:600 14px var(--mono);color:var(--text)}
+.cmdlist button .s2{display:block;font-size:12.5px;color:var(--muted);margin-top:2px;line-height:1.4}
+.cmdlist button[aria-selected=true]{background:var(--panel2);box-shadow:inset 3px 0 0 var(--accent)}
+.cmdlist button:hover{background:var(--panel2)}
+.explain{margin:14px 2px 0;color:var(--muted);font-size:15px}
+.more{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 36px;margin-top:34px}
+@media(max-width:760px){.more{grid-template-columns:1fr}}
+.more div{padding:12px 0;border-top:1px solid var(--line);font-size:14.5px;color:var(--muted)}
+.more code{color:var(--text);font-size:13px}
+
+/* platforms */
+.plat{display:grid;grid-template-columns:150px repeat(3,minmax(0,1fr));border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--panel)}
+@media(max-width:900px){.plat{grid-template-columns:1fr}.plat .rl{display:none}.plat .pc.h{margin-top:0}}
+.plat>div{padding:14px 16px;border-bottom:1px solid var(--line);font-size:13.5px;min-width:0}
+.plat>div.rl{color:var(--faint);font:600 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;background:var(--bg2);display:flex;align-items:center}
+.plat .pc.h{font:700 16px var(--serif);display:flex;align-items:center;gap:8px;background:var(--bg2)}
+.plat .pc{transition:background .2s}
+.plat .pc.sel{background:rgba(45,212,191,.07)}
+.plat .pc.h.sel{background:rgba(45,212,191,.16)}
+.plat .pc code{font-size:12px;color:var(--text);word-break:break-all}
+.plat .pc .tagrow{display:flex;flex-wrap:wrap;gap:5px}
+.tag{font:11px var(--mono);padding:2px 7px;border-radius:5px;border:1px solid var(--line2);color:var(--muted)}
+.tag.posix{border-style:dashed}
+.plat>div:nth-last-child(-n+4){border-bottom:0}
+.plat button.pick{all:unset;cursor:pointer;display:flex;align-items:center;gap:8px;width:100%}
+.normer{margin-top:28px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px}
+@media(max-width:820px){.normer{grid-template-columns:1fr}}
+.normer .out{font:13px/1.6 var(--mono);background:#0a0c10;border:1px solid var(--line);border-radius:8px;padding:12px 14px;min-height:46px;word-break:break-all}
+
+/* how it plugs in */
+.plug{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:28px;align-items:start}
+@media(max-width:940px){.plug{grid-template-columns:1fr}}
+.steps{list-style:none;margin:0;padding:0;counter-reset:s}
+.steps li{counter-increment:s;display:grid;grid-template-columns:34px 1fr;gap:12px;padding:13px 12px;border:1px solid transparent;border-radius:10px;cursor:pointer}
+.steps li::before{content:counter(s);width:28px;height:28px;border-radius:50%;border:1px solid var(--line2);display:grid;place-items:center;font:600 12px var(--mono);color:var(--muted)}
+.steps li[aria-current=true]{background:var(--panel);border-color:var(--line2)}
+.steps li[aria-current=true]::before{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.steps li:hover{background:var(--panel)}
+.steps h3{font:600 16px var(--sans);margin:0 0 2px}
+.steps p{margin:0;color:var(--muted);font-size:14px}
+.cover{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:14px}
+.cover th,.cover td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.cover th{font:600 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+.cover td:first-child code{color:var(--accent)}
+.cover td code{font-size:12.5px}
+
+/* install */
+.inst{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:28px;align-items:start}
+@media(max-width:940px){.inst{grid-template-columns:1fr}}
+.isteps{list-style:none;margin:0;padding:0}
+.istep{display:grid;grid-template-columns:34px minmax(0,1fr);gap:16px;padding:20px 0;border-top:1px solid var(--line)}
+.istep:first-child{border-top:0;padding-top:0}
+.istep .chk{width:26px;height:26px;border-radius:7px;border:1.5px solid var(--line2);background:var(--bg2);display:grid;place-items:center;color:transparent;padding:0;font-size:15px;line-height:1}
+.istep.done .chk{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.istep h3{font:600 17px var(--sans);margin:2px 0 6px}
+.istep.done h3{color:var(--muted)}
+.istep p{margin:0 0 10px;color:var(--muted);font-size:14.5px}
+.cb{display:flex;align-items:stretch;background:#0a0c10;border:1px solid var(--line2);border-radius:9px;margin:8px 0;overflow:hidden}
+.cb pre{flex:1;margin:0;padding:11px 14px;font-size:13px;overflow-x:auto;line-height:1.7}
+.cb .copy{border-left:1px solid var(--line2)}
+.side{position:sticky;top:76px;display:flex;flex-direction:column;gap:14px}
+.prog{height:6px;background:var(--panel2);border-radius:99px;overflow:hidden;margin:10px 0 8px}
+.prog i{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}
+.callout{padding:13px 15px;border:1px solid var(--line);border-radius:10px;font-size:13.5px;color:var(--muted);background:var(--panel)}
+.callout b{color:var(--text)}
+
+/* limits */
+.limits{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:36px}
+@media(max-width:860px){.limits{grid-template-columns:1fr}}
+.limits h3{font-size:19px;margin-bottom:8px}
+.limits p{margin:0;color:var(--muted);font-size:15px}
+footer{border-top:1px solid var(--line);padding:34px 0 60px;color:var(--faint);font-size:14px}
+footer .wrap{display:flex;gap:20px;flex-wrap:wrap;align-items:center}
+footer .sp{flex:1}
+</style>
+</head>
+<body>
+
+<nav class="top" aria-label="Main">
+  <div class="wrap">
+    <a class="brand" href="#top"><span id="logo" aria-hidden="true"></span>Cephalo</a>
+    <div class="links">
+      <a href="#try">Try it</a><a href="#plug">How it plugs in</a><a href="#commands">Commands</a><a href="#platforms">Platforms</a><a href="#limits">Limits</a>
+      <a class="cta" href="#install">Install</a>
+    </div>
+  </div>
+</nav>
+
+<main id="top">
+
+<!-- HERO -->
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <p class="eyebrow">for Claude Code and Hermes Agent</p>
+      <h1>Stop the tool call <em>before</em> it runs.</h1>
+      <p class="lede">Cephalo sits in front of your AI coding agents and checks every shell command and file access against a rules file. <code>DROP TABLE</code>, <code>rm -rf</code>, a force push, a read of <code>.env</code>: the agent gets a refusal, and nothing happens.</p>
+      <div class="installpill">
+        <code id="heroCmd"><i>$ </i>cephalo init</code>
+        <button class="copy" data-copy="cephalo init" type="button">Copy</button>
+      </div>
+      <div class="hero-actions">
+        <a class="btn primary" href="#try">Try it in your browser</a>
+        <a class="btn" href="#install">Install steps</a>
+      </div>
+      <p class="compat"><b>Windows, macOS, Linux.</b> Node.js CLI. Rules are plain YAML you own.</p>
+    </div>
+    <div class="term" role="img" aria-label="Example output of the cephalo watch command, showing allowed and blocked tool calls">
+      <div class="term-bar"><span class="dots"><i></i><i></i><i></i></span><span class="t">cephalo watch &nbsp;·&nbsp; example output</span></div>
+      <div class="term-body" id="heroTerm"></div>
+    </div>
+  </div>
+</section>
+
+<!-- PLAYGROUND -->
+<section id="try">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Interactive</p>
+      <h2>Send a tool call through Cephalo.</h2>
+      <p>This runs the same rules Cephalo ships with, in your browser. Pick an agent and an operating system, type a command or a file path (or choose an example), and watch it go through the pipeline. Switch rules off to see what they were doing.</p>
+    </div>
+
+    <div class="lab">
+      <div class="card">
+        <div class="hd">Tool call</div>
+        <div class="bd">
+          <div class="field"><span class="lbl" id="l-agent">Agent</span>
+            <div class="seg" role="group" aria-labelledby="l-agent" id="segAgent">
+              <button type="button" data-v="claude" aria-pressed="true">Claude Code</button>
+              <button type="button" data-v="hermes" aria-pressed="false">Hermes</button>
+            </div></div>
+          <div class="field"><span class="lbl" id="l-os">Operating system</span>
+            <div class="seg" role="group" aria-labelledby="l-os" id="segOs">
+              <button type="button" data-v="win32" aria-pressed="false">Windows</button>
+              <button type="button" data-v="darwin" aria-pressed="false">macOS</button>
+              <button type="button" data-v="linux" aria-pressed="false">Linux</button>
+            </div></div>
+          <div class="field"><label for="tool">Tool</label><select id="tool"></select></div>
+          <div class="field"><label for="input" id="inputLabel">Command</label>
+            <input type="text" id="input" autocomplete="off" spellcheck="false" placeholder="type something an agent might run"></div>
+          <div class="field runrow"><button class="btn primary" id="run" type="button">Run through Cephalo</button></div>
+          <div class="field"><span class="lbl">Try an example</span><div class="chips" id="chips"></div></div>
+          <details class="rules"><summary><span>Rules in effect <b id="ruleCount"></b></span><span class="dim">toggle</span></summary>
+            <div class="rulelist" id="ruleList"></div>
+            <div style="margin-top:10px"><button class="chip" type="button" id="rulesReset">Turn everything back on</button></div>
+          </details>
+        </div>
+      </div>
+
+      <div id="result" aria-live="polite">
+        <div class="stage" id="st1"><div class="hd"><span class="n">1</span>The agent asks to use a tool</div><pre id="payload"></pre></div>
+        <div class="stage" id="st2"><div class="hd"><span class="n">2</span>Cephalo cleans it up</div><div class="norm" id="norm"></div></div>
+        <div class="stage" id="st3"><div class="hd"><span class="n">3</span>Rules are checked in order, first match wins</div><div class="trace" id="trace"></div></div>
+        <div class="stage" id="st4"><div class="hd"><span class="n">4</span>Decision</div><div class="verdict" id="verdict"></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT PLUGS IN -->
+<section id="plug">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Mechanism</p>
+      <h2>It rides each agent's pre-tool hook.</h2>
+      <p>No proxy, no patching the agent. Both Claude Code and Hermes can run a command before every tool call and read a decision from its output. Cephalo is that command. Click a step.</p>
+    </div>
+    <div class="plug">
+      <ol class="steps" id="plugSteps"></ol>
+      <div>
+        <div class="seg" role="group" aria-label="Agent" id="segPlug">
+          <button type="button" data-v="claude" aria-pressed="true">Claude Code</button>
+          <button type="button" data-v="hermes" aria-pressed="false">Hermes</button>
+        </div>
+        <div class="term" style="margin-top:14px"><div class="term-bar"><span class="t" id="plugTitle"></span></div><pre class="term-body" id="plugCode" style="margin:0;min-height:190px"></pre></div>
+        <table class="cover" id="cover"></table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COMMANDS -->
+<section id="commands">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">What it can do</p>
+      <h2>A small CLI that is easy to check.</h2>
+      <p>Choose a command to replay it. The <code>doctor</code>, <code>rules</code> and <code>test</code> output below was captured from a real run (with your username and paths shortened); the rest is representative.</p>
+    </div>
+    <div class="explorer">
+      <div class="cmdlist" role="tablist" aria-label="Commands" id="cmdList"></div>
+      <div>
+        <div class="term">
+          <div class="term-bar"><span class="dots"><i></i><i></i><i></i></span><span class="t" id="exTitle"></span><button type="button" id="exReplay">Replay</button></div>
+          <div class="term-body" id="exTerm" tabindex="0" aria-label="Command output"></div>
+        </div>
+        <p class="explain" id="exExplain"></p>
+      </div>
+    </div>
+    <div class="more">
+      <div><code>cephalo rules show &lt;id&gt;</code> prints one rule in full, including its pattern, and the default it was changed from.</div>
+      <div><code>cephalo rules reset [--yes]</code> backs up <code>rules.yml</code>, then rewrites it from the built-in defaults. Nothing is deleted.</div>
+      <div><code>cephalo install</code> / <code>uninstall claude|hermes</code> are idempotent, parse configs strictly, refuse invalid ones, and back up before writing. Uninstall removes only Cephalo's own entries.</div>
+      <div><code>cephalo hook claude|hermes</code> is the entry point the agents call. It prints pure JSON only, and fails open if anything breaks.</div>
+    </div>
+  </div>
+</section>
+
+<!-- PLATFORMS -->
+<section id="platforms">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Native on every OS</p>
+      <h2>One rule set, three platform adapters.</h2>
+      <p>An adapter decides where configs live, how paths and commands are cleaned up before matching, and which extra built-in rules apply. Rules are tested against the raw text and the cleaned copy, so cleaning can only add blocks, never remove one.</p>
+    </div>
+    <div class="plat" id="plat"></div>
+    <div class="normer">
+      <div class="card"><div class="hd">Try the cleaner <span class="sp"></span><span class="dim" id="normOsLabel"></span></div>
+        <div class="bd">
+          <div class="field"><label for="normIn">Command or path</label><input type="text" id="normIn" autocomplete="off" spellcheck="false"></div>
+          <div class="chips" id="normChips"></div>
+        </div></div>
+      <div class="card"><div class="hd">What the rules also see</div>
+        <div class="bd"><div class="out" id="normOut"></div>
+          <p class="dim" style="font-size:13px;margin:10px 0 0" id="normNote"></p></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- INSTALL -->
+<section id="install">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Install</p>
+      <h2>Six steps, about five minutes.</h2>
+      <p>Cephalo is installed from its project folder. Your progress is saved in this browser, so you can tick steps off as you go.</p>
+    </div>
+    <div class="inst">
+      <ol class="isteps" id="isteps">
+        <li class="istep" data-step="0"><button class="chk" type="button" aria-label="Mark step done">✓</button><div>
+          <h3>Check you have Node.js</h3>
+          <p>Node.js 21 or newer (developed and tested on 24). You also need Claude Code, Hermes, or both.</p>
+          <div class="cb"><pre>node --version</pre><button class="copy" data-copy="node --version" type="button">Copy</button></div>
+        </div></li>
+        <li class="istep" data-step="1"><button class="chk" type="button" aria-label="Mark step done">✓</button><div>
+          <h3>Build it and put <code>cephalo</code> on your PATH</h3>
+          <p>From the Cephalo project folder:</p>
+          <div class="cb"><pre id="buildCmds"></pre><button class="copy" data-copy-from="buildCmds" type="button">Copy</button></div>
+          <p>Then <code>cephalo --help</code> should show the banner and command list.</p>
+        </div></li>
+        <li class="istep" data-step="2"><button class="chk" type="button" aria-label="Mark step done">✓</button><div>
+          <h3>Run <code>cephalo init</code></h3>
+          <p>It prints a plan first, asks before changing anything, creates <code>~/.cephalo/rules.yml</code> from the defaults, and adds its hook to Claude Code and (if found) Hermes. Every edited file is backed up to <code>&lt;file&gt;.cephalo-backup-&lt;timestamp&gt;</code>. Add <code>--yes</code> to skip the question.</p>
+          <div class="cb"><pre>cephalo init</pre><button class="copy" data-copy="cephalo init" type="button">Copy</button></div>
+        </div></li>
+        <li class="istep" data-step="3"><button class="chk" type="button" aria-label="Mark step done">✓</button><div>
+          <h3>Restart Claude Code</h3>
+          <p>Claude Code reads hooks when it starts, so a running session will not pick the new hook up.</p>
+        </div></li>
+        <li class="istep" data-step="4"><button class="chk" type="button" aria-label="Mark step done">✓</button><div>
+          <h3>Approve the hook in Hermes</h3>
+          <p>Hermes skips a hook command until you approve it once. Start an interactive <code>hermes</code>, accept the prompt, then check the list. It should say <code>allowed</code>, not <code>not allowed</code>.</p>
+          <div class="cb"><pre>hermes hooks list
+hermes hooks doctor</pre><button class="copy" data-copy="hermes hooks list&#10;hermes hooks doctor" type="button">Copy</button></div>
+        </div></li>
+        <li class="istep" data-step="5"><button class="chk" type="button" aria-label="Mark step done">✓</button><div>
+          <h3>Verify</h3>
+          <p><code>doctor</code> checks the rules file, runs a self-test, and confirms both hooks. Then prove a block, and watch it arrive live.</p>
+          <div class="cb"><pre>cephalo doctor
+cephalo test "DROP TABLE users"
+cephalo watch</pre><button class="copy" data-copy='cephalo doctor&#10;cephalo test "DROP TABLE users"&#10;cephalo watch' type="button">Copy</button></div>
+        </div></li>
+      </ol>
+      <aside class="side">
+        <div class="card"><div class="bd">
+          <div class="seg" role="group" aria-label="Shell" id="segShell">
+            <button type="button" data-v="ps" aria-pressed="true">PowerShell</button>
+            <button type="button" data-v="sh" aria-pressed="false">bash / zsh</button>
+          </div>
+          <div class="prog"><i id="progBar"></i></div>
+          <div style="font-size:13.5px;color:var(--muted)"><b id="progText" style="color:var(--text)"></b> <button class="chip" id="progReset" type="button" style="margin-left:6px">Reset</button></div>
+        </div></div>
+        <div class="callout"><b>Undo it any time.</b><br>
+          <code>cephalo uninstall claude</code><br><code>cephalo uninstall hermes</code><br>removes only Cephalo's entries, after a backup. <code>npm unlink -g cephalo</code> removes the command.</div>
+        <div class="callout"><b>Your rules, your file.</b> Edit <code>~/.cephalo/rules.yml</code>. Defaults added in later versions are not pushed into an existing file; <code>cephalo rules</code> lists what is missing.</div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- LIMITS -->
+<section id="limits">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Honest limits</p>
+      <h2>A seatbelt, not a vault.</h2>
+    </div>
+    <div class="limits">
+      <div><h3>It matches patterns.</h3><p>Cephalo sees command text, not what a script does once it runs. A command assembled at runtime, or hidden inside a script file, can slip past. Cleaning catches common tricks like <code>r''m</code>, not all of them.</p></div>
+      <div><h3>It fails open.</h3><p>If the hook crashes or its input is not valid JSON, the call is allowed and the error is logged. A block is never weakened by a logging failure.</p></div>
+      <div><h3>Windows is the proven one.</h3><p>The Windows adapter has run on a real machine. macOS and Linux are covered by unit tests only. Agents can also edit Cephalo's own files unless you add a rule against it.</p></div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap"><span class="brand" style="font-size:17px"><span id="logo2" aria-hidden="true"></span>Cephalo</span><span>v0.1.0</span><span class="sp"></span><span>Everything on this page runs locally in your browser.</span></div>
+</footer>
+
+<script id="engine">
+/* Cephalo rule engine, ported from src/engine.ts and src/platform.ts. Rule data is generated from the built project. */
+var CephaloEngine=(function(){
+  var RULES=/*RULES_JSON*/{"defaults":[{"id":"no-drop","d":"Dropping tables or databases","t":"command","p":"\\bDROP\\s+(TABLE|DATABASE|SCHEMA)\\b","o":"default"},{"id":"no-truncate","d":"Truncating tables","t":"command","p":"\\bTRUNCATE\\s+(TABLE\\s+)?[\\w.\"]+","o":"default"},{"id":"no-delete-all","d":"DELETE FROM with no WHERE clause","t":"command","p":"\\bDELETE\\s+FROM\\s+[\\w.\"]+\\s*(;|\"|$)","o":"default"},{"id":"no-rm-rf","d":"Recursive forced rm","t":"command","p":"\\brm\\s+-(?=[a-z]*r)(?=[a-z]*f)[a-z]+","o":"default"},{"id":"no-win-recursive-delete","d":"Recursive delete on Windows","t":"command","p":"(Remove-Item\\b(?=.*-Recurse)(?=.*-Force))|(\\b(rd|rmdir)\\s+\\/s\\b)|(\\bdel\\s+.*\\/s\\b)","o":"default"},{"id":"no-force-push","d":"Force pushing to git remotes","t":"command","p":"\\bgit\\s+push\\b(?=.*(\\s--force(?!-with-lease)\\b|\\s-f\\b))","o":"default"},{"id":"no-hard-reset","d":"git reset --hard","t":"command","p":"\\bgit\\s+reset\\s+--hard\\b","o":"default"},{"id":"no-secret-read","d":"Reading .env secret files via shell","t":"command","p":"\\b(cat|type|Get-Content|gc|more|less|head|tail)\\b.*\\.env\\b(?!\\.example)","o":"default"},{"id":"no-secret-file","d":"Accessing .env secret files","t":"path","on":"any","p":"(^|[\\/\\\\])\\.env(\\.(?!example$)[\\w.-]+)?$","o":"default"},{"id":"protect-config","d":"Writing Claude Code or Hermes config","t":"path","on":"write","p":"[\\/\\\\]\\.claude[\\/\\\\]settings(\\.local)?\\.json$|[\\/\\\\]hermes[\\/\\\\]config\\.yaml$","o":"default"}],"win32":[{"id":"win-format-drive","d":"Formatting a drive (format X:)","t":"command","p":"\\bformat(\\.com)?\\s+[a-z]:(?![\\w\\\\/])","o":"platform","os":"win32"},{"id":"win-disk-wipe","d":"Disk partitioning or wiping tools","t":"command","p":"\\b(diskpart|Clear-Disk|Remove-Partition|Format-Volume|Initialize-Disk)\\b","o":"platform","os":"win32"},{"id":"win-registry-delete","d":"Deleting registry keys or values","t":"command","p":"\\breg(\\.exe)?\\s+delete\\b|Remove-Item(Property)?\\b[^;&|\\n]*\\bHK(LM|CU|CR|U):","o":"platform","os":"win32"},{"id":"win-shadow-delete","d":"Deleting shadow copies or boot entries","t":"command","p":"\\bvssadmin(\\.exe)?\\s+delete\\b|\\bwmic\\b[^;&|\\n]*\\bshadowcopy\\s+delete\\b|\\bbcdedit(\\.exe)?\\s+/delete\\b","o":"platform","os":"win32"},{"id":"win-power","d":"Shutting down or restarting the machine","t":"command","p":"\\bshutdown(\\.exe)?\\s+/[srp]\\b|\\b(Stop|Restart)-Computer\\b","o":"platform","os":"win32"}],"darwin":[{"id":"mac-diskutil-erase","d":"diskutil erase/partition/zero a disk","t":"command","p":"\\bdiskutil\\s+(erase\\w*|secureErase|partitionDisk|zeroDisk|randomDisk|apfs\\s+delete\\w*)\\b","o":"platform","os":"darwin"},{"id":"mac-disable-protection","d":"Disabling SIP or Gatekeeper","t":"command","p":"\\bcsrutil\\s+disable\\b|\\bspctl\\s+--master-disable\\b","o":"platform","os":"darwin"},{"id":"mac-tmutil-delete","d":"Deleting or disabling Time Machine backups","t":"command","p":"\\btmutil\\s+(delete|deletelocalsnapshots|disable)\\b","o":"platform","os":"darwin"},{"id":"mac-keychain-secrets","d":"Reading or deleting keychain secrets","t":"command","p":"\\bsecurity\\s+(dump-keychain|delete-(generic-|internet-)?(password|keychain)|find-(generic|internet)-password\\b[^;&|\\n]*\\s-[a-z]*w)","o":"platform","os":"darwin"},{"id":"rm-long-flags","d":"rm with separate or long recursive+force flags","t":"command","p":"\\brm\\b(?=[^;&|\\n]*(\\s-[a-z]*r[a-z]*\\b|--recursive))(?=[^;&|\\n]*(\\s-[a-z]*f[a-z]*\\b|--force))","o":"platform","os":"posix"},{"id":"no-preserve-root","d":"rm --no-preserve-root","t":"command","p":"--no-preserve-root","o":"platform","os":"posix"},{"id":"pipe-to-shell","d":"Piping a download straight into a shell","t":"command","p":"\\b(curl|wget)\\b[^|\\n]*\\|\\s*(sudo\\s+)?(ba|z|da|k)?sh\\b","o":"platform","os":"posix"},{"id":"chmod-chown-system","d":"Recursive chmod/chown on / or a system directory","t":"command","p":"\\b(chmod|chown)\\s+(-[a-z]*R[a-z]*|--recursive)\\b[^;&|\\n]*\\s(/|/etc|/usr|/var|/bin|/sbin|/boot|/lib|/opt|/home|~)/?(\\s|$|[;&|])","o":"platform","os":"posix"}],"linux":[{"id":"linux-mkfs","d":"Creating filesystems or wiping signatures","t":"command","p":"\\b(mkfs(\\.\\w+)?|wipefs|mkswap)\\b","o":"platform","os":"linux"},{"id":"linux-dd-device","d":"dd writing to a device","t":"command","p":"\\bdd\\b[^;&|\\n]*\\bof=/dev/(?!null\\b|zero\\b|stdout\\b|stderr\\b|tty)","o":"platform","os":"linux"},{"id":"linux-write-device","d":"Redirecting output onto a block device","t":"command","p":">\\s*/dev/(sd|nvme|hd|vd|xvd|mmcblk)\\w*","o":"platform","os":"linux"},{"id":"linux-shred-device","d":"shred on a device","t":"command","p":"\\bshred\\b[^;&|\\n]*\\s/dev/","o":"platform","os":"linux"},{"id":"linux-fork-bomb","d":"Fork bomb","t":"command","p":":\\(\\)\\s*\\{\\s*:\\s*\\|\\s*:\\s*&\\s*\\}\\s*;\\s*:","o":"platform","os":"linux"},{"id":"rm-long-flags","d":"rm with separate or long recursive+force flags","t":"command","p":"\\brm\\b(?=[^;&|\\n]*(\\s-[a-z]*r[a-z]*\\b|--recursive))(?=[^;&|\\n]*(\\s-[a-z]*f[a-z]*\\b|--force))","o":"platform","os":"posix"},{"id":"no-preserve-root","d":"rm --no-preserve-root","t":"command","p":"--no-preserve-root","o":"platform","os":"posix"},{"id":"pipe-to-shell","d":"Piping a download straight into a shell","t":"command","p":"\\b(curl|wget)\\b[^|\\n]*\\|\\s*(sudo\\s+)?(ba|z|da|k)?sh\\b","o":"platform","os":"posix"},{"id":"chmod-chown-system","d":"Recursive chmod/chown on / or a system directory","t":"command","p":"\\b(chmod|chown)\\s+(-[a-z]*R[a-z]*|--recursive)\\b[^;&|\\n]*\\s(/|/etc|/usr|/var|/bin|/sbin|/boot|/lib|/opt|/home|~)/?(\\s|$|[;&|])","o":"platform","os":"posix"}]}/*END_RULES_JSON*/;
+  var HOMES={win32:'C:\\Users\\you',darwin:'/Users/you',linux:'/home/you'};
+  function posixNormalize(p){
+    var abs=p.charAt(0)==='/',out=[],parts=p.split('/');
+    for(var i=0;i<parts.length;i++){var s=parts[i];
+      if(!s||s==='.')continue;
+      if(s==='..'){if(out.length&&out[out.length-1]!=='..')out.pop();else if(!abs)out.push('..');}
+      else out.push(s);}
+    var r=(abs?'/':'')+out.join('/');
+    return r||(abs?'/':'.');
+  }
+  function cleanSlashes(s){
+    var unc=s.indexOf('//')===0&&s.indexOf('///')!==0;
+    var n=posixNormalize(s.replace(/\/{2,}/g,'/'));
+    return unc?'/'+n:n;
+  }
+  function expandPosixHome(raw,home){
+    return raw.replace(/^~(?=$|[\\/])/,function(){return home;})
+              .replace(/^\$\{HOME\}|^\$HOME(?![A-Za-z0-9_])/,function(){return home;});
+  }
+  function posixCmd(raw){
+    return raw.replace(/\\\r?\n/g,' ')
+      .replace(/(?<=\S)(''|"")(?=\S)/g,'')
+      .replace(/(?<=[A-Za-z0-9])\\(?=[A-Za-z])/g,'')
+      .replace(/(^|[\s;&|(])\\(?=[A-Za-z])/g,'$1');
+  }
+  var ADAPT={
+    win32:{label:'Windows',
+      normalizePath:function(raw,env,home){
+        var s=raw.trim();
+        s=s.replace(/^\\\\\?\\/,'');
+        s=s.replace(/^~(?=$|[\\/])/,function(){return home;});
+        s=s.replace(/%([A-Za-z0-9_]+)%/g,function(m,k){var v=env[k]!==undefined?env[k]:env[k.toUpperCase()];return v!==undefined?v:m;});
+        s=s.replace(/\$env:([A-Za-z0-9_]+)/gi,function(m,k){var v=env[k]!==undefined?env[k]:env[k.toUpperCase()];return v!==undefined?v:m;});
+        s=s.replace(/\\/g,'/');
+        var m=s.match(/^([A-Za-z]:)(\/.*)?$/);
+        if(m)return m[1]+cleanSlashes(m[2]||'/');
+        return cleanSlashes(s);
+      },
+      normalizeCommand:function(raw){
+        return raw.replace(/\^(?=[^\r\n])/g,'').replace(/`(?=\S)/g,'').replace(/(?<=\S)(''|"")(?=\S)/g,'');
+      }},
+    darwin:{label:'macOS',
+      normalizePath:function(raw,env,home){
+        var s=expandPosixHome(raw.trim(),home);
+        s=cleanSlashes(s.replace(/\\/g,'/'));
+        return s.replace(/^\/private(?=\/(etc|var|tmp)(\/|$))/,'');
+      },
+      normalizeCommand:posixCmd},
+    linux:{label:'Linux',
+      normalizePath:function(raw,env,home){return cleanSlashes(expandPosixHome(raw.trim(),home).replace(/\\/g,'/'));},
+      normalizeCommand:posixCmd}
+  };
+  function envFor(os){var h=HOMES[os];return {USERPROFILE:h,HOME:h,LOCALAPPDATA:h+'\\AppData\\Local'};}
+  function rulesFor(os){return RULES.defaults.concat(RULES[os]);}
+  function variants(raw,norm){var n=raw;try{n=norm(raw);}catch(e){}return n===raw?[raw]:[raw,n];}
+  /* input: {command?, path?, access?}. disabled: object of rule ids -> true. Returns a full trace. */
+  function evaluate(input,os,disabled){
+    disabled=disabled||{};
+    var a=ADAPT[os];
+    var cmds=input.command!==undefined?variants(input.command,a.normalizeCommand):[];
+    var paths=input.path!==undefined?variants(input.path,function(p){return a.normalizePath(p,envFor(os),HOMES[os]);}):[];
+    var rules=rulesFor(os),steps=[],hit=null;
+    for(var i=0;i<rules.length;i++){
+      var r=rules[i];
+      if(disabled[r.id]){steps.push({rule:r,state:'off'});continue;}
+      var re;try{re=new RegExp(r.p,'i');}catch(e){steps.push({rule:r,state:'off'});continue;}
+      if(r.t==='command'){
+        if(!cmds.length){steps.push({rule:r,state:'na'});continue;}
+        var hv=-1;for(var j=0;j<cmds.length;j++){if(re.test(cmds[j])){hv=j;break;}}
+        if(hv>=0){steps.push({rule:r,state:'hit',via:hv===0?'raw':'cleaned'});hit=r;break;}
+        steps.push({rule:r,state:'pass'});
+      }else{
+        if(!paths.length){steps.push({rule:r,state:'na'});continue;}
+        var on=r.on||'any',acc=input.access||'read';
+        if(on!=='any'&&on!==acc){steps.push({rule:r,state:'skip'});continue;}
+        var hp=-1;for(var k=0;k<paths.length;k++){if(re.test(paths[k])){hp=k;break;}}
+        if(hp>=0){steps.push({rule:r,state:'hit',via:hp===0?'raw':'cleaned'});hit=r;break;}
+        steps.push({rule:r,state:'pass'});
+      }
+    }
+    return {decision:hit?'block':'allow',rule:hit,steps:steps,total:rules.length,
+            command:cmds,path:paths};
+  }
+  return {RULES:RULES,HOMES:HOMES,ADAPT:ADAPT,evaluate:evaluate,rulesFor:rulesFor,envFor:envFor};
+})();
+if(typeof module!=='undefined')module.exports=CephaloEngine;
+</script>
+
+<script id="ui">
+(function(){
+'use strict';
+var E=CephaloEngine;
+var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+function $(s,r){return (r||document).querySelector(s);}
+function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s));}
+function el(tag,cls,text){var e=document.createElement(tag);if(cls)e.className=cls;if(text!==undefined)e.textContent=text;return e;}
+var instant=false;
+function psleep(ms){return new Promise(function(r){setTimeout(r,ms);});} /* terminal players always use real time */
+function sleep(ms){return new Promise(function(r){if(reduce||instant)r();else setTimeout(r,ms);});}
+/* tiny markup: <ok>..</ok> <bad> <warn> <dim> <acc> <b> -> spans (textContent only) */
+function markup(parent,text){
+  var re=/<(ok|bad|warn|dim|acc|b|cmdc|prompt)>([\s\S]*?)<\/\1>/g,last=0,m;
+  while((m=re.exec(text))){
+    if(m.index>last)parent.appendChild(document.createTextNode(text.slice(last,m.index)));
+    var sp=el('span',m[1]);markup(sp,m[2]);parent.appendChild(sp);last=re.lastIndex;
+  }
+  if(last<text.length)parent.appendChild(document.createTextNode(text.slice(last)));
+}
+
+/* ---------- logo (pixel octopus from banner.ts) ---------- */
+var PAL={P:'#ff5c8a',L:'#ffaac8',W:'#ffffff',K:'#1a1a2e'};
+var OCT=["......PPPP......","...PPPPPPPPPP...","..PPLLPPPPPPPP..",".PPLPPPPPPPPPPP.",".PPPWWPPPPWWPPP.",".PPPWKPPPPWKPPP.",".PPPPPPPPPPPPPP.","..PPPPPPPPPPPP..",".PP.PP.PP.PP.PP.","PP..P..PP..P..PP","P..PP..PP..PP..P",".PP..PP..PP..PP."];
+function logo(){
+  var ns='http://www.w3.org/2000/svg',s=document.createElementNS(ns,'svg');
+  s.setAttribute('viewBox','0 0 16 12');s.setAttribute('shape-rendering','crispEdges');s.setAttribute('width','26');s.setAttribute('height','20');
+  OCT.forEach(function(row,y){for(var x=0;x<row.length;x++){var c=PAL[row[x]];if(!c)continue;var r=document.createElementNS(ns,'rect');r.setAttribute('x',x);r.setAttribute('y',y);r.setAttribute('width','1');r.setAttribute('height','1');r.setAttribute('fill',c);s.appendChild(r);}});
+  return s;
+}
+$('#logo').appendChild(logo());$('#logo2').appendChild(logo());
+
+/* ---------- copy buttons ---------- */
+document.addEventListener('click',function(e){
+  var b=e.target.closest('.copy');if(!b)return;
+  var t=b.getAttribute('data-copy');
+  if(b.hasAttribute('data-copy-from'))t=document.getElementById(b.getAttribute('data-copy-from')).textContent;
+  if(t===null)return;
+  function ok(){var old=b.textContent;b.textContent='Copied';b.classList.add('done');setTimeout(function(){b.textContent=old;b.classList.remove('done');},1400);}
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(ok,function(){fallback(t,ok);});}else fallback(t,ok);
+});
+function fallback(t,ok){var ta=el('textarea');ta.value=t;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');ok();}catch(e){}ta.remove();}
+
+/* ---------- terminal player ---------- */
+function Player(body,opts){this.body=body;this.token=0;this.opts=opts||{};}
+Player.prototype.play=function(script,loop){
+  var self=this,tok=++this.token;this.body.textContent='';
+  var alive=function(){return self.token===tok;};
+  var run=async function(){
+    do{
+      self.body.textContent='';
+      for(var i=0;i<script.length&&alive();i++){
+        var it=script[i];
+        if(it.k==='wait'){await psleep(it.ms);continue;}
+        var line=el('span','ln');self.body.appendChild(line);
+        if(it.k==='cmd'){
+          markup(line,'<prompt>$ </prompt>');
+          var txt=it.t,span=el('span','cmdc');line.appendChild(span);
+          var caret=el('span','caret');line.appendChild(caret);
+          for(var c=0;c<txt.length&&alive();c++){span.textContent+=txt[c];await psleep(it.speed||26);}
+          caret.remove();await psleep(it.after||260);
+        }else{
+          markup(line,it.t);await psleep(it.d===undefined?70:it.d);
+        }
+        self.body.scrollTop=self.body.scrollHeight;
+      }
+      if(loop&&alive())await psleep(2600);
+    }while(loop&&alive());
+  };
+  if(reduce){ // render instantly
+    this.body.textContent='';
+    script.forEach(function(it){if(it.k==='wait')return;var l=el('span','ln');self.body.appendChild(l);if(it.k==='cmd'){markup(l,'<prompt>$ </prompt>');l.appendChild(el('span','cmdc',it.t));}else markup(l,it.t);});
+    return;
+  }
+  run();
+};
+Player.prototype.stop=function(){this.token++;};
+
+/* ---------- hero terminal ---------- */
+var heroP=new Player($('#heroTerm'));
+var MSG_DROP='🛑 Cephalo blocked this (rule: no-drop - Dropping tables or databases). If it is intended, ask the user to run it themselves.';
+heroP.play([
+  {k:'out',t:'<dim>Watching ~/.cephalo/audit.jsonl  -  Ctrl+C to stop</dim>',d:500},
+  {k:'out',t:'<dim>12:04:11</dim>  <ok>ALLOW</ok>  claude/Bash  git status',d:900},
+  {k:'out',t:'<dim>12:04:14</dim>  <ok>ALLOW</ok>  claude/Read  src/app.ts',d:900},
+  {k:'out',t:'<dim>12:04:19</dim>  <bad><b>BLOCK</b></bad>  claude/Bash <warn>[no-drop]</warn>  psql -c "DROP TABLE users;"',d:500},
+  {k:'out',t:'<dim>  the agent is told: '+MSG_DROP+'</dim>',d:1100},
+  {k:'out',t:'<dim>12:04:25</dim>  <bad><b>BLOCK</b></bad>  hermes/read_file <warn>[no-secret-file]</warn>  C:/proj/.env',d:900},
+  {k:'out',t:'<dim>12:04:31</dim>  <ok>ALLOW</ok>  hermes/terminal  npm test',d:900},
+  {k:'out',t:'<dim>12:04:36</dim>  <bad><b>BLOCK</b></bad>  claude/Bash <warn>[no-force-push]</warn>  git push --force origin main',d:900},
+  {k:'out',t:'<dim>12:04:40</dim>  <ok>ALLOW</ok>  claude/Bash  git push --force-with-lease',d:300}
+],true);
+
+/* ---------- playground ---------- */
+var TOOLS={
+  claude:[
+    {id:'Bash',kind:'command',label:'Bash (shell command)',field:'command'},
+    {id:'Read',kind:'path',access:'read',label:'Read (file path)',field:'file_path'},
+    {id:'Write',kind:'path',access:'write',label:'Write (file path)',field:'file_path'},
+    {id:'Edit',kind:'path',access:'write',label:'Edit (file path)',field:'file_path'},
+    {id:'Grep',kind:'none',label:'Grep (not checked)',field:'pattern'}
+  ],
+  hermes:[
+    {id:'terminal',kind:'command',label:'terminal (shell command)',field:'command'},
+    {id:'execute_code',kind:'command',label:'execute_code (script text)',field:'code'},
+    {id:'read_file',kind:'path',access:'read',label:'read_file (path)',field:'path'},
+    {id:'search_files',kind:'path',access:'read',label:'search_files (path)',field:'path'},
+    {id:'write_file',kind:'path',access:'write',label:'write_file (path)',field:'path'},
+    {id:'patch',kind:'path',access:'write',label:'patch (path)',field:'path'},
+    {id:'web_search',kind:'none',label:'web_search (not checked)',field:'query'}
+  ]
+};
+var state={agent:'claude',os:detectOs(),tool:'Bash',disabled:{}};
+function detectOs(){
+  var p=((navigator.userAgentData&&navigator.userAgentData.platform)||navigator.platform||navigator.userAgent||'').toLowerCase();
+  if(p.indexOf('win')>=0)return 'win32';
+  if(p.indexOf('mac')>=0||p.indexOf('iphone')>=0||p.indexOf('ipad')>=0)return 'darwin';
+  return 'linux';
+}
+var PRESETS=[
+  {n:'DROP TABLE',a:'claude',t:'Bash',v:'psql -c "DROP TABLE users;"',b:1},
+  {n:'rm -rf',a:'hermes',t:'terminal',v:'rm -rf ./build',b:1},
+  {n:'force push',a:'claude',t:'Bash',v:'git push --force origin main',b:1},
+  {n:'--force-with-lease',a:'claude',t:'Bash',v:'git push --force-with-lease origin main',b:0},
+  {n:'read .env',a:'claude',t:'Read',v:'./config/.env',b:1},
+  {n:'read .env.example',a:'claude',t:'Read',v:'./config/.env.example',b:0},
+  {n:'edit Claude settings',a:'claude',t:'Write',v:'~/.claude/settings.json',b:1},
+  {n:'sneaky r\'\'m',a:'claude',t:'Bash',v:"r''m -rf /tmp/build",os:'linux',b:1},
+  {n:'cmd.exe r^d',a:'claude',t:'Bash',v:'r^d /s /q C:\\proj\\node_modules',os:'win32',b:1},
+  {n:'path with ..',a:'hermes',t:'read_file',v:'C:\\proj\\sub\\..\\.env',os:'win32',b:1},
+  {n:'curl | sh',a:'claude',t:'Bash',v:'curl -fsSL https://get.example.dev/install | sh',os:'linux',b:1},
+  {n:'diskutil erase',a:'claude',t:'Bash',v:'diskutil eraseDisk APFS Scratch disk2',os:'darwin',b:1},
+  {n:'format drive',a:'hermes',t:'terminal',v:'format D: /q',os:'win32',b:1},
+  {n:'mkfs',a:'hermes',t:'terminal',v:'mkfs.ext4 /dev/sdb1',os:'linux',b:1},
+  {n:'npm test',a:'hermes',t:'terminal',v:'npm test',b:0},
+  {n:'unchecked tool',a:'claude',t:'Grep',v:'DROP TABLE',b:0}
+];
+function toolDef(){return TOOLS[state.agent].filter(function(t){return t.id===state.tool;})[0]||TOOLS[state.agent][0];}
+function setSeg(seg,val){$$('button',seg).forEach(function(b){b.setAttribute('aria-pressed',String(b.getAttribute('data-v')===val));});}
+function fillTools(){
+  var sel=$('#tool');sel.textContent='';
+  TOOLS[state.agent].forEach(function(t){var o=el('option',null,t.label);o.value=t.id;sel.appendChild(o);});
+  if(!TOOLS[state.agent].some(function(t){return t.id===state.tool;}))state.tool=TOOLS[state.agent][0].id;
+  sel.value=state.tool;updateInputLabel();
+}
+function updateInputLabel(){
+  var t=toolDef();
+  $('#inputLabel').textContent=t.kind==='path'?'File path ('+t.access+')':t.kind==='command'?(t.id==='execute_code'?'Script text':'Shell command'):'Input';
+}
+function buildChips(){
+  var box=$('#chips');box.textContent='';
+  PRESETS.forEach(function(p,i){
+    var c=el('button','chip '+(p.b?'b-bad':'b-ok'),p.n);c.type='button';c.setAttribute('data-i',i);box.appendChild(c);
+  });
+}
+function buildRuleList(){
+  var box=$('#ruleList');box.textContent='';
+  E.rulesFor(state.os).forEach(function(r){
+    var lab=el('label'),cb=el('input');cb.type='checkbox';cb.checked=!state.disabled[r.id];cb.setAttribute('data-id',r.id);
+    var code=el('code',null,r.id),o=el('span','o',r.o==='default'?'default':'platform');
+    lab.title=r.d;lab.appendChild(cb);lab.appendChild(code);lab.appendChild(o);box.appendChild(lab);
+  });
+  $('#ruleCount').textContent='('+E.rulesFor(state.os).length+')';
+}
+var runToken=0;
+function highlight(pre,obj){ // small JSON colourizer, textContent only
+  pre.textContent='';
+  var json=JSON.stringify(obj,null,2),re=/("(?:\\.|[^"\\])*")(\s*:)?|[{}\[\],]|\S+/g,last=0,m;
+  while((m=re.exec(json))){
+    if(m.index>last)pre.appendChild(document.createTextNode(json.slice(last,m.index)));
+    var cls=m[1]?(m[2]?'k':'s'):null;
+    if(cls){pre.appendChild(el('span',cls,m[1]));if(m[2])pre.appendChild(document.createTextNode(m[2]));}
+    else pre.appendChild(document.createTextNode(m[0]));
+    last=re.lastIndex;
+  }
+}
+function diffMark(parent,raw,clean){ // mark characters that were removed or changed
+  if(raw===clean){parent.textContent=raw;return;}
+  var i=0;while(i<raw.length&&i<clean.length&&raw[i]===clean[i])i++;
+  var j=0;while(j<raw.length-i&&j<clean.length-i&&raw[raw.length-1-j]===clean[clean.length-1-j])j++;
+  parent.appendChild(document.createTextNode(clean.slice(0,i)));
+  var mid=clean.slice(i,clean.length-j);
+  if(mid)parent.appendChild(el('mark',null,mid));
+  else{var g=el('mark','gap');g.title='characters removed here';parent.appendChild(g);} // something was removed here
+  parent.appendChild(document.createTextNode(clean.slice(clean.length-j)));
+}
+async function runPlayground(){
+  var tok=++runToken,t=toolDef(),val=$('#input').value;
+  var stages=['#st1','#st2','#st3','#st4'].map(function(s){return $(s);});
+  stages.forEach(function(s){s.classList.add('pending');s.classList.remove('live');});
+  // payload
+  var ti={};ti[t.field]=val;
+  var payload={tool_name:t.id,tool_input:ti};
+  highlight($('#payload'),payload);
+  stages[0].classList.remove('pending');stages[0].classList.add('live');
+  var input={};
+  if(t.kind==='command')input.command=val;
+  if(t.kind==='path'){input.path=val;input.access=t.access;}
+  var res=E.evaluate(input,state.os,state.disabled);
+  await sleep(380);if(tok!==runToken)return;
+  // normalize
+  var n=$('#norm');n.textContent='';
+  var raw=t.kind==='command'?input.command:t.kind==='path'?input.path:null;
+  if(raw===null||raw===undefined){
+    n.appendChild(el('span','l','note'));n.appendChild(el('span','v dim','This tool is not one Cephalo checks, so there is nothing to clean. It is allowed and logged.'));
+  }else{
+    var cleaned=(t.kind==='command'?res.command:res.path);var c=cleaned[cleaned.length-1];
+    n.appendChild(el('span','l','raw'));n.appendChild(el('span','v',raw));
+    n.appendChild(el('span','l','cleaned'));var cv=el('span','v');diffMark(cv,raw,c);n.appendChild(cv);
+    n.appendChild(el('span','l dim','how'));
+    n.appendChild(el('span','v dim',cleaned.length===1?'Nothing to clean. Rules see the text as written.':'Rules see both versions. A match on either one blocks.'+(t.kind==='path'?' ('+E.ADAPT[state.os].label+' path rules)':' ('+E.ADAPT[state.os].label+' shell rules)')));
+  }
+  stages[1].classList.remove('pending');stages[1].classList.add('live');
+  await sleep(420);if(tok!==runToken)return;
+  // trace
+  var tr=$('#trace');tr.textContent='';
+  stages[2].classList.remove('pending');stages[2].classList.add('live');
+  var ICON={pass:'\u2713',hit:'\u2715',na:'\u2013',off:'\u25CB',skip:'\u2013'};
+  var DESC={pass:'no match',hit:'MATCH',na:'does not apply',off:'switched off',skip:'wrong access type'};
+  if(t.kind==='none'){tr.appendChild(rowEl('na','','(no rules apply)','Cephalo only inspects shell and file tools'));}
+  else for(var i=0;i<res.steps.length;i++){
+    var s=res.steps[i];
+    var d=DESC[s.state]+(s.state==='hit'&&s.via==='cleaned'?' (on cleaned text)':'');
+    tr.appendChild(rowEl(s.state,ICON[s.state],s.rule.id,s.state==='hit'?s.rule.d+' \u2014 '+d:d));
+    tr.scrollTop=tr.scrollHeight;
+    await sleep(res.steps.length>16?38:60);if(tok!==runToken)return;
+  }
+  if(t.kind!=='none'&&!res.rule){var rest=el('div','row na');rest.appendChild(el('span','ic','\u2713'));rest.appendChild(el('span',null,'All '+res.total+' rules checked, none matched'));tr.appendChild(rest);tr.scrollTop=tr.scrollHeight;}
+  else if(res.rule){var left=res.total-res.steps.length;if(left>0){var rr=el('div','row na');rr.appendChild(el('span','ic','\u00B7'));rr.appendChild(el('span',null,'Stopped at the first match. '+left+' later rule'+(left===1?'':'s')+' not needed.'));tr.appendChild(rr);tr.scrollTop=tr.scrollHeight;}}
+  await sleep(260);if(tok!==runToken)return;
+  // verdict
+  var v=$('#verdict');v.textContent='';
+  stages[3].classList.remove('pending');stages[3].classList.add('live');
+  var block=res.decision==='block';
+  v.appendChild(el('div','badge '+(block?'block':'allow'),block?'BLOCKED':'ALLOWED'));
+  var right=el('div');
+  var msg='\uD83D\uDED1 Cephalo blocked this (rule: '+(res.rule&&res.rule.id)+' - '+(res.rule&&res.rule.d)+'). If it is intended, ask the user to run it themselves.';
+  if(block){
+    right.appendChild(el('p',null,'The agent receives a refusal and the tool call never runs.'));
+    right.appendChild(el('div','lab-s','What the hook prints to the agent'));
+    var out=state.agent==='claude'
+      ?{hookSpecificOutput:{hookEventName:'PreToolUse',permissionDecision:'deny',permissionDecisionReason:msg}}
+      :{action:'block',message:msg};
+    var pre=el('pre');highlight(pre,out);right.appendChild(pre);
+  }else{
+    right.appendChild(el('p',null,t.kind==='none'?'Not a tool Cephalo checks, so it is allowed and logged.':'No rule matched, so the call goes ahead.'));
+    right.appendChild(el('div','lab-s','What the hook prints to the agent'));
+    var p2=el('pre');p2.textContent=state.agent==='claude'?'(nothing: empty output means allow)':'{}';right.appendChild(p2);
+  }
+  right.appendChild(el('div','lab-s','Line appended to audit.jsonl'));
+  var au={ts:new Date().toISOString(),agent:state.agent,tool:t.id};
+  if(t.kind==='command'||(t.kind==='none'&&false))au.command=val;
+  if(t.kind==='path')au.path=val;
+  if(t.kind==='none'){}
+  au.decision=res.decision;if(res.rule)au.rule=res.rule.id;
+  var p3=el('pre');p3.textContent=JSON.stringify(au);right.appendChild(p3);
+  v.appendChild(right);
+}
+function rowEl(cls,icon,id,desc){
+  var r=el('div','row '+cls);r.appendChild(el('span','ic',icon));r.appendChild(el('span',null,id));r.appendChild(el('span','d',desc));return r;
+}
+function applyPreset(p){
+  if(p.a&&p.a!==state.agent){state.agent=p.a;setSeg($('#segAgent'),p.a);setSeg($('#segPlug'),p.a);renderPlug();}
+  if(p.os&&p.os!==state.os){setOs(p.os,true);}
+  state.tool=p.t;fillTools();$('#input').value=p.v;runPlayground();
+}
+function setOs(os,keepRun){
+  state.os=os;setSeg($('#segOs'),os);buildRuleList();renderPlat();renderNormer();
+  if(!keepRun)runPlayground();
+}
+$('#segAgent').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;state.agent=b.getAttribute('data-v');setSeg(this,state.agent);setSeg($('#segPlug'),state.agent);fillTools();renderPlug();runPlayground();});
+$('#segOs').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;setOs(b.getAttribute('data-v'));});
+$('#tool').addEventListener('change',function(){state.tool=this.value;updateInputLabel();runPlayground();});
+$('#run').addEventListener('click',runPlayground);
+$('#input').addEventListener('keydown',function(e){if(e.key==='Enter')runPlayground();});
+$('#chips').addEventListener('click',function(e){var b=e.target.closest('.chip');if(!b)return;applyPreset(PRESETS[+b.getAttribute('data-i')]);});
+$('#ruleList').addEventListener('change',function(e){var cb=e.target;if(cb.type!=='checkbox')return;var id=cb.getAttribute('data-id');if(cb.checked)delete state.disabled[id];else state.disabled[id]=true;runPlayground();});
+$('#rulesReset').addEventListener('click',function(){state.disabled={};buildRuleList();runPlayground();});
+
+/* ---------- how it plugs in ---------- */
+var PLUG_STEPS=[
+  {h:'The agent is about to use a tool',p:'Bash, a file write, a read. Before it runs, the agent consults its pre-tool hook.'},
+  {h:'The hook runs Cephalo',p:'The agent starts the registered command and hands it the tool call as JSON on stdin.'},
+  {h:'Cephalo checks the rules',p:'It reads the command or path, cleans it for your OS, and tests your rules file in order.'},
+  {h:'The decision comes back as JSON',p:'Allow lets the call proceed. Block returns a refusal the agent can read, and the call is skipped.'}
+];
+var plugStep=0;
+function plugCode(){
+  var c=state.agent==='claude';
+  var codes=[
+    c?'{\n  "hooks": {\n    "PreToolUse": [{\n      "matcher": "Bash|Read|Write|Edit|MultiEdit|NotebookEdit",\n      "hooks": [{ "type": "command",\n        "command": "node C:/Users/you/cephalo/dist/cli.js hook claude" }]\n    }]\n  }\n}'
+     :'hooks:\n  pre_tool_call:\n    - matcher: "terminal|read_file|write_file|patch|search_files|execute_code"\n      command: "node C:/Users/you/cephalo/dist/cli.js hook hermes"\n      timeout: 10',
+    c?'# stdin to: node cli.js hook claude\n{\n  "tool_name": "Bash",\n  "tool_input": { "command": "psql -c \\"DROP TABLE users;\\"" }\n}'
+     :'# stdin to: node cli.js hook hermes\n{\n  "tool_name": "terminal",\n  "tool_input": { "command": "psql -c \\"DROP TABLE users;\\"" }\n}',
+    '// inside Cephalo (src/hooks.ts, src/engine.ts)\nextract(payload)        // -> command or path + read/write\nvariants = [raw, cleaned]\nfor (rule of rules) {   // your rules.yml, then OS rules\n  if (rule matches any variant) return BLOCK(rule)\n}\nreturn ALLOW            // also writes one line to audit.jsonl',
+    c?'# stdout, exit code 0\n{"hookSpecificOutput":{"hookEventName":"PreToolUse",\n  "permissionDecision":"deny",\n  "permissionDecisionReason":"\uD83D\uDED1 Cephalo blocked this (rule: no-drop ...)"}}\n\n# allowed calls print nothing'
+     :'# stdout, exit code 0\n{"action":"block","message":"\uD83D\uDED1 Cephalo blocked this (rule: no-drop ...)"}\n\n# allowed calls print {}'
+  ];
+  return codes[plugStep];
+}
+function renderPlug(){
+  var ol=$('#plugSteps');ol.textContent='';
+  PLUG_STEPS.forEach(function(s,i){
+    var li=el('li');li.tabIndex=0;li.setAttribute('role','button');li.setAttribute('data-i',i);
+    if(i===plugStep)li.setAttribute('aria-current','true');
+    var d=el('div');d.appendChild(el('h3',null,s.h));d.appendChild(el('p',null,s.p));li.appendChild(d);ol.appendChild(li);
+  });
+  $('#plugTitle').textContent=[state.agent==='claude'?'settings.json, added by cephalo init':'config.yaml, added by cephalo init','what the agent sends','what Cephalo does','what Cephalo answers'][plugStep]+' \u00B7 '+(state.agent==='claude'?'Claude Code':'Hermes');
+  $('#plugCode').textContent=plugCode();
+  var rows=state.agent==='claude'
+   ?[['Bash','command'],['Read','file_path (read)'],['Write, Edit, MultiEdit','file_path (write)'],['NotebookEdit','notebook_path (write)']]
+   :[['terminal','command'],['execute_code','code, scanned like a command (heuristic)'],['read_file, search_files','path (read)'],['write_file, patch','path (write)']];
+  var t=$('#cover');t.textContent='';
+  var hr=el('tr');hr.appendChild(el('th',null,'Tool checked'));hr.appendChild(el('th',null,'Field used'));t.appendChild(hr);
+  rows.forEach(function(r){var tr=el('tr'),a=el('td'),b=el('td');a.appendChild(el('code',null,r[0]));b.textContent=r[1];tr.appendChild(a);tr.appendChild(b);t.appendChild(tr);});
+  var f=el('tr'),fc=el('td');fc.colSpan=2;fc.className='dim';fc.textContent='Every other tool is allowed and logged.';f.appendChild(fc);t.appendChild(f);
+}
+function plugPick(e){var li=e.target.closest('li');if(!li)return;if(e.type==='keydown'&&e.key!=='Enter'&&e.key!==' ')return;e.preventDefault();plugStep=+li.getAttribute('data-i');renderPlug();}
+$('#plugSteps').addEventListener('click',plugPick);$('#plugSteps').addEventListener('keydown',plugPick);
+$('#segPlug').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;state.agent=b.getAttribute('data-v');setSeg(this,state.agent);setSeg($('#segAgent'),state.agent);fillTools();renderPlug();runPlayground();});
+
+/* ---------- command explorer ---------- */
+var EX={
+ test:{cmd:'cephalo test "DROP TABLE users"',sub:'Check one command',explain:'Dry-run any shell command against your rules without involving an agent. Prints BLOCKED with the rule, or ALLOWED. Also logged to the audit file.',
+  script:[{k:'cmd',t:'cephalo test "DROP TABLE users"'},{k:'out',t:'<bad>🛑 BLOCKED (no-drop: Dropping tables or databases)</bad>'},{k:'cmd',t:'cephalo test "git status"'},{k:'out',t:'<ok>✓ ALLOWED</ok>'}]},
+ doctor:{cmd:'cephalo doctor',sub:'Check the whole setup',explain:'Read-only. Checks the rules file, runs a self-test on your real rules, confirms the audit log is writable, both hooks are installed and current, their target file exists, and Hermes has approved the hook. Every problem prints a fix line. Exits 1 on real failures.',
+  script:[{k:'cmd',t:'cephalo doctor',after:400},
+   {k:'out',t:'<dim>- Environment: node v24.20.0 on win32 (Windows adapter), project C:/Users/you/cephalo</dim>',d:90},
+   {k:'out',t:'<ok>✓</ok> Rules file: 10 rules loaded from C:\\Users\\you\\.cephalo\\rules.yml',d:90},
+   {k:'out',t:'<dim>- Platform rules: 5 built-in Windows rule(s) active on top of the rules file</dim>',d:90},
+   {k:'out',t:'<ok>✓</ok> Self-test: your rules block DROP TABLE and allow ls, for both Claude and Hermes payloads',d:90},
+   {k:'out',t:'<ok>✓</ok> Audit log: writable (C:\\Users\\you\\.cephalo\\audit.jsonl)',d:90},
+   {k:'out',t:'<ok>✓</ok> Claude Code hook: installed and current',d:90},
+   {k:'out',t:'<ok>✓</ok> Claude Code hook target: C:/Users/you/cephalo/dist/cli.js exists',d:90},
+   {k:'out',t:'<ok>✓</ok> Hermes hook: installed and current',d:90},
+   {k:'out',t:'<ok>✓</ok> Hermes hook target: C:/Users/you/cephalo/dist/cli.js exists',d:90},
+   {k:'out',t:'<ok>✓</ok> Hermes approval: hook is allowlisted',d:90},
+   {k:'out',t:' '},{k:'out',t:'<ok><b>All good.</b></ok>'}]},
+ rules:{cmd:'cephalo rules',sub:'See what is enforced',explain:'Lists every rule with where it came from: default, modified (you changed a default), custom, or platform (built in for your OS and applied at runtime, not stored in your file). A rule in your file with the same id overrides a platform rule.',
+  script:[{k:'cmd',t:'cephalo rules',after:400},
+   {k:'out',t:'Rules file: C:\\Users\\you\\.cephalo\\rules.yml',d:60},{k:'out',t:' ',d:30},
+   {k:'out',t:'<dim>ID                       TYPE     ON     ORIGIN    DESCRIPTION</dim>',d:60},
+   {k:'out',t:'no-drop                  command  -      default   Dropping tables or databases',d:50},
+   {k:'out',t:'no-truncate              command  -      default   Truncating tables',d:50},
+   {k:'out',t:'no-delete-all            command  -      default   DELETE FROM with no WHERE clause',d:50},
+   {k:'out',t:'no-rm-rf                 command  -      default   Recursive forced rm',d:50},
+   {k:'out',t:'no-win-recursive-delete  command  -      default   Recursive delete on Windows',d:50},
+   {k:'out',t:'no-force-push            command  -      default   Force pushing to git remotes',d:50},
+   {k:'out',t:'no-hard-reset            command  -      default   git reset --hard',d:50},
+   {k:'out',t:'no-secret-read           command  -      default   Reading .env secret files via shell',d:50},
+   {k:'out',t:'no-secret-file           path     any    default   Accessing .env secret files',d:50},
+   {k:'out',t:'protect-config           path     write  default   Writing Claude Code or Hermes config',d:50},
+   {k:'out',t:'win-format-drive         command  -      <acc>platform</acc>  Formatting a drive (format X:)',d:50},
+   {k:'out',t:'win-disk-wipe            command  -      <acc>platform</acc>  Disk partitioning or wiping tools',d:50},
+   {k:'out',t:'win-registry-delete      command  -      <acc>platform</acc>  Deleting registry keys or values',d:50},
+   {k:'out',t:'win-shadow-delete        command  -      <acc>platform</acc>  Deleting shadow copies or boot entries',d:50},
+   {k:'out',t:'win-power                command  -      <acc>platform</acc>  Shutting down or restarting the machine',d:50},
+   {k:'out',t:' ',d:30},{k:'out',t:'10 rule(s). Missing defaults: none.'},
+   {k:'out',t:'5 built-in Windows rule(s) also active (not stored in the file; to override one, add a rule with the same id).'}]},
+ log:{cmd:'cephalo log --blocked --limit 3',sub:'Read the audit trail',explain:'Every evaluation appends one JSON line to ~/.cephalo/audit.jsonl: time, agent, tool, the command or path, the decision, and the rule. cephalo log prints recent entries; --blocked filters to refusals.',
+  script:[{k:'cmd',t:'cephalo log --blocked --limit 3',after:400},
+   {k:'out',t:'2026-10-30T20:47:13.125Z  <bad>BLOCK</bad>  hermes/terminal <warn>[no-rm-rf]</warn>  cephalo test "..."'},
+   {k:'out',t:'2026-10-30T21:02:44.870Z  <bad>BLOCK</bad>  claude/Read <warn>[no-secret-file]</warn>  C:/proj/.env'},
+   {k:'out',t:'2026-10-30T21:15:09.311Z  <bad>BLOCK</bad>  claude/Bash <warn>[no-drop]</warn>  psql -c "DROP TABLE users;"'}]},
+ watch:{cmd:'cephalo watch',sub:'Follow it live',explain:'A live tail of the audit log. Shows the last few entries, then each new decision as it happens: ALLOW in green, BLOCK in red. Works the same on every OS and neutralizes control characters in logged commands. Ctrl+C stops it.',live:true,
+  script:[{k:'cmd',t:'cephalo watch',after:400},
+   {k:'out',t:'Watching C:\\Users\\you\\.cephalo\\audit.jsonl  -  Ctrl+C to stop',d:600},
+   {k:'out',t:'<dim>09:12:03</dim>  <ok>ALLOW</ok>  claude/Bash  npm run build',d:1100},
+   {k:'out',t:'<dim>09:12:09</dim>  <ok>ALLOW</ok>  claude/Edit  src/index.ts',d:1100},
+   {k:'out',t:'<dim>09:12:15</dim>  <bad><b>BLOCK</b></bad>  hermes/terminal <warn>[no-hard-reset]</warn>  git reset --hard HEAD~3',d:1300},
+   {k:'out',t:'<dim>09:12:22</dim>  <ok>ALLOW</ok>  hermes/read_file  README.md',d:1100},
+   {k:'out',t:'<dim>09:12:27</dim>  <bad><b>BLOCK</b></bad>  claude/Write <warn>[protect-config]</warn>  C:/Users/you/.claude/settings.json',d:1300},
+   {k:'out',t:'<dim>^C</dim>'}]},
+ init:{cmd:'cephalo init',sub:'Set everything up',explain:'Prints a plan, asks before changing anything (--yes to skip), creates your rules file from the defaults, and adds the hook to Claude Code and, if found, Hermes. Each edited config is backed up first. A missing Hermes is skipped, never created.',
+  script:[{k:'cmd',t:'cephalo init',after:400},
+   {k:'out',t:'Plan:',d:60},
+   {k:'out',t:'  Rules: will create C:\\Users\\you\\.cephalo\\rules.yml from the built-in defaults.',d:60},
+   {k:'out',t:'  Claude Code: will add the hook to C:\\Users\\you\\.claude\\settings.json (backup first).',d:60},
+   {k:'out',t:'  Hermes: will add the hook to C:\\Users\\you\\AppData\\Local\\hermes\\config.yaml (backup first).',d:400},
+   {k:'out',t:'Apply these changes? [y/N] <cmdc>y</cmdc>',d:700},
+   {k:'out',t:' ',d:30},{k:'out',t:'  Created C:\\Users\\you\\.cephalo\\rules.yml',d:60},
+   {k:'out',t:'  <dim>(one line per config edited, each with its backup path)</dim>',d:60},
+   {k:'out',t:' ',d:30},{k:'out',t:'Next steps:',d:60},
+   {k:'out',t:'  1. Restart Claude Code (it reads hooks at startup).',d:60},
+   {k:'out',t:'  2. Hermes asks you to approve a new hook the first time. Start an interactive `hermes`,',d:60},
+   {k:'out',t:'     accept the prompt, then check: hermes hooks list',d:60},
+   {k:'out',t:'  3. Try it: cephalo test "DROP TABLE users"   then   cephalo log',d:60}]}
+};
+var EX_ORDER=['test','doctor','rules','log','watch','init'];
+var exP=new Player($('#exTerm')),exCur='test';
+function buildCmdList(){
+  var box=$('#cmdList');
+  EX_ORDER.forEach(function(k){
+    var b=el('button');b.type='button';b.setAttribute('role','tab');b.setAttribute('data-k',k);b.setAttribute('aria-selected',String(k===exCur));
+    b.appendChild(el('span','c','cephalo '+k));b.appendChild(el('span','s2',EX[k].sub));box.appendChild(b);
+  });
+}
+function showEx(k){
+  exCur=k;$$('#cmdList button').forEach(function(b){b.setAttribute('aria-selected',String(b.getAttribute('data-k')===k));});
+  $('#exTitle').textContent=EX[k].cmd;$('#exExplain').textContent=EX[k].explain;
+  exP.play(EX[k].script,false);
+}
+$('#cmdList').addEventListener('click',function(e){var b=e.target.closest('button');if(b)showEx(b.getAttribute('data-k'));});
+$('#exReplay').addEventListener('click',function(){showEx(exCur);});
+buildCmdList();
+
+/* ---------- platforms ---------- */
+var PLAT={
+  win32:{name:'Windows',claude:'%USERPROFILE%\\.claude\\settings.json',hermes:'%LOCALAPPDATA%\\hermes\\config.yaml',data:'%USERPROFILE%\\.cephalo',spawn:'through the shell (finds hermes.cmd)',
+    clean:['backslashes to /','%VAR% and $env:VAR','~ and \\\\?\\ prefix','cmd ^ and PowerShell ` escapes','empty quotes: r\'\'m']},
+  darwin:{name:'macOS',claude:'~/.claude/settings.json',hermes:'~/.hermes/config.yaml',data:'~/.cephalo',spawn:'directly, no shell',
+    clean:['~ and $HOME','/private/etc, /var, /tmp','..  and // in paths','\\rm and r\\m escapes','empty quotes: r\'\'m']},
+  linux:{name:'Linux',claude:'~/.claude/settings.json',hermes:'~/.hermes/config.yaml',data:'~/.cephalo',spawn:'directly, no shell',
+    clean:['~ and $HOME','..  and // in paths','\\rm and r\\m escapes','line continuations','empty quotes: r\'\'m']}
+};
+function renderPlat(){
+  var g=$('#plat');g.textContent='';
+  var order=['win32','darwin','linux'];
+  function row(label,fn){
+    g.appendChild(el('div','rl',label));
+    order.forEach(function(os){var c=el('div','pc'+(os===state.os?' sel':''));fn(c,os);g.appendChild(c);});
+  }
+  g.appendChild(el('div','rl',''));
+  order.forEach(function(os){var c=el('div','pc h'+(os===state.os?' sel':''));var b=el('button','pick',PLAT[os].name);b.type='button';b.setAttribute('data-os',os);b.setAttribute('aria-pressed',String(os===state.os));c.appendChild(b);g.appendChild(c);});
+  row('Claude settings',function(c,os){c.appendChild(el('code',null,PLAT[os].claude));});
+  row('Hermes config',function(c,os){c.appendChild(el('code',null,PLAT[os].hermes));});
+  row('Cephalo data',function(c,os){c.appendChild(el('code',null,PLAT[os].data));});
+  row('Runs hermes',function(c,os){c.textContent=PLAT[os].spawn;});
+  row('Cleans up',function(c,os){var t=el('div','tagrow');PLAT[os].clean.forEach(function(x){t.appendChild(el('span','tag',x));});c.appendChild(t);});
+  row('Built-in rules',function(c,os){var t=el('div','tagrow');E.RULES[os].forEach(function(r){t.appendChild(el('span','tag'+(r.os==='posix'?' posix':''),r.id));});c.appendChild(t);});
+}
+$('#plat').addEventListener('click',function(e){var b=e.target.closest('.pick');if(b)setOs(b.getAttribute('data-os'));});
+
+/* ---------- cleaner widget ---------- */
+var NORM_EX=[
+  {n:"r''m",v:"r''m -rf /tmp/x"},{n:'\\rm',v:'\\rm -rf ~/work'},{n:'cmd ^',v:'r^d /s /q C:\\x'},{n:'PS backtick',v:'Remove`-Item x -Recurse -Force'},
+  {n:'.. path',v:'~/proj/../.claude/settings.json'},{n:'%VAR% path',v:'%USERPROFILE%\\.env'},{n:'macOS /private',v:'/private/etc/hosts'}
+];
+function renderNormer(){
+  $('#normOsLabel').textContent=E.ADAPT[state.os].label+' adapter';
+  var box=$('#normChips');if(!box.childNodes.length){NORM_EX.forEach(function(x,i){var c=el('button','chip',x.n);c.type='button';c.setAttribute('data-i',i);box.appendChild(c);});}
+  var raw=$('#normIn').value,out=$('#normOut');out.textContent='';
+  if(!raw){out.appendChild(el('span','dim','Type or pick an example.'));$('#normNote').textContent='';return;}
+  var a=E.ADAPT[state.os],nc=a.normalizeCommand(raw),np=a.normalizePath(raw,E.envFor(state.os),E.HOMES[state.os]);
+  function line(l,v){var d=el('div');d.appendChild(el('span','dim',l+'  '));var s=el('span');diffMark(s,raw,v);d.appendChild(s);out.appendChild(d);}
+  line('as command',nc);line('as path   ',np);
+  $('#normNote').textContent=(nc===raw&&np===raw)?'Nothing to clean here: both forms equal what you typed.':'Highlighted parts changed. Cephalo checks the raw text and these cleaned forms, and a match on any blocks.';
+}
+$('#normIn').addEventListener('input',renderNormer);
+$('#normChips').addEventListener('click',function(e){var b=e.target.closest('.chip');if(!b)return;$('#normIn').value=NORM_EX[+b.getAttribute('data-i')].v;renderNormer();});
+
+/* ---------- install checklist ---------- */
+var KEY='cephalo-site-install-v1',done={};
+try{done=JSON.parse(localStorage.getItem(KEY)||'{}')||{};}catch(e){done={};}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(done));}catch(e){}}
+function renderInstall(){
+  var steps=$$('.istep'),n=0;
+  steps.forEach(function(s){var i=s.getAttribute('data-step'),d=!!done[i];if(d)n++;s.classList.toggle('done',d);$('.chk',s).setAttribute('aria-pressed',String(d));});
+  $('#progBar').style.width=(n/steps.length*100)+'%';
+  $('#progText').textContent=n===steps.length?'All done. Cephalo is on watch.':n+' of '+steps.length+' steps done';
+}
+$('#isteps').addEventListener('click',function(e){var b=e.target.closest('.chk');if(!b)return;var s=b.closest('.istep'),i=s.getAttribute('data-step');done[i]=!done[i];save();renderInstall();});
+$('#progReset').addEventListener('click',function(){done={};save();renderInstall();});
+function renderShell(sh){
+  setSeg($('#segShell'),sh);
+  $('#buildCmds').textContent=sh==='ps'
+    ?'cd C:\\path\\to\\cephalo\nnpm install\nnpm run build\nnpm link'
+    :'cd /path/to/cephalo\nnpm install\nnpm run build\nnpm link';
+}
+$('#segShell').addEventListener('click',function(e){var b=e.target.closest('button');if(b)renderShell(b.getAttribute('data-v'));});
+
+/* ---------- boot ---------- */
+setSeg($('#segOs'),state.os);
+renderShell(state.os==='win32'?'ps':'sh');
+fillTools();buildChips();buildRuleList();renderPlug();renderPlat();renderNormer();renderInstall();
+$('#input').value='psql -c "DROP TABLE users;"';
+showEx('test');
+/* show a finished result immediately, then replay it animated the first time it scrolls into view */
+instant=true;
+function endInstant(){instant=false;}
+runPlayground().then(endInstant,function(e){endInstant();console.error(e);});
+if('IntersectionObserver' in window&&!reduce){
+  var started=false;
+  new IntersectionObserver(function(es,o){es.forEach(function(x){if(x.isIntersecting&&!started){started=true;o.disconnect();runPlayground();}});},{threshold:.15}).observe($('#result'));
+}
+})();
+</script>
+</body>
+</html>
