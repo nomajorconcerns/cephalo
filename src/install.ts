@@ -1,6 +1,6 @@
 import fs from "node:fs";
-import os from "node:os";
 import path from "node:path";
+import { getPlatform } from "./platform.js";
 import { fileURLToPath } from "node:url";
 import { isMap, isScalar, isSeq, parseDocument, type YAMLMap, type YAMLSeq } from "yaml";
 
@@ -12,15 +12,11 @@ export function projectRoot(): string {
 }
 
 export function claudeSettingsPath(): string {
-  return path.join(os.homedir(), ".claude", "settings.json");
+  return getPlatform().claudeSettingsPath();
 }
 
 export function hermesConfigPath(): string {
-  if (process.platform === "win32") {
-    const base = process.env.LOCALAPPDATA ?? path.join(os.homedir(), "AppData", "Local");
-    return path.join(base, "hermes", "config.yaml");
-  }
-  return path.join(os.homedir(), ".hermes", "config.yaml");
+  return getPlatform().hermesConfigPath();
 }
 
 export const HERMES_MATCHER = "terminal|read_file|write_file|patch|search_files|execute_code";

@@ -4,6 +4,7 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { auditPath } from "./audit.js";
 import { runHook } from "./hooks.js";
+import { getPlatform } from "./platform.js";
 import { claudeSettingsPath, hermesConfigPath, projectRoot, HERMES_CMD_RE } from "./install.js";
 import { DEFAULT_RULES, defaultRulesPath, parseRules, type Rule } from "./rules.js";
 import { claudeStatus, hermesStatus, type HookStatus } from "./status.js";
@@ -29,7 +30,7 @@ export interface DoctorOptions {
 
 function defaultHermesList(): string | null {
   try {
-    const r = spawnSync("hermes", ["hooks", "list"], { encoding: "utf8", timeout: 10000, windowsHide: true, shell: process.platform === "win32" });
+    const r = spawnSync("hermes", ["hooks", "list"], { encoding: "utf8", timeout: 10000, ...getPlatform().spawnOptions() });
     if (r.error || r.status !== 0) return null;
     return `${r.stdout ?? ""}`;
   } catch {
@@ -81,7 +82,7 @@ export function runDoctor(o: DoctorOptions = {}): { checks: Check[]; exitCode: n
   const hermesFile = o.hermesFile ?? hermesConfigPath();
   const checks: Check[] = [];
 
-  checks.push({ level: "info", name: "Environment", detail: `node ${process.version} on ${process.platform}, project ${abs}` });
+  checks.push({ level: "info", name: "Environment", detail: `node ${process.version} on ${process.platform} (${getPlatform().label} adapter), project ${abs}` });
 
   // Rules (read-only: never create the file here)
   let rules: Rule[] = [];

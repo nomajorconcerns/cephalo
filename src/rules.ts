@@ -1,6 +1,6 @@
 import fs from "node:fs";
-import os from "node:os";
 import path from "node:path";
+import { getPlatform } from "./platform.js";
 import { parse, stringify } from "yaml";
 
 export type RuleType = "command" | "path";
@@ -29,7 +29,7 @@ export const DEFAULT_RULES: Rule[] = [
 ];
 
 export function cephaloDir(): string {
-  return path.join(os.homedir(), ".cephalo");
+  return getPlatform().dataDir();
 }
 
 export function defaultRulesPath(): string {
