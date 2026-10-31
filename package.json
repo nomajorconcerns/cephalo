@@ -3,12 +3,47 @@
   "version": "0.1.0",
   "description": "Guards AI coding agents by blocking dangerous tool calls before they run",
   "type": "module",
+  "license": "MIT",
+  "author": "nomajorconcerns",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nomajorconcerns/cephalo.git"
+  },
+  "homepage": "https://github.com/nomajorconcerns/cephalo#readme",
+  "bugs": {
+    "url": "https://github.com/nomajorconcerns/cephalo/issues"
+  },
+  "keywords": [
+    "ai-agents",
+    "claude-code",
+    "hermes-agent",
+    "mcp",
+    "security",
+    "guardrails",
+    "firewall"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
   "bin": {
     "cephalo": "dist/cli.js"
   },
+  "files": [
+    "dist",
+    "!dist/tests",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc",
-    "test": "npm run build && node --test dist/tests/*.test.js"
+    "test": "npm run build && node --test dist/tests/*.test.js",
+    "test:release": "node --test scripts/release.test.mjs scripts/workflow.test.mjs",
+    "release:check": "node scripts/release.mjs check",
+    "release:pack": "node scripts/release.mjs pack",
+    "prepublishOnly": "npm run build && node scripts/release.mjs check --quick"
   },
   "dependencies": {
     "yaml": "^2.9.1"
