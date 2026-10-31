@@ -707,7 +707,7 @@ function retrigger(node,cls){node.classList.remove(cls);void node.offsetWidth;no
       Object.keys(links).forEach(function(k){links[k].removeAttribute('aria-current');});
       if(a)a.setAttribute('aria-current','true');
     });},{rootMargin:'-45% 0px -50% 0px'});
-    $$('section[id]').forEach(function(s){spy.observe(s);});
+    $$('section').forEach(function(s){spy.observe(s);}); /* the hero has no id, so entering it clears the highlight */
   }
 })();
 
