@@ -61,6 +61,14 @@ export function spawnServer(command: string, args: string[], env: NodeJS.Process
     : spawn(command, args, { env, windowsHide: true, stdio: io });
 }
 
+/** Start any program (same Windows .cmd/.bat handling as spawnServer) with a caller-chosen stdin; stdout/stderr are always piped. */
+export function spawnProcess(command: string, args: string[], env: NodeJS.ProcessEnv, stdin: "pipe" | "inherit" | "ignore" = "inherit", cwd?: string): ChildProcess {
+  const io: [typeof stdin, "pipe", "pipe"] = [stdin, "pipe", "pipe"];
+  return process.platform === "win32" && !/\.exe$/i.test(command)
+    ? spawn(process.env.ComSpec ?? "cmd.exe", ["/d", "/s", "/c", `"${[command, ...args].map(winQuote).join(" ")}"`], { env, cwd, windowsHide: true, windowsVerbatimArguments: true, stdio: io })
+    : spawn(command, args, { env, cwd, windowsHide: true, stdio: io });
+}
+
 export { killTree };
 
 /** Ask a stdio MCP server for its tools (initialize -> initialized -> tools/list, following pages). */

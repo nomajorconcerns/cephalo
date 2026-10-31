@@ -14,6 +14,10 @@ import { printBanner, supportsColor } from "./banner.js";
 import { runWatch } from "./watch.js";
 import { applyAllow, applyMode, listMcp, planAllow, planMode, planPin, planWrap, runScan } from "./mcpcmd.js";
 import { runProxy } from "./mcp/proxy.js";
+import { Vault } from "./vault/store.js";
+import { parseEnvSpec, runWithSecrets, type EnvMapping } from "./vault/run.js";
+import type { BackendId } from "./vault/backends.js";
+import { applyRemove, planRemove, readValueFromEnv, vaultAllow, vaultList, vaultReveal, vaultSet, vaultStatus } from "./vaultcmd.js";
 import { applyClear, applyTripMode, planClear, planTripMode, scanReport, tripStatus } from "./tripwirecmd.js";
 import { tripPolicyPath } from "./tripwire/state.js";
 import { projectRoot } from "./install.js";
@@ -32,6 +36,9 @@ const USAGE = `Usage:
                                       Follow the audit log live (Ctrl+C to stop)
   cephalo mcp [list|allow|pin|scan|wrap|mode|path]
                                       MCP firewall: allowlist by command/URL, fingerprint tools, audit or enforce
+  cephalo vault [status|list|set|allow|remove|reveal|path]
+                                      Secrets vault: tokens the agent can use but never see
+  cephalo run --env NAME -- <command> Run a command with vault secrets injected; output is scrubbed
   cephalo tripwire [status|scan|clear|mode|path]
                                       Prompt-injection tripwire: scan what the agent reads, lock down risky actions
   cephalo mcp proxy -- <command...>   Run an MCP server behind Cephalo's runtime proxy (used in agent configs)
@@ -42,6 +49,41 @@ const USAGE = `Usage:
   cephalo rules [list|show <id>|path|reset [--yes]]
                                       Inspect the rules file, or reset it to the defaults (with backup)
 `;
+
+/** Read a line from the terminal without echoing it (Enter ends, Ctrl+C cancels). */
+function readHidden(prompt: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const stdin = process.stdin;
+    let buf = "";
+    process.stdout.write(prompt);
+    stdin.setRawMode(true);
+    stdin.resume();
+    stdin.setEncoding("utf8");
+    const done = () => {
+      stdin.setRawMode(false);
+      stdin.pause();
+      stdin.removeListener("data", onData);
+      process.stdout.write("\n");
+    };
+    const onData = (chunk: string) => {
+      for (const c of chunk) {
+        if (c === "\r" || c === "\n" || c === "\u0004") {
+          done();
+          resolve(buf);
+          return;
+        }
+        if (c === "\u0003") {
+          done();
+          reject(new Error("Cancelled. Nothing was stored."));
+          return;
+        }
+        if (c === "\u007f" || c === "\b") buf = buf.slice(0, -1);
+        else buf += c;
+      }
+    };
+    stdin.on("data", onData);
+  });
+}
 
 async function readStdin(): Promise<string> {
   const chunks: Buffer[] = [];
@@ -138,6 +180,128 @@ async function main(): Promise<number> {
       signal: ac.signal,
     });
     return 0;
+  }
+
+  if (cmd === "run") {
+    // cephalo run [--env NAME | --env VAR=NAME]... [--] <command> [args...]
+    const tail = rest;
+    const env: EnvMapping[] = [];
+    let i = 0;
+    try {
+      while (i < tail.length && tail[i] === "--env") {
+        if (!tail[i + 1]) throw new Error("--env needs a secret name");
+        env.push(parseEnvSpec(tail[i + 1]));
+        i += 2;
+      }
+    } catch (e) {
+      process.stderr.write(`cephalo: ${(e as Error).message}\n`);
+      return 1;
+    }
+    if (tail[i] === "--") i += 1;
+    const command = tail[i];
+    if (!command) {
+      process.stderr.write("Usage: cephalo run [--env NAME | --env VAR=NAME]... -- <command> [args...]\n       (or put {{secret:NAME}} in an argument)\n");
+      return 1;
+    }
+    const r = await runWithSecrets({ vault: new Vault(), env, command, args: tail.slice(i + 1) });
+    return r.exitCode;
+  }
+
+  if (cmd === "vault") {
+    const sub = rest[0] ?? "status";
+    const yes = rest.includes("--yes") || rest.includes("-y");
+    const flagAll = (name: string) => rest.flatMap((a, k) => (a === name && rest[k + 1] !== undefined ? [rest[k + 1]] : []));
+    const positional = rest.slice(1).filter((a, k, arr) => !a.startsWith("-") && !["--from-env", "--allow", "--backend"].includes(arr[k - 1] ?? ""));
+    const fail = (e: unknown) => {
+      process.stderr.write(`cephalo: ${(e as Error).message}\n`);
+      return 1;
+    };
+    try {
+      if (sub === "status") {
+        const r = vaultStatus();
+        for (const line of r.lines) console.log(line);
+        return r.exitCode;
+      }
+      if (sub === "list" || sub === "ls") {
+        const r = vaultList();
+        for (const line of r.lines) console.log(line);
+        return r.exitCode;
+      }
+      if (sub === "path") {
+        console.log(new Vault().file);
+        return 0;
+      }
+      if (sub === "set") {
+        const name = positional[0];
+        if (!name) {
+          process.stderr.write("Usage: cephalo vault set NAME [--stdin | --from-env VAR] [--allow REGEX]... [--backend file]\n");
+          return 1;
+        }
+        const fromEnv = flagAll("--from-env")[0];
+        let value: string;
+        if (fromEnv) value = readValueFromEnv(fromEnv);
+        else if (rest.includes("--stdin")) value = await readStdin();
+        else if (process.stdin.isTTY) value = await readHidden(`Value for ${name} (typing is hidden): `);
+        else {
+          process.stderr.write("Not a terminal. Pipe the value with --stdin, or use --from-env VAR. A value is never taken from an argument.\n");
+          return 1;
+        }
+        const backend = flagAll("--backend")[0] as BackendId | undefined;
+        const allow = flagAll("--allow");
+        for (const line of vaultSet(name, value, allow.length ? allow : undefined, backend ? { backend } : {})) console.log(line);
+        return 0;
+      }
+      if (sub === "allow") {
+        const [name, ...patterns] = positional;
+        if (!name) {
+          process.stderr.write("Usage: cephalo vault allow NAME REGEX...   (no REGEX or --clear = any command)\n");
+          return 1;
+        }
+        for (const line of vaultAllow(name, rest.includes("--clear") ? [] : patterns)) console.log(line);
+        return 0;
+      }
+      if (sub === "remove" || sub === "rm") {
+        const name = positional[0];
+        if (!name) {
+          process.stderr.write("Usage: cephalo vault remove NAME [--yes]\n");
+          return 1;
+        }
+        const plan = planRemove(name);
+        for (const line of plan.lines) console.log(line);
+        if (!plan.ok) return 1;
+        let ok = yes;
+        if (!ok) {
+          if (!process.stdin.isTTY) {
+            console.log("Not running in a terminal. Nothing was changed. Re-run with --yes to apply.");
+            return 1;
+          }
+          const rl = createInterface({ input: process.stdin, output: process.stdout });
+          const answer = await new Promise<string>((resolve) => rl.question("Remove it? [y/N] ", resolve));
+          rl.close();
+          ok = /^y(es)?$/i.test(answer.trim());
+        }
+        if (!ok) return 1;
+        for (const line of applyRemove(name)) console.log(line);
+        return 0;
+      }
+      if (sub === "reveal") {
+        const name = positional[0];
+        if (!name) {
+          process.stderr.write("Usage: cephalo vault reveal NAME\n");
+          return 1;
+        }
+        if (!process.stdin.isTTY || !process.stdout.isTTY) {
+          process.stderr.write("reveal only works in an interactive terminal, so a value can never be captured by a script or an agent.\n");
+          return 1;
+        }
+        console.log(vaultReveal(name));
+        return 0;
+      }
+    } catch (e) {
+      return fail(e);
+    }
+    process.stderr.write("Usage: cephalo vault [status | list | set NAME | allow NAME REGEX... | remove NAME | reveal NAME | path]\n");
+    return 1;
   }
 
   if (cmd === "tripwire") {

@@ -40,6 +40,15 @@ export function collectStrings(v: unknown, out: string[] = [], budget = { n: MAX
   return out;
 }
 
+/** All text a tool returned, in either agent's payload shape. */
+export function toolResponseText(agent: "claude" | "hermes", payload: any): string {
+  const response = agent === "claude" ? payload?.tool_response : (payload?.extra?.result ?? payload?.tool_response);
+  return collectStrings(response).join("\n");
+}
+
+/** True for tools whose result is only a confirmation of the agent's own write. */
+export const isOwnWrite = (tool: string) => OWN_WRITES.has(tool);
+
 export interface Observation {
   tool: string;
   verdict?: Verdict;

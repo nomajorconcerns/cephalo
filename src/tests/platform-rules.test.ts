@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { getPlatform } from "../platform.js";
 import { evaluate } from "../engine.js";
+import { SYSTEM_RULES } from "../platform-rules.js";
 import { DEFAULT_RULES, activePlatformRules } from "../rules.js";
 import { listRules, showRule } from "../rulescmd.js";
 import fs from "node:fs";
@@ -80,7 +81,7 @@ test("each OS only gets its own rules, ids are unique, patterns compile", () => 
     for (const r of rules) new RegExp(r.pattern, "i");
     for (const d of DEFAULT_RULES) assert.ok(!ids.includes(d.id), `${id} redefines default ${d.id}`);
   }
-  const SYSTEM = new Set(["protect-cephalo-policy", "no-self-approve"]); // apply on every OS
+  const SYSTEM = new Set(SYSTEM_RULES.map((r) => r.id)); // apply on every OS
   assert.ok(getPlatform("win32").rules().filter((r) => !SYSTEM.has(r.id)).every((r) => r.id.startsWith("win-")));
   for (const id of ["win32", "darwin", "linux"]) assert.ok([...SYSTEM].every((s) => getPlatform(id).rules().some((r) => r.id === s)), `${id} has the system rules`);
   assert.ok(!getPlatform("linux").rules().some((r) => r.id.startsWith("win-") || r.id.startsWith("mac-")));

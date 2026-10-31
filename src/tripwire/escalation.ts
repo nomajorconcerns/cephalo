@@ -27,6 +27,11 @@ export const ESCALATION_RULES: Rule[] = [
     "([\\\\/]\\.ssh[\\\\/]|[\\\\/]\\.aws[\\\\/]|[\\\\/]\\.gnupg[\\\\/]|[\\\\/]\\.(npmrc|pypirc|netrc|git-credentials)$|[\\\\/]id_(rsa|ed25519|ecdsa)(\\.pub)?$|[\\\\/]\\.kube[\\\\/]config$|[\\\\/]\\.docker[\\\\/]config\\.json$|[\\\\/]gh[\\\\/]hosts\\.yml$|[\\\\/]login data$|[\\\\/]cookies$)",
   ),
   cmd(
+    "trip-vault",
+    "Using the secrets vault (a hijacked agent could point a stored token at an attacker)",
+    "(\\bcephalo(\\.cmd|\\.ps1)?|cli\\.js[\"']?)\\s+(run|vault)\\b",
+  ),
+  cmd(
     "trip-persist",
     "Planting something that outlives the session (scheduled tasks, startup entries, git hooks, shell profiles)",
     "\\bcrontab\\b|\\bschtasks(\\.exe)?\\s+/create\\b|\\bRegister-ScheduledTask\\b|\\blaunchctl\\s+(load|bootstrap|enable)\\b|\\bsystemctl\\s+(--user\\s+)?enable\\b|\\breg(\\.exe)?\\s+add\\b[^\\n]*\\\\Run\\b|\\bNew-Service\\b|\\bsc(\\.exe)?\\s+create\\b|\\bgit\\s+config\\b[^\\n]*(hooksPath|fsmonitor)|\\b(npm|pnpm|yarn)\\s+(config\\s+set|set)\\s+registry\\b|\\bpip3?\\s+config\\s+set\\b|>>?\\s*[^\\n]*(\\.bashrc|\\.zshrc|\\.profile|\\.bash_profile|profile\\.ps1|authorized_keys)",

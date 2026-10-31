@@ -1,4 +1,5 @@
 import type { Rule } from "./rules.js";
+import { ANY_TOKEN_SOURCE } from "./vault/patterns.js";
 
 const cmd = (id: string, description: string, pattern: string): Rule => ({ id, description, type: "command", pattern, action: "block" });
 
@@ -15,6 +16,24 @@ export const SYSTEM_RULES: Rule[] = [
     pattern: "[\\/\\\\]\\.cephalo[\\/\\\\](mcp[^\\/\\\\]*$|tripwire([\\/\\\\.]|$))",
     action: "block",
   },
+  {
+    id: "protect-vault-files",
+    description: "Reading or writing Cephalo's secrets vault files",
+    type: "path",
+    on: "any",
+    pattern: "[\\/\\\\]\\.cephalo[\\/\\\\]vault[^\\/\\\\]*$",
+    action: "block",
+  },
+  cmd(
+    "no-vault-extract",
+    "Changing or reading the secrets vault outside `cephalo run` (vault set/allow/remove/reveal, OS key APIs, the vault files)",
+    "(\\bcephalo(\\.cmd|\\.ps1)?|cli\\.js[\"']?)\\s+vault\\s+(set|allow|remove|rm|reveal)\\b|\\.cephalo[\\/\\\\]vault|\\b(ProtectedData|Unprotect)\\b|\\bsecret-tool\\s+(lookup|search|clear)\\b",
+  ),
+  cmd(
+    "secret-in-command",
+    "A literal API token in a command. Store it with `cephalo vault set NAME` (the user does this) and run with `cephalo run --env NAME -- ...`",
+    ANY_TOKEN_SOURCE,
+  ),
   cmd("no-self-approve", "An agent approving MCP servers, or releasing/disabling the tripwire, itself", "(\\bcephalo(\\.cmd|\\.ps1)?|cli\\.js[\"']?)\\s+(mcp\\s+(allow|approve|pin|mode|trust)|tripwire\\s+(clear|mode|reset|allow))\\b"),
 ];
 

@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { cephaloDir } from "./rules.js";
+import { redactTokens } from "./vault/patterns.js";
 
 export interface AuditEntry {
   ts: string;
@@ -39,7 +40,8 @@ export function auditPath(): string {
 
 export function appendAudit(entry: AuditEntry, file: string = auditPath()): void {
   fs.mkdirSync(path.dirname(file), { recursive: true });
-  fs.appendFileSync(file, JSON.stringify(entry) + "\n", "utf8");
+  // A command that carried a literal token (and was blocked for it) must not leave that token in the log.
+  fs.appendFileSync(file, redactTokens(JSON.stringify(entry)) + "\n", "utf8");
 }
 
 export function readAudit(

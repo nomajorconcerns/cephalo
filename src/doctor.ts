@@ -7,6 +7,7 @@ import { runHook } from "./hooks.js";
 import { getPlatform } from "./platform.js";
 import { mcpSummary, type McpCmdOptions } from "./mcpcmd.js";
 import { tripSummary, type TripCmdOptions } from "./tripwirecmd.js";
+import { vaultSummary, type VaultCmdOptions } from "./vaultcmd.js";
 import { claudeSettingsPath, hermesConfigPath, projectRoot, HERMES_CMD_RE } from "./install.js";
 import { DEFAULT_RULES, activePlatformRules, defaultRulesPath, parseRules, type Rule } from "./rules.js";
 import { claudeStatus, hermesStatus, type HookStatus } from "./status.js";
@@ -32,6 +33,8 @@ export interface DoctorOptions {
   mcp?: McpCmdOptions;
   /** Tripwire lookups (tests): policy file, state directory. */
   trip?: TripCmdOptions;
+  /** Vault lookups (tests): directory and backend. */
+  vault?: VaultCmdOptions;
 }
 
 function defaultHermesList(): string | null {
@@ -118,6 +121,19 @@ export function runDoctor(o: DoctorOptions = {}): { checks: Check[]; exitCode: n
     const plat = getPlatform();
     const active = activePlatformRules(rules, plat);
     checks.push({ level: "info", name: "Platform rules", detail: `${active.length} built-in ${plat.label} rule(s) active on top of the rules file` });
+  }
+
+  {
+    const v = vaultSummary(o.vault ?? {});
+    if (v.error) {
+      checks.push({ level: "fail", name: "Secrets vault", detail: `exists but cannot be opened: ${v.error}`, fix: "Restore the key or the vault file from a backup (<file>.cephalo-backup-*). Cephalo will not overwrite it." });
+    } else if (!v.exists) {
+      checks.push({ level: "info", name: "Secrets vault", detail: "no secrets stored yet", fix: "cephalo vault set NAME   (then use it with: cephalo run --env NAME -- <command>)" });
+    } else {
+      const bits = [`${v.count} secret${v.count === 1 ? "" : "s"}, key held by ${v.backend}`];
+      if (v.unrestricted) bits.push(`${v.unrestricted} with no command restriction`);
+      checks.push({ level: !v.protectsAtRest || v.unrestricted ? "warn" : "ok", name: "Secrets vault", detail: bits.join("; "), fix: v.unrestricted ? "Limit a secret to the commands it is for: cephalo vault allow NAME \"<regex>\"" : undefined });
+    }
   }
 
   {

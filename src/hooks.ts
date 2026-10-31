@@ -1,5 +1,6 @@
 import { currentUser } from "./user.js";
-import { tripwireGate, tripwireObserve, type TripHookOptions } from "./tripwire/hook.js";
+import { isOwnWrite, toolResponseText, tripwireGate, tripwireObserve, type TripHookOptions } from "./tripwire/hook.js";
+import { findLeaks } from "./vault/patterns.js";
 import { appendAudit, type AuditEntry } from "./audit.js";
 import { checkMcpCall, type McpCheckOptions } from "./mcp/check.js";
 import { isMcpToolName } from "./mcp/servers.js";
@@ -88,18 +89,33 @@ export function runHook(agent: Agent, raw: string, opts: HookOptions = {}): stri
     if (evName === "PostToolUse" || evName === "post_tool_call") {
       // After the tool ran: look at what came back for prompt injection. Never blocks (the tool has already run).
       const obs = tripwireObserve(agent, payload, opts.tripwire);
-      if (!obs.event) return allowOut;
       const input = payload?.tool_input ?? {};
-      log({
-        tool: obs.tool,
+      const where = {
         ...(str(input.command) !== undefined ? { command: str(input.command) } : {}),
         ...(str(input.file_path ?? input.path) !== undefined ? { path: str(input.file_path ?? input.path) } : {}),
-        decision: "allow",
-        rule: `tripwire-${obs.event.level}`,
-        note: `possible prompt injection in the output of ${obs.tool}: ${obs.event.findings.map((f) => `${f.id} "${f.excerpt}"`).join("; ")}`.slice(0, 600),
-      });
-      if (agent === "claude" && obs.warning) {
-        return JSON.stringify({ hookSpecificOutput: { hookEventName: "PostToolUse", additionalContext: obs.warning } });
+      };
+      const warnings: string[] = [];
+      if (obs.event) {
+        log({
+          tool: obs.tool,
+          ...where,
+          decision: "allow",
+          rule: `tripwire-${obs.event.level}`,
+          note: `possible prompt injection in the output of ${obs.tool}: ${obs.event.findings.map((f) => `${f.id} "${f.excerpt}"`).join("; ")}`.slice(0, 600),
+        });
+        if (obs.warning) warnings.push(obs.warning);
+      }
+      // A credential in the output is now in the agent's context; log it (type and first characters only) and say so.
+      const ownVault = /(^|[\s;&|])((cephalo(\.cmd|\.ps1)?)|(node\s+\S*cephalo\S*[\\/]dist[\\/]cli\.js))\s+vault\s/i.test(`${str(input.command) ?? ""} `);
+      if (!isOwnWrite(obs.tool) && !ownVault) {
+        const leaks = findLeaks(toolResponseText(agent, payload));
+        if (leaks.length) {
+          log({ tool: obs.tool, ...where, decision: "allow", rule: "secret-in-output", note: `credential in the output of ${obs.tool}: ${leaks.map((l) => `${l.type} ${l.preview}`).join("; ")}` });
+          warnings.push(`Cephalo: the output of ${obs.tool} contains what looks like a credential (${leaks.map((l) => l.type).join(", ")}). Do not repeat or store it. Tell the user it was exposed so they can rotate it. To use a token, ask the user to add it with "cephalo vault set NAME" and run commands with "cephalo run --env NAME -- ...".`);
+        }
+      }
+      if (agent === "claude" && warnings.length) {
+        return JSON.stringify({ hookSpecificOutput: { hookEventName: "PostToolUse", additionalContext: warnings.join("\n") } });
       }
       return allowOut;
     }
