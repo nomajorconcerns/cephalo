@@ -6,7 +6,7 @@
 <title>Cephalo — the seatbelt for AI coding agents</title>
 <meta name="description" content="Cephalo blocks dangerous tool calls from Claude Code and Hermes Agent before they run. See how it works, try it live, and install it.">
 <meta name="color-scheme" content="dark light">
-<script>(function(){var t=null;try{t=localStorage.getItem('cephalo-site-theme');}catch(e){}if(!t&&window.matchMedia&&matchMedia('(prefers-color-scheme: light)').matches)t='light';document.documentElement.setAttribute('data-theme',t==='light'?'light':'dark');})();</script>
+<script>document.documentElement.classList.add('js');(function(){var t=null;try{t=localStorage.getItem('cephalo-site-theme');}catch(e){}if(!t&&window.matchMedia&&matchMedia('(prefers-color-scheme: light)').matches)t='light';document.documentElement.setAttribute('data-theme',t==='light'?'light':'dark');})();</script>
 <style>
 :root{
   --bg:#0d0f14; --bg2:#12151c; --panel:#171a23; --panel2:#1d212c; --line:#2a2f3d; --line2:#363c4d;
@@ -248,6 +248,90 @@ mark.gap{display:inline-block;width:3px;height:1.05em;vertical-align:text-bottom
 footer{border-top:1px solid var(--line);padding:34px 0 60px;color:var(--faint);font-size:14px}
 footer .wrap{display:flex;gap:20px;flex-wrap:wrap;align-items:center}
 footer .sp{flex:1}
+
+/* ---------- motion ---------- */
+:root{--ease:cubic-bezier(.22,.61,.36,1);--spring:cubic-bezier(.34,1.4,.64,1)}
+a,button,.btn,.chip,.copy,.tag,.seg button,.cmdlist button,.steps li,.themebtn,.chk,select,input[type=text],.rulelist label,nav.top .links a{
+  transition:background-color .22s var(--ease),color .22s var(--ease),border-color .22s var(--ease),box-shadow .22s var(--ease),transform .22s var(--ease),filter .22s var(--ease)}
+.btn:hover,.chip:hover{transform:translateY(-1px)}
+.btn:active,.chip:active,.seg button:active,.themebtn:active{transform:translateY(0) scale(.97);transition-duration:.08s}
+.btn.primary:hover{box-shadow:0 8px 22px -10px var(--accent)}
+.chip:hover{box-shadow:0 6px 16px -12px var(--accent)}
+nav.top{transition:border-color .3s var(--ease),background-color .35s var(--ease)}
+nav.top .links a[aria-current=true]{color:var(--text);box-shadow:inset 0 -2px 0 var(--accent)}
+nav.top .links a.cta[aria-current=true]{box-shadow:none;background:var(--accent);color:var(--accent-ink)}
+nav.top .links a:not(.cta){padding:4px 0}
+
+/* page load: hero rises in, one piece after another */
+@keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+.hero-grid>div:first-child>*{animation:rise .8s var(--ease) both}
+.hero-grid>div:first-child>:nth-child(1){animation-delay:.05s}
+.hero-grid>div:first-child>:nth-child(2){animation-delay:.14s}
+.hero-grid>div:first-child>:nth-child(3){animation-delay:.24s}
+.hero-grid>div:first-child>:nth-child(4){animation-delay:.34s}
+.hero-grid>div:first-child>:nth-child(5){animation-delay:.42s}
+.hero-grid>div:first-child>:nth-child(6){animation-delay:.5s}
+.hero-grid>.term{animation:rise 1s var(--ease) .25s both}
+
+/* scroll reveal (only when JS is running, so nothing is ever hidden without it) */
+.js .reveal{opacity:0;transform:translateY(22px);transition:opacity .8s var(--ease),transform .8s var(--ease)}
+.js .reveal.in{opacity:1;transform:none}
+
+/* playground: stages light up in turn */
+.stage{transition:opacity .5s var(--ease),transform .5s var(--ease),border-color .45s var(--ease),box-shadow .45s var(--ease)}
+.stage.live{border-color:color-mix(in srgb,var(--accent) 42%,var(--line));box-shadow:0 0 0 1px color-mix(in srgb,var(--accent) 10%,transparent),0 14px 34px -22px var(--accent)}
+.stage .hd .n{transition:background-color .35s var(--ease),color .35s var(--ease),border-color .35s var(--ease),transform .35s var(--spring)}
+.stage.live .hd .n{transform:scale(1.12)}
+@keyframes rowin{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
+.trace .row{animation:rowin .3s var(--ease) both}
+.trace .row.hit{animation:rowin .3s var(--ease) both,hitflash 1.1s var(--ease) .1s}
+@keyframes hitflash{0%{background:rgba(255,107,107,.38)}100%{background:rgba(255,107,107,.12)}}
+@keyframes lnin{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.norm>*{animation:lnin .35s var(--ease) both}
+.norm>*:nth-child(2n){animation-delay:.05s}
+.norm>*:nth-child(n+3){animation-delay:.12s}
+.norm>*:nth-child(n+5){animation-delay:.2s}
+@keyframes badgein{0%{opacity:0;transform:scale(.7)}60%{opacity:1;transform:scale(1.07)}100%{transform:scale(1)}}
+.verdict .badge{animation:badgein .55s var(--spring) both}
+.verdict>div:last-child>*{animation:lnin .4s var(--ease) both}
+.verdict>div:last-child>:nth-child(2){animation-delay:.08s}
+.verdict>div:last-child>:nth-child(3){animation-delay:.14s}
+.verdict>div:last-child>:nth-child(4){animation-delay:.2s}
+.verdict>div:last-child>:nth-child(5){animation-delay:.26s}
+.verdict>div:last-child>:nth-child(6){animation-delay:.32s}
+details.rules[open] .rulelist{animation:lnin .3s var(--ease)}
+.rulelist input{transition:transform .2s var(--spring)}
+.rulelist input:active{transform:scale(.8)}
+
+/* terminals */
+.term-body .ln{animation:lnin .22s var(--ease) both}
+.term-body.swap,#plugCode.swap{animation:fadein .4s var(--ease)}
+.term{transition:box-shadow .4s var(--ease),border-color .4s var(--ease)}
+.term:hover{border-color:var(--line2);box-shadow:0 22px 56px rgba(0,0,0,.5)}
+
+/* tabs and lists */
+.cmdlist button{position:relative}
+.cmdlist button[aria-selected=true]{transition-duration:.3s}
+.steps li{transition:background-color .3s var(--ease),border-color .3s var(--ease),transform .3s var(--ease)}
+.steps li:hover{transform:translateX(3px)}
+.steps li::before{transition:background-color .3s var(--ease),border-color .3s var(--ease),color .3s var(--ease),transform .35s var(--spring)}
+.steps li[aria-current=true]::before{transform:scale(1.12)}
+.plat .pc{transition:background-color .35s var(--ease)}
+.plat .pc code,.plat .pc .tag{transition:color .3s var(--ease),border-color .3s var(--ease)}
+.plat .pc.sel .tag{border-color:color-mix(in srgb,var(--accent) 50%,var(--line2));color:var(--text)}
+
+/* install checklist */
+.istep h3,.istep p{transition:color .3s var(--ease)}
+.istep .chk{transition:background-color .25s var(--ease),border-color .25s var(--ease),color .25s var(--ease),transform .3s var(--spring)}
+.istep .chk:hover{border-color:var(--accent)}
+.istep .chk:active{transform:scale(.85)}
+.istep.done .chk{animation:badgein .45s var(--spring)}
+.prog i{transition:width .6s var(--ease)}
+
+/* theme switch: fade colours instead of snapping (class is added for a moment while toggling) */
+html.theming *,html.theming *::before,html.theming *::after{transition:background-color .4s var(--ease),color .4s var(--ease),border-color .4s var(--ease),box-shadow .4s var(--ease)!important}
+@media (prefers-reduced-motion:reduce){.js .reveal{opacity:1;transform:none}}
 </style>
 </head>
 <body>
@@ -600,10 +684,38 @@ function markup(parent,text){
   if(last<text.length)parent.appendChild(document.createTextNode(text.slice(last)));
 }
 
+function retrigger(node,cls){node.classList.remove(cls);void node.offsetWidth;node.classList.add(cls);}
+
+/* ---------- scroll reveal + nav highlight ---------- */
+(function(){
+  var targets=$$('.sec-head,.lab,.plug,.explorer,.more>div,.plat,.normer>.card,.inst,.limits>div');
+  targets.forEach(function(t,i){t.classList.add('reveal');});
+  // stagger siblings inside the same grid
+  [['.more','div'],['.limits','div'],['.normer','.card']].forEach(function(g){
+    var p=$(g[0]);if(!p)return;$$(':scope > '+g[1],p).forEach(function(c,i){c.style.transitionDelay=(i*90)+'ms';});
+  });
+  if(reduce||!('IntersectionObserver' in window)){targets.forEach(function(t){t.classList.add('in');});}
+  else{
+    var io=new IntersectionObserver(function(es){es.forEach(function(x){if(x.isIntersecting){x.target.classList.add('in');io.unobserve(x.target);}});},{threshold:.08,rootMargin:'0px 0px -6% 0px'});
+    targets.forEach(function(t){io.observe(t);});
+  }
+  // highlight the nav link of the section in view
+  if('IntersectionObserver' in window){
+    var links={};$$('nav.top .links a').forEach(function(a){links[a.getAttribute('href')]=a;});
+    var spy=new IntersectionObserver(function(es){es.forEach(function(x){
+      if(!x.isIntersecting)return;var a=links['#'+x.target.id];
+      Object.keys(links).forEach(function(k){links[k].removeAttribute('aria-current');});
+      if(a)a.setAttribute('aria-current','true');
+    });},{rootMargin:'-45% 0px -50% 0px'});
+    $$('section[id]').forEach(function(s){spy.observe(s);});
+  }
+})();
+
 /* ---------- theme ---------- */
 function paintTheme(){var light=document.documentElement.getAttribute('data-theme')==='light';var b=$('#themeBtn');b.textContent=light?'Dark mode':'Light mode';b.setAttribute('aria-pressed',String(light));}
 $('#themeBtn').addEventListener('click',function(){
   var next=document.documentElement.getAttribute('data-theme')==='light'?'dark':'light';
+  var root=document.documentElement;root.classList.add('theming');clearTimeout(window.__themingT);window.__themingT=setTimeout(function(){root.classList.remove('theming');},520);
   document.documentElement.setAttribute('data-theme',next);try{localStorage.setItem('cephalo-site-theme',next);}catch(e){}paintTheme();
 });
 paintTheme();
@@ -895,7 +1007,7 @@ function renderPlug(){
     var d=el('div');d.appendChild(el('h3',null,s.h));d.appendChild(el('p',null,s.p));li.appendChild(d);ol.appendChild(li);
   });
   $('#plugTitle').textContent=[state.agent==='claude'?'settings.json, added by cephalo init':'config.yaml, added by cephalo init','what the agent sends','what Cephalo does','what Cephalo answers'][plugStep]+' \u00B7 '+(state.agent==='claude'?'Claude Code':'Hermes');
-  $('#plugCode').textContent=plugCode();
+  $('#plugCode').textContent=plugCode();retrigger($('#plugCode'),'swap');
   var rows=state.agent==='claude'
    ?[['Bash','command'],['Read','file_path (read)'],['Write, Edit, MultiEdit','file_path (write)'],['NotebookEdit','notebook_path (write)']]
    :[['terminal','command'],['execute_code','code, scanned like a command (heuristic)'],['read_file, search_files','path (read)'],['write_file, patch','path (write)']];
@@ -987,6 +1099,7 @@ function buildCmdList(){
 function showEx(k){
   exCur=k;$$('#cmdList button').forEach(function(b){b.setAttribute('aria-selected',String(b.getAttribute('data-k')===k));});
   $('#exTitle').textContent=EX[k].cmd;$('#exExplain').textContent=EX[k].explain;
+  retrigger($('#exTerm'),'swap');retrigger($('#exExplain'),'swap');
   exP.play(EX[k].script,false);
 }
 $('#cmdList').addEventListener('click',function(e){var b=e.target.closest('button');if(b)showEx(b.getAttribute('data-k'));});
