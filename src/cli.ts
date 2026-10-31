@@ -14,6 +14,8 @@ import { printBanner, supportsColor } from "./banner.js";
 import { runWatch } from "./watch.js";
 import { applyAllow, applyMode, listMcp, planAllow, planMode, planPin, planWrap, runScan } from "./mcpcmd.js";
 import { runProxy } from "./mcp/proxy.js";
+import { INCIDENT_USAGE, parseIncidentArgs, planIncident } from "./incidentcmd.js";
+import { applyRule, undoRule } from "./incident/rule.js";
 import { collectReplay, parseReplayArgs, planComment, postComment, render, writeOutput } from "./replaycmd.js";
 import { Vault } from "./vault/store.js";
 import { parseEnvSpec, runWithSecrets, type EnvMapping } from "./vault/run.js";
@@ -39,6 +41,8 @@ const USAGE = `Usage:
                                       MCP firewall: allowlist by command/URL, fingerprint tools, audit or enforce
   cephalo replay [--pr N] [--format text|md|html|json] [--comment]
                                       Replay of what the agents did on this branch, for a pull request
+  cephalo incident [<n> | --last] [--use K]
+                                      Turn something an agent did into a blocking rule, tested against your history
   cephalo vault [status|list|set|allow|remove|reveal|path]
                                       Secrets vault: tokens the agent can use but never see
   cephalo run --env NAME -- <command> Run a command with vault secrets injected; output is scrubbed
@@ -257,6 +261,45 @@ async function main(): Promise<number> {
       console.log(text);
     }
     return 0;
+  }
+
+  if (cmd === "incident") {
+    if (rest.includes("--help") || rest.includes("-h")) {
+      console.log(INCIDENT_USAGE);
+      return 0;
+    }
+    const parsed = parseIncidentArgs(rest);
+    if ("error" in parsed) {
+      process.stderr.write(`cephalo: ${parsed.error}\n`);
+      return 1;
+    }
+    const a = parsed.args;
+    if (a.sub === "undo") {
+      const res = undoRule(a.id!);
+      for (const line of res.lines) console.log(line);
+      return res.ok ? 0 : 1;
+    }
+    const plan = planIncident(a);
+    for (const line of plan.lines) console.log(line);
+    if (!plan.apply) return plan.exitCode;
+    let ok = a.yes;
+    if (!ok) {
+      if (!process.stdin.isTTY) {
+        console.log("Not running in a terminal. Nothing was changed. Re-run with --yes to add the rule.");
+        return 1;
+      }
+      const rl = createInterface({ input: process.stdin, output: process.stdout });
+      const answer = await new Promise<string>((resolve) => rl.question("Add this rule? [y/N] ", resolve));
+      rl.close();
+      ok = /^y(es)?$/i.test(answer.trim());
+    }
+    if (!ok) {
+      console.log("Nothing was changed.");
+      return 1;
+    }
+    const res = applyRule(plan.apply.rule, plan.apply.entry);
+    for (const line of res.lines) console.log(line);
+    return res.ok ? 0 : 1;
   }
 
   if (cmd === "run") {

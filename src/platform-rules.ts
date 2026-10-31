@@ -48,6 +48,7 @@ export const SYSTEM_RULES: Rule[] = [
     ANY_TOKEN_SOURCE,
   ),
   cmd("no-self-approve", "An agent approving MCP servers, or releasing/disabling the tripwire, itself", "(\\bcephalo(\\.cmd|\\.ps1)?|cli\\.js[\"']?)\\s+(mcp\\s+(allow|approve|pin|mode|trust)|tripwire\\s+(clear|mode|reset|allow))\\b"),
+  cmd("no-self-incident", "An agent adding or removing its own learned rules", "(\\bcephalo(\\.cmd|\\.ps1)?|cli\\.js[\"']?)\\s+incident\\b[^\\n]*(--use|\\bundo\\b)"),
 ];
 
 /** Applies on every POSIX system (macOS and Linux). */
