@@ -5,6 +5,7 @@ import { spawnSync } from "node:child_process";
 import { auditPath } from "./audit.js";
 import { runHook } from "./hooks.js";
 import { getPlatform } from "./platform.js";
+import { mcpSummary, type McpCmdOptions } from "./mcpcmd.js";
 import { claudeSettingsPath, hermesConfigPath, projectRoot, HERMES_CMD_RE } from "./install.js";
 import { DEFAULT_RULES, activePlatformRules, defaultRulesPath, parseRules, type Rule } from "./rules.js";
 import { claudeStatus, hermesStatus, type HookStatus } from "./status.js";
@@ -26,6 +27,8 @@ export interface DoctorOptions {
   abs?: string;
   /** Returns the output of `hermes hooks list`, or null if unavailable. Injectable for tests. */
   hermesList?: () => string | null;
+  /** MCP lookups (tests): policy file, home dir, cwd, Hermes config. */
+  mcp?: McpCmdOptions;
 }
 
 function defaultHermesList(): string | null {
@@ -111,6 +114,27 @@ export function runDoctor(o: DoctorOptions = {}): { checks: Check[]; exitCode: n
     const plat = getPlatform();
     const active = activePlatformRules(rules, plat);
     checks.push({ level: "info", name: "Platform rules", detail: `${active.length} built-in ${plat.label} rule(s) active on top of the rules file` });
+  }
+
+  {
+    const m = mcpSummary(o.mcp ?? {});
+    if (m.servers === 0) {
+      checks.push({ level: "info", name: "MCP firewall", detail: `${m.mode} mode, ${m.entries} allowlist entr${m.entries === 1 ? "y" : "ies"}, no MCP servers configured` });
+    } else if (m.mode === "audit") {
+      checks.push({
+        level: m.unlisted ? "warn" : "ok",
+        name: "MCP firewall",
+        detail: `audit mode (logging only): ${m.servers} server(s) configured, ${m.unlisted} not on the allowlist`,
+        fix: m.unlisted ? "Review with: cephalo mcp list   then approve with: cephalo mcp allow <name>   and finally: cephalo mcp mode enforce" : "cephalo mcp mode enforce",
+      });
+    } else {
+      checks.push({
+        level: m.unlisted ? "warn" : "ok",
+        name: "MCP firewall",
+        detail: `enforce mode: ${m.servers} server(s) configured, ${m.unlisted} would be blocked`,
+        fix: m.unlisted ? "Review with: cephalo mcp list" : undefined,
+      });
+    }
   }
 
   // Self-test with the user's real rules, in-process, with a throwaway audit file (nothing is written to the real log)

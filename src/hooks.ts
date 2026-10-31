@@ -1,4 +1,8 @@
+import os from "node:os";
 import { appendAudit, type AuditEntry } from "./audit.js";
+import { checkMcpCall, type McpCheckOptions } from "./mcp/check.js";
+import { isMcpToolName } from "./mcp/servers.js";
+import { redactParams } from "./redact.js";
 import { evaluate, type EvalInput } from "./engine.js";
 import { loadEffectiveRules, type Rule } from "./rules.js";
 
@@ -10,6 +14,8 @@ export function blockMessage(rule: Rule): string {
 
 interface Extracted extends EvalInput {
   tool: string;
+  /** Set for MCP tool calls (`mcp__server__tool`): checked against the MCP allowlist instead of the command/path rules. */
+  mcp?: { params: unknown; cwd?: string };
 }
 
 const str = (v: unknown): string | undefined => (typeof v === "string" ? v : undefined);
@@ -29,6 +35,7 @@ function extractClaude(p: any): Extracted | null {
     case "NotebookEdit":
       return { tool, path: str(ti.notebook_path), access: "write" };
     default:
+      if (isMcpToolName(tool)) return { tool, mcp: { params: ti, cwd: str(p?.cwd) } };
       return null;
   }
 }
@@ -49,6 +56,7 @@ function extractHermes(p: any): Extracted | null {
     case "patch":
       return { tool, path: str(ti.path), access: "write" };
     default:
+      if (isMcpToolName(tool)) return { tool, mcp: { params: ti, cwd: str(p?.cwd) } };
       return null;
   }
 }
@@ -56,6 +64,16 @@ function extractHermes(p: any): Extracted | null {
 export interface HookOptions {
   rules?: Rule[];
   auditFile?: string;
+  /** Overrides for MCP checks (tests): policy, home dir, cwd, Hermes config path, or a fixed server list. */
+  mcp?: McpCheckOptions;
+}
+
+function currentUser(): string | undefined {
+  try {
+    return os.userInfo().username;
+  } catch {
+    return process.env.USERNAME ?? process.env.USER;
+  }
 }
 
 /** Process raw stdin JSON for an agent hook. Returns the text to print on stdout. Never throws (fail-open). */
@@ -63,7 +81,7 @@ export function runHook(agent: Agent, raw: string, opts: HookOptions = {}): stri
   const allowOut = agent === "claude" ? "" : "{}";
   const log = (e: Omit<AuditEntry, "ts" | "agent">) => {
     try {
-      appendAudit({ ts: new Date().toISOString(), agent, ...e }, opts.auditFile);
+      appendAudit({ ts: new Date().toISOString(), agent, user: currentUser(), ...e }, opts.auditFile);
     } catch (err) {
       process.stderr.write(`cephalo: audit log failed: ${(err as Error).message}\n`);
     }
@@ -77,13 +95,25 @@ export function runHook(agent: Agent, raw: string, opts: HookOptions = {}): stri
       return allowOut;
     }
     tool = ex.tool;
-    const res = evaluate(ex, opts.rules ?? loadEffectiveRules());
+    let res: { decision: "allow" | "block"; rule?: Rule };
+    let mcpLog: Partial<AuditEntry> = {};
+    if (ex.mcp) {
+      const v = checkMcpCall(agent, tool, { cwd: ex.mcp.cwd, ...opts.mcp });
+      res = v ? { decision: v.decision, rule: v.rule } : { decision: "allow" };
+      mcpLog = {
+        params: redactParams(ex.mcp.params),
+        ...(v ? { server: v.server, ...(v.identity ? { serverId: v.identity } : {}), ...(v.note ? { note: v.note } : {}) } : {}),
+      };
+    } else {
+      res = evaluate(ex, opts.rules ?? loadEffectiveRules());
+    }
     log({
       tool,
       ...(ex.command !== undefined ? { command: ex.command } : {}),
       ...(ex.path !== undefined ? { path: ex.path } : {}),
       decision: res.decision,
       ...(res.rule ? { rule: res.rule.id } : {}),
+      ...mcpLog,
     });
     if (res.decision === "block" && res.rule) {
       const message = blockMessage(res.rule);

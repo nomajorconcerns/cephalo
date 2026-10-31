@@ -1,6 +1,6 @@
 import os from "node:os";
 import path from "node:path";
-import { LINUX_RULES, MACOS_RULES, WINDOWS_RULES } from "./platform-rules.js";
+import { LINUX_RULES, MACOS_RULES, SYSTEM_RULES, WINDOWS_RULES } from "./platform-rules.js";
 import type { Rule } from "./rules.js";
 
 export type PlatformId = "win32" | "darwin" | "linux";
@@ -69,7 +69,7 @@ const win32: PlatformAdapter = {
   },
   dataDir: (p) => path.join(homeOf(p), ".cephalo"),
   spawnOptions: () => ({ shell: true, windowsHide: true }),
-  rules: () => WINDOWS_RULES,
+  rules: () => [...SYSTEM_RULES, ...WINDOWS_RULES],
   normalizePath(raw, p) {
     const e = envOf(p);
     const home = homeOf(p);
@@ -99,7 +99,7 @@ const darwin: PlatformAdapter = {
   hermesConfigPath: (p) => path.join(homeOf(p), ".hermes", "config.yaml"),
   dataDir: (p) => path.join(homeOf(p), ".cephalo"),
   spawnOptions: () => ({ shell: false, windowsHide: false }),
-  rules: () => MACOS_RULES,
+  rules: () => [...SYSTEM_RULES, ...MACOS_RULES],
   normalizePath(raw, p) {
     let s = expandPosixHome(raw.trim(), homeOf(p));
     s = cleanSlashes(s.replace(/\\/g, "/"));
@@ -116,7 +116,7 @@ const linux: PlatformAdapter = {
   hermesConfigPath: (p) => path.join(homeOf(p), ".hermes", "config.yaml"),
   dataDir: (p) => path.join(homeOf(p), ".cephalo"),
   spawnOptions: () => ({ shell: false, windowsHide: false }),
-  rules: () => LINUX_RULES,
+  rules: () => [...SYSTEM_RULES, ...LINUX_RULES],
   normalizePath(raw, p) {
     return cleanSlashes(expandPosixHome(raw.trim(), homeOf(p)).replace(/\\/g, "/"));
   },

@@ -2,6 +2,22 @@ import type { Rule } from "./rules.js";
 
 const cmd = (id: string, description: string, pattern: string): Rule => ({ id, description, type: "command", pattern, action: "block" });
 
+/**
+ * Built-in rules that protect Cephalo itself. They apply on every OS, are not stored in rules.yml, and can be
+ * overridden only by a rule with the same id. They exist so an agent cannot approve its own MCP servers.
+ */
+export const SYSTEM_RULES: Rule[] = [
+  {
+    id: "protect-cephalo-policy",
+    description: "Writing Cephalo's MCP allowlist or tool approvals",
+    type: "path",
+    on: "write",
+    pattern: "[\\/\\\\]\\.cephalo[\\/\\\\]mcp[^\\/\\\\]*$",
+    action: "block",
+  },
+  cmd("no-self-approve", "An agent approving MCP servers or changing the MCP mode itself", "(\\bcephalo(\\.cmd|\\.ps1)?|cli\\.js[\"']?)\\s+mcp\\s+(allow|approve|mode|trust)\\b"),
+];
+
 /** Applies on every POSIX system (macOS and Linux). */
 export const POSIX_RULES: Rule[] = [
   cmd("rm-long-flags", "rm with separate or long recursive+force flags", "\\brm\\b(?=[^;&|\\n]*(\\s-[a-z]*r[a-z]*\\b|--recursive))(?=[^;&|\\n]*(\\s-[a-z]*f[a-z]*\\b|--force))"),

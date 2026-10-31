@@ -1,5 +1,5 @@
 import fs from "node:fs";
-import { auditPath, readAudit, type AuditEntry } from "./audit.js";
+import { auditPath, entrySubject, readAudit, type AuditEntry } from "./audit.js";
 
 const ESC = "\x1b[";
 const RESET = `${ESC}0m`;
@@ -27,7 +27,7 @@ export function formatWatchLine(e: AuditEntry, opts: { color: boolean; width?: n
   const rule = e.rule ? ` ${paint(`[${e.rule}]`, "33")}` : "";
   const err = e.error ? ` ${paint(`(error: ${sanitize(e.error)})`, "90")}` : "";
   const prefix = `${paint(time, "90")}  ${decision}  ${sanitize(who)}${rule}  `;
-  let what = sanitize(e.command ?? e.path ?? "");
+  let what = sanitize(entrySubject(e));
   if (opts.width) {
     // visible prefix length: time(8) + 2 + 5 + 2 + who + rule + 2
     const visible = 8 + 2 + 5 + 2 + who.length + (e.rule ? e.rule.length + 3 : 0) + 2;

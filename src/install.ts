@@ -19,8 +19,9 @@ export function hermesConfigPath(): string {
   return getPlatform().hermesConfigPath();
 }
 
-export const HERMES_MATCHER = "terminal|read_file|write_file|patch|search_files|execute_code";
-export const CLAUDE_MATCHER = "Bash|Read|Write|Edit|MultiEdit|NotebookEdit";
+// `mcp__.*` / `mcp_.*` route every MCP tool call (mcp__<server>__<tool>) to Cephalo's MCP firewall.
+export const HERMES_MATCHER = "terminal|read_file|write_file|patch|search_files|execute_code|mcp_.*";
+export const CLAUDE_MATCHER = "Bash|Read|Write|Edit|MultiEdit|NotebookEdit|mcp__.*";
 export const CLAUDE_CMD_RE = /cli\.js["']?\s+hook\s+claude\b/;
 export const HERMES_CMD_RE = /cli\.js["']?\s+hook\s+hermes\b/;
 

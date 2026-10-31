@@ -80,7 +80,9 @@ test("each OS only gets its own rules, ids are unique, patterns compile", () => 
     for (const r of rules) new RegExp(r.pattern, "i");
     for (const d of DEFAULT_RULES) assert.ok(!ids.includes(d.id), `${id} redefines default ${d.id}`);
   }
-  assert.ok(getPlatform("win32").rules().every((r) => r.id.startsWith("win-")));
+  const SYSTEM = new Set(["protect-cephalo-policy", "no-self-approve"]); // apply on every OS
+  assert.ok(getPlatform("win32").rules().filter((r) => !SYSTEM.has(r.id)).every((r) => r.id.startsWith("win-")));
+  for (const id of ["win32", "darwin", "linux"]) assert.ok([...SYSTEM].every((s) => getPlatform(id).rules().some((r) => r.id === s)), `${id} has the system rules`);
   assert.ok(!getPlatform("linux").rules().some((r) => r.id.startsWith("win-") || r.id.startsWith("mac-")));
   assert.ok(!getPlatform("darwin").rules().some((r) => r.id.startsWith("linux-")));
 });

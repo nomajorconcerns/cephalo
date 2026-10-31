@@ -11,6 +11,24 @@ export interface AuditEntry {
   decision: "allow" | "block";
   rule?: string;
   error?: string;
+  /** OS account that ran the agent. */
+  user?: string;
+  /** MCP calls: configured server name, what it runs / where it is, and the (redacted) parameters. */
+  server?: string;
+  serverId?: string;
+  params?: unknown;
+  note?: string;
+}
+
+/** Short text describing what the call acted on, for one-line views. */
+export function entrySubject(e: AuditEntry): string {
+  if (e.command !== undefined) return e.command;
+  if (e.path !== undefined) return e.path;
+  if (e.params !== undefined) {
+    const s = typeof e.params === "string" ? e.params : JSON.stringify(e.params);
+    return s.length > 300 ? `${s.slice(0, 300)}…` : s;
+  }
+  return "";
 }
 
 export function auditPath(): string {
@@ -42,8 +60,9 @@ export function readAudit(
 }
 
 export function formatAudit(e: AuditEntry): string {
-  const what = e.command ?? e.path ?? "";
+  const what = entrySubject(e);
   const rule = e.rule ? ` [${e.rule}]` : "";
   const err = e.error ? ` (error: ${e.error})` : "";
-  return `${e.ts}  ${e.decision.toUpperCase().padEnd(5)}  ${e.agent}/${e.tool}${rule}  ${what}${err}`;
+  const who = e.user ? `  (${e.user})` : "";
+  return `${e.ts}  ${e.decision.toUpperCase().padEnd(5)}  ${e.agent}/${e.tool}${rule}  ${what}${err}${who}`;
 }
