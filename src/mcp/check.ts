@@ -4,15 +4,19 @@ import {
   listClaudeServers,
   listHermesServers,
   parseMcpToolName,
+  sanitizeName,
   type ConfiguredServer,
   type ServerLookup,
 } from "./servers.js";
+import { loadApprovals, type ApprovalStore } from "./store.js";
 import type { Rule } from "../rules.js";
 
 export interface McpCheckOptions extends ServerLookup {
   policy?: McpPolicy;
   /** Test hook: use these servers instead of reading the agent configs. */
   servers?: ConfiguredServer[];
+  /** Test hook: use this approvals store instead of ~/.cephalo/mcp-tools.json. */
+  approvals?: ApprovalStore;
 }
 
 export interface McpVerdict {
@@ -24,6 +28,8 @@ export interface McpVerdict {
   identity?: string;
   /** True when the server's command/URL was found and checked against the allowlist. */
   verified: boolean;
+  /** Server fingerprint at the time the tools were approved, when pinned. */
+  pinnedFingerprint?: string;
   allowedBy?: string;
   note?: string;
 }
@@ -54,18 +60,52 @@ export function checkMcpCall(agent: "claude" | "hermes", toolName: string, o: Mc
 
   const missing = cands.filter((c) => !matchAllow(policy, c.def));
   const shown = cands.map((c) => c.identity).join(" ; ");
-  if (missing.length === 0) {
-    const entry = matchAllow(policy, cands[0].def);
-    return { ...base, decision: "allow", identity: shown, verified: true, allowedBy: entry?.command ?? entry?.url };
+  if (missing.length) {
+    if (!enforce) return { ...base, decision: "allow", identity: shown, verified: false, note: "not on the allowlist (audit mode: allowed and logged)" };
+    return {
+      ...base,
+      decision: "block",
+      identity: missing.map((c) => c.identity).join(" ; "),
+      verified: false,
+      rule: rule("mcp-not-allowed", `MCP server is not on the allowlist (${missing[0].identity}). Ask the user to review it with: cephalo mcp list`),
+    };
   }
-  if (!enforce) {
-    return { ...base, decision: "allow", identity: shown, verified: false, note: "not on the allowlist (audit mode: allowed and logged)" };
+
+  // Allowlisted. Now check the approved tool definitions.
+  const store = o.approvals ?? loadApprovals();
+  const notes: string[] = [];
+  let pinnedFingerprint: string | undefined;
+  for (const c of cands) {
+    const pin = store.servers[c.identity];
+    if (!pin) {
+      if (enforce && policy.requirePin) {
+        return { ...base, decision: "block", identity: shown, verified: true, rule: rule("mcp-unpinned", `MCP server's tools were never approved (${c.identity}). Ask the user to run: cephalo mcp pin ${c.name}`) };
+      }
+      notes.push("tools not pinned");
+      continue;
+    }
+    pinnedFingerprint = pin.fingerprint;
+    const key = Object.keys(pin.tools).find((n) => n === parsed.tool || sanitizeName(n) === parsed.tool);
+    if (!key) {
+      if (enforce) {
+        return {
+          ...base, decision: "block", identity: shown, verified: true, pinnedFingerprint,
+          rule: rule("mcp-tool-unapproved", `"${parsed.tool}" is not one of the approved tools of this MCP server (it may be new). Ask the user to review it: cephalo mcp scan ${c.name}`),
+        };
+      }
+      notes.push(`"${parsed.tool}" is not an approved tool (audit mode: allowed and logged)`);
+      continue;
+    }
+    if (pin.drift?.changed.includes(key)) {
+      if (enforce) {
+        return {
+          ...base, decision: "block", identity: shown, verified: true, pinnedFingerprint,
+          rule: rule("mcp-tool-changed", `the definition of "${key}" changed since it was approved (possible rug pull). Ask the user to review and re-approve: cephalo mcp scan ${c.name}`),
+        };
+      }
+      notes.push(`"${key}" changed since approval (audit mode: allowed and logged)`);
+    }
   }
-  return {
-    ...base,
-    decision: "block",
-    identity: missing.map((c) => c.identity).join(" ; "),
-    verified: false,
-    rule: rule("mcp-not-allowed", `MCP server is not on the allowlist (${missing[0].identity}). Ask the user to review it with: cephalo mcp list`),
-  };
+  const entry = matchAllow(policy, cands[0].def);
+  return { ...base, decision: "allow", identity: shown, verified: true, allowedBy: entry?.command ?? entry?.url, ...(pinnedFingerprint ? { pinnedFingerprint } : {}), ...(notes.length ? { note: notes.join("; ") } : {}) };
 }

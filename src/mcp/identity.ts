@@ -8,6 +8,11 @@ export interface ServerDef {
   command?: string;
   args?: string[];
   url?: string;
+  /** Needed only to START or CONNECT to the server (scan/pin). Never part of its identity, never logged or printed. */
+  env?: Record<string, string>;
+  headers?: Record<string, string>;
+  /** Legacy SSE transport (`type: "sse"`): recognised but not supported by `scan`. */
+  transport?: "sse";
 }
 
 const EXE_EXT = /\.(exe|cmd|bat|com)$/i;
@@ -72,9 +77,19 @@ export function identityOf(def: ServerDef): string {
 export function defFromRaw(raw: unknown): ServerDef | null {
   if (typeof raw !== "object" || raw === null) return null;
   const o = raw as Record<string, unknown>;
-  if (typeof o.url === "string" && o.url) return { kind: "http", url: o.url };
+  const strMap = (v: unknown): Record<string, string> | undefined => {
+    if (typeof v !== "object" || v === null || Array.isArray(v)) return undefined;
+    const out: Record<string, string> = {};
+    for (const [k, val] of Object.entries(v as Record<string, unknown>)) if (typeof val === "string") out[k] = val;
+    return Object.keys(out).length ? out : undefined;
+  };
+  if (typeof o.url === "string" && o.url) {
+    const headers = strMap(o.headers);
+    return { kind: "http", url: o.url, ...(headers ? { headers } : {}), ...(o.type === "sse" ? { transport: "sse" as const } : {}) };
+  }
   if (typeof o.command === "string" && o.command) {
-    return { kind: "stdio", command: o.command, args: Array.isArray(o.args) ? o.args.map(String) : [] };
+    const env = strMap(o.env);
+    return { kind: "stdio", command: o.command, args: Array.isArray(o.args) ? o.args.map(String) : [], ...(env ? { env } : {}) };
   }
   return null;
 }

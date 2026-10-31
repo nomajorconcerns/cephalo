@@ -16,6 +16,8 @@ export interface AuditEntry {
   /** MCP calls: configured server name, what it runs / where it is, and the (redacted) parameters. */
   server?: string;
   serverId?: string;
+  /** Fingerprint of the approved tool set when the call was made (short form), if the server is pinned. */
+  pin?: string;
   params?: unknown;
   note?: string;
 }

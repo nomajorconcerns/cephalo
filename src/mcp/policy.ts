@@ -19,6 +19,8 @@ export interface AllowEntry {
 export interface McpPolicy {
   mode: McpMode;
   allow: AllowEntry[];
+  /** In enforce mode, also block tools of allowlisted servers whose tools were never pinned (`cephalo mcp pin`). */
+  requirePin?: boolean;
 }
 
 export function mcpPolicyPath(): string {
@@ -31,7 +33,8 @@ const HEADER =
   "# Cephalo MCP allowlist.\n" +
   "# mode: audit (log only) | enforce (block MCP tool calls from servers not listed below)\n" +
   "# Servers are matched by what they RUN (command) or WHERE they are (url), never by the name in a config file.\n" +
-  "# `*` matches any text. `label` is only a note for you.\n";
+  "# `*` matches any text. `label` is only a note for you. Windows paths: use 'single quotes' (double quotes treat \\ as an escape).\n" +
+  "# requirePin: true (optional) also blocks tools of allowlisted servers whose tools were never approved with `cephalo mcp pin`.\n";
 
 /** Parse mcp.yml text. Bad entries are reported and skipped (never silently widened). */
 export function parseMcpPolicy(text: string): { policy: McpPolicy; problems: string[] } {
@@ -47,6 +50,11 @@ export function parseMcpPolicy(text: string): { policy: McpPolicy; problems: str
   if (o.mode === "enforce" || o.mode === "audit") mode = o.mode;
   else if (o.mode !== undefined) problems.push(`mode must be "audit" or "enforce", got ${JSON.stringify(o.mode)}; using audit`);
   const allow: AllowEntry[] = [];
+  let requirePin: boolean | undefined;
+  if (o.requirePin !== undefined) {
+    if (typeof o.requirePin === "boolean") requirePin = o.requirePin;
+    else problems.push("requirePin must be true or false");
+  }
   if (o.allow !== undefined && !Array.isArray(o.allow)) problems.push("allow must be a list");
   for (const [i, raw] of (Array.isArray(o.allow) ? o.allow : []).entries()) {
     const e = (raw ?? {}) as Record<string, unknown>;
@@ -64,7 +72,7 @@ export function parseMcpPolicy(text: string): { policy: McpPolicy; problems: str
       ...(typeof e.added === "string" ? { added: e.added } : {}),
     });
   }
-  return { policy: { mode, allow }, problems };
+  return { policy: { mode, allow, ...(requirePin !== undefined ? { requirePin } : {}) }, problems };
 }
 
 /** Missing file means audit mode with an empty list: log everything, block nothing. */

@@ -118,6 +118,11 @@ export function runDoctor(o: DoctorOptions = {}): { checks: Check[]; exitCode: n
 
   {
     const m = mcpSummary(o.mcp ?? {});
+    if (m.drifted) {
+      checks.push({ level: "fail", name: "MCP tool changes", detail: `${m.drifted} MCP server(s) changed their tools since you approved them (possible rug pull)`, fix: "Review with: cephalo mcp scan   then re-approve with: cephalo mcp approve <name>" });
+    } else if (m.servers > 0) {
+      checks.push({ level: m.pinned < m.servers ? "info" : "ok", name: "MCP tool pins", detail: `${m.pinned} of ${m.servers} configured server(s) have approved tool fingerprints`, fix: m.pinned < m.servers ? "Approve tool definitions with: cephalo mcp pin <name>" : undefined });
+    }
     if (m.servers === 0) {
       checks.push({ level: "info", name: "MCP firewall", detail: `${m.mode} mode, ${m.entries} allowlist entr${m.entries === 1 ? "y" : "ies"}, no MCP servers configured` });
     } else if (m.mode === "audit") {

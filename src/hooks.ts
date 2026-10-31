@@ -102,7 +102,7 @@ export function runHook(agent: Agent, raw: string, opts: HookOptions = {}): stri
       res = v ? { decision: v.decision, rule: v.rule } : { decision: "allow" };
       mcpLog = {
         params: redactParams(ex.mcp.params),
-        ...(v ? { server: v.server, ...(v.identity ? { serverId: v.identity } : {}), ...(v.note ? { note: v.note } : {}) } : {}),
+        ...(v ? { server: v.server, ...(v.identity ? { serverId: v.identity } : {}), ...(v.pinnedFingerprint ? { pin: v.pinnedFingerprint.slice(0, 12) } : {}), ...(v.note ? { note: v.note } : {}) } : {}),
       };
     } else {
       res = evaluate(ex, opts.rules ?? loadEffectiveRules());

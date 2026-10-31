@@ -15,7 +15,7 @@ export const SYSTEM_RULES: Rule[] = [
     pattern: "[\\/\\\\]\\.cephalo[\\/\\\\]mcp[^\\/\\\\]*$",
     action: "block",
   },
-  cmd("no-self-approve", "An agent approving MCP servers or changing the MCP mode itself", "(\\bcephalo(\\.cmd|\\.ps1)?|cli\\.js[\"']?)\\s+mcp\\s+(allow|approve|mode|trust)\\b"),
+  cmd("no-self-approve", "An agent approving MCP servers or changing the MCP mode itself", "(\\bcephalo(\\.cmd|\\.ps1)?|cli\\.js[\"']?)\\s+mcp\\s+(allow|approve|pin|mode|trust)\\b"),
 ];
 
 /** Applies on every POSIX system (macOS and Linux). */

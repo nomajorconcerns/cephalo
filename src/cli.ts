@@ -11,7 +11,7 @@ import {
 import { createInterface } from "node:readline";
 import { printBanner, supportsColor } from "./banner.js";
 import { runWatch } from "./watch.js";
-import { applyAllow, applyMode, listMcp, planAllow, planMode } from "./mcpcmd.js";
+import { applyAllow, applyMode, listMcp, planAllow, planMode, planPin, runScan } from "./mcpcmd.js";
 import { mcpPolicyPath } from "./mcp/policy.js";
 import { formatChecks, runDoctor } from "./doctor.js";
 import { runInit } from "./init.js";
@@ -25,7 +25,8 @@ const USAGE = `Usage:
   cephalo log [--blocked] [--limit N] Show recent audit entries
   cephalo watch [--blocked] [--last N] [--no-color]
                                       Follow the audit log live (Ctrl+C to stop)
-  cephalo mcp [list|allow|mode|path]  MCP firewall: allowlist servers by command/URL, audit or enforce
+  cephalo mcp [list|allow|pin|scan|mode|path]
+                                      MCP firewall: allowlist by command/URL, fingerprint tools, audit or enforce
   cephalo install claude|hermes       Add Cephalo's hook to the agent's config
   cephalo uninstall claude|hermes     Remove Cephalo's hook from the agent's config
   cephalo init [--yes]                Set up rules and install hooks for the agents found
@@ -167,6 +168,22 @@ async function main(): Promise<number> {
       for (const line of applyAllow(plan)) console.log(line);
       return 0;
     }
+    if (sub === "pin" || sub === "approve") {
+      const name = rest.slice(1).find((a) => !a.startsWith("-"));
+      const plan = await planPin(name);
+      for (const line of plan.lines) console.log(line);
+      if (!plan.apply) return plan.exitCode;
+      if (!(await confirm("Approve these tool definitions? [y/N] "))) return yes ? 0 : 1;
+      for (const line of plan.apply()) console.log(line);
+      return 0;
+    }
+    if (sub === "scan") {
+      const name = rest.slice(1).find((a) => !a.startsWith("-"));
+      const r = await runScan(name);
+      if (rest.includes("--json")) console.log(JSON.stringify(r.results, null, 2));
+      else for (const line of r.lines) console.log(line);
+      return r.exitCode;
+    }
     if (sub === "mode") {
       const plan = planMode(rest[1] ?? "");
       for (const line of plan.lines) console.log(line);
@@ -175,7 +192,7 @@ async function main(): Promise<number> {
       for (const line of applyMode(plan.mode)) console.log(line);
       return 0;
     }
-    process.stderr.write("Usage: cephalo mcp [list | allow <name> | allow --command \"...\" | allow --url <url> | mode audit|enforce | path]\n");
+    process.stderr.write("Usage: cephalo mcp [list | allow <name> | allow --command \"...\" | allow --url <url> | pin <name> | scan [name] [--json] | mode audit|enforce | path]\n");
     return 1;
   }
 
