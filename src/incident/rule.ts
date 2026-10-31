@@ -84,7 +84,10 @@ export function assess(c: Candidate, incident: AuditEntry, history: AuditEntry[]
   }
   if (re) {
     for (const s of stress()) {
-      slowestMs = Math.max(slowestMs, timeIt(rule.pattern, s));
+      // A busy machine can make a good pattern look slow once. A catastrophic pattern is slow every time, so take the best of up to three tries.
+      let best = timeIt(rule.pattern, s);
+      for (let k = 0; k < 2 && best > 50; k++) best = Math.min(best, timeIt(rule.pattern, s));
+      slowestMs = Math.max(slowestMs, best);
       if (slowestMs === Infinity) break;
     }
     if (slowestMs > 50) errors.push(`the pattern is slow on adversarial input (${slowestMs === Infinity ? `over ${WATCHDOG_MS} ms, cut off` : `${slowestMs.toFixed(0)} ms`}), which could stall every tool call`);
