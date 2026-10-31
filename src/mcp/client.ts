@@ -53,16 +53,23 @@ function killTree(child: ChildProcess) {
   }
 }
 
+/** Start a stdio MCP server process (on Windows, .cmd/.bat shims such as npx need cmd.exe). Used by scan and by the proxy. */
+export function spawnServer(command: string, args: string[], env: NodeJS.ProcessEnv, stdio: "pipe" | "inherit-stderr" = "pipe"): ChildProcess {
+  const io: ["pipe", "pipe", "pipe" | "inherit"] = ["pipe", "pipe", stdio === "pipe" ? "pipe" : "inherit"];
+  return process.platform === "win32" && !/\.exe$/i.test(command)
+    ? spawn(process.env.ComSpec ?? "cmd.exe", ["/d", "/s", "/c", `"${[command, ...args].map(winQuote).join(" ")}"`], { env, windowsHide: true, windowsVerbatimArguments: true, stdio: io })
+    : spawn(command, args, { env, windowsHide: true, stdio: io });
+}
+
+export { killTree };
+
 /** Ask a stdio MCP server for its tools (initialize -> initialized -> tools/list, following pages). */
 async function listStdio(def: ServerDef, o: Required<Pick<ListToolsOptions, "timeoutMs">> & ListToolsOptions): Promise<ListToolsResult> {
   const base = o.expandFrom ?? process.env;
   const env = { ...process.env, ...expandMap(def.env, base) };
   const args = (def.args ?? []).map((a) => expand(a, base));
   const command = expand(def.command!, base);
-  const child =
-    process.platform === "win32" && !/\.exe$/i.test(command)
-      ? spawn(process.env.ComSpec ?? "cmd.exe", ["/d", "/s", "/c", `"${[command, ...args].map(winQuote).join(" ")}"`], { env, windowsHide: true, windowsVerbatimArguments: true, stdio: ["pipe", "pipe", "pipe"] })
-      : spawn(command, args, { env, windowsHide: true, stdio: ["pipe", "pipe", "pipe"] });
+  const child = spawnServer(command, args, env);
   child.stderr?.resume();
   child.stdin?.on("error", () => {}); /* a server that dies early closes the pipe; the exit handler reports it */
   const pending = new Map<number, (m: any) => void>();

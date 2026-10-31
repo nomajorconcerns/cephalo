@@ -45,10 +45,32 @@ function unwrap(exe: string, args: string[]): { exe: string; args: string[] } {
   return { exe, args };
 }
 
+/**
+ * `cephalo mcp proxy [--name x] -- <real command...>` (or `node .../cli.js mcp proxy ...`) IS the real command as far as
+ * identity goes, so approvals and pins made for the plain server keep working after it is put behind the proxy.
+ */
+function unwrapProxy(exe: string, args: string[]): { exe: string; args: string[] } | null {
+  let rest: string[] | null = null;
+  if (exe === "cephalo" && args[0] === "mcp" && args[1] === "proxy") rest = args.slice(2);
+  else if (exe === "node" && /cli\.js$/i.test(args[0] ?? "") && args[1] === "mcp" && args[2] === "proxy") rest = args.slice(3);
+  if (!rest) return null;
+  let i = 0;
+  while (i < rest.length && rest[i] === "--name") i += 2; // proxy options come first
+  if (rest[i] === "--") i += 1;
+  rest = rest.slice(i);
+  if (!rest.length) return null;
+  return { exe: normalizeExecutable(rest[0]), args: rest.slice(1) };
+}
+
 /** Canonical single-line form of a command + args. */
 export function normalizeCommandLine(command: string, args: string[] = []): string {
-  const first = unwrap(normalizeExecutable(command), args.map(String));
-  return [first.exe, ...first.args.map(quoteArg)].join(" ").trim();
+  let cur = unwrap(normalizeExecutable(command), args.map(String));
+  for (let i = 0; i < 4; i++) {
+    const inner = unwrapProxy(cur.exe, cur.args);
+    if (!inner) break;
+    cur = unwrap(inner.exe, inner.args);
+  }
+  return [cur.exe, ...cur.args.map(quoteArg)].join(" ").trim();
 }
 
 /** Same canonical form for a user-written allowlist string. */

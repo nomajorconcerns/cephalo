@@ -1,4 +1,4 @@
-import os from "node:os";
+import { currentUser } from "./user.js";
 import { appendAudit, type AuditEntry } from "./audit.js";
 import { checkMcpCall, type McpCheckOptions } from "./mcp/check.js";
 import { isMcpToolName } from "./mcp/servers.js";
@@ -66,14 +66,6 @@ export interface HookOptions {
   auditFile?: string;
   /** Overrides for MCP checks (tests): policy, home dir, cwd, Hermes config path, or a fixed server list. */
   mcp?: McpCheckOptions;
-}
-
-function currentUser(): string | undefined {
-  try {
-    return os.userInfo().username;
-  } catch {
-    return process.env.USERNAME ?? process.env.USER;
-  }
 }
 
 /** Process raw stdin JSON for an agent hook. Returns the text to print on stdout. Never throws (fail-open). */

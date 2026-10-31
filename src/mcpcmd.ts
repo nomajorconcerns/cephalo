@@ -276,6 +276,41 @@ export async function runScan(name: string | undefined, o: McpCmdOptions = {}): 
   return { lines, exitCode, results };
 }
 
+/* ---------------------------------------------------------------- wrap (print-only) */
+
+/**
+ * `cephalo mcp wrap <name>`: show how to put a configured stdio server behind the runtime proxy.
+ * Prints the replacement config entry; it never edits an agent's config.
+ */
+export function planWrap(name: string | undefined, cliJs: string, o: McpCmdOptions = {}): { lines: string[]; exitCode: number } {
+  if (!name) return { lines: ["Usage: cephalo mcp wrap <server-name>"], exitCode: 1 };
+  const found = listAllServers(o).filter((s) => s.name === name);
+  if (found.length === 0) return { lines: [`No configured MCP server named "${name}". See: cephalo mcp list`], exitCode: 1 };
+  const s = found[0];
+  if (s.def.kind !== "stdio") return { lines: [`"${name}" is a remote (URL) server. The runtime proxy wraps local stdio servers only; remote servers are covered by the allowlist, \`cephalo mcp scan\` and the hook.`], exitCode: 1 };
+  const alreadyWrapped = /\bmcp\s+proxy\b/.test([s.def.command, ...(s.def.args ?? [])].join(" "));
+  if (alreadyWrapped) return { lines: [`"${name}" already runs behind the proxy.`], exitCode: 0 };
+  const args = ["mcp", "proxy", "--name", name, "--", s.def.command!, ...(s.def.args ?? [])];
+  const forClaude = { command: "node", args: [cliJs, ...args] };
+  const lines = [
+    `"${name}" currently runs: ${s.identity.replace(/^cmd:/, "")}   (${s.source}, ${s.origin})`,
+    "",
+    "Replace its \"command\" and \"args\" with the following (keep your \"env\" as it is). Cephalo does not edit agent configs.",
+    "",
+    "Claude Code (JSON, in the same place the server is defined today):",
+    `  "command": ${JSON.stringify(forClaude.command)},`,
+    `  "args": ${JSON.stringify(forClaude.args)}`,
+    "",
+    "Hermes (YAML, under mcp_servers):",
+    `  command: ${JSON.stringify(forClaude.command)}`,
+    `  args: ${JSON.stringify(forClaude.args)}`,
+    "",
+    "The server's identity stays the same (the proxy is unwrapped when matching), so your allowlist entry and pinned tools keep working.",
+    "Restart the agent afterwards.",
+  ];
+  return { lines, exitCode: 0 };
+}
+
 export { snapshotTool };
 
 export { identityOf };

@@ -39,6 +39,7 @@ function respond(m: any): any | null {
     }
     return ok({ tools });
   }
+  if (m.method === "tools/call") return ok({ content: [{ type: "text", text: `called ${m.params?.name} with ${JSON.stringify(m.params?.arguments ?? {})}` }] });
   if (m.method === "ping") return ok({});
   return { jsonrpc: "2.0", id: m.id, error: { code: -32601, message: `unknown method ${m.method}` } };
 }
@@ -83,6 +84,12 @@ if (mode === "http") {
   });
 } else {
   console.log("fake-notes server starting (this banner line is not JSON)");
+  if (process.env.FAKE_MCP_NOTIFY === "1") {
+    // announce a change whenever the tools file is rewritten (what a server that swaps its tools at runtime would do)
+    fs.watchFile(toolsFile, { interval: 40 }, (cur, prev) => {
+      if (cur.mtimeMs !== prev.mtimeMs) process.stdout.write(JSON.stringify({ jsonrpc: "2.0", method: "notifications/tools/list_changed" }) + "\n");
+    });
+  }
   const rl = createInterface({ input: process.stdin });
   rl.on("line", (line) => {
     try {

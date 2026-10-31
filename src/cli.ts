@@ -11,7 +11,9 @@ import {
 import { createInterface } from "node:readline";
 import { printBanner, supportsColor } from "./banner.js";
 import { runWatch } from "./watch.js";
-import { applyAllow, applyMode, listMcp, planAllow, planMode, planPin, runScan } from "./mcpcmd.js";
+import { applyAllow, applyMode, listMcp, planAllow, planMode, planPin, planWrap, runScan } from "./mcpcmd.js";
+import { runProxy } from "./mcp/proxy.js";
+import { projectRoot } from "./install.js";
 import { mcpPolicyPath } from "./mcp/policy.js";
 import { formatChecks, runDoctor } from "./doctor.js";
 import { runInit } from "./init.js";
@@ -25,8 +27,9 @@ const USAGE = `Usage:
   cephalo log [--blocked] [--limit N] Show recent audit entries
   cephalo watch [--blocked] [--last N] [--no-color]
                                       Follow the audit log live (Ctrl+C to stop)
-  cephalo mcp [list|allow|pin|scan|mode|path]
+  cephalo mcp [list|allow|pin|scan|wrap|mode|path]
                                       MCP firewall: allowlist by command/URL, fingerprint tools, audit or enforce
+  cephalo mcp proxy -- <command...>   Run an MCP server behind Cephalo's runtime proxy (used in agent configs)
   cephalo install claude|hermes       Add Cephalo's hook to the agent's config
   cephalo uninstall claude|hermes     Remove Cephalo's hook from the agent's config
   cephalo init [--yes]                Set up rules and install hooks for the agents found
@@ -167,6 +170,28 @@ async function main(): Promise<number> {
       if (!(await confirm("Add this to the MCP allowlist? [y/N] "))) return yes ? 0 : 1;
       for (const line of applyAllow(plan)) console.log(line);
       return 0;
+    }
+    if (sub === "proxy") {
+      // Everything after `proxy` is: [--name <label>] [--] <command> [args...]. stdout belongs to the MCP protocol: print nothing else.
+      const tail = rest.slice(1);
+      let label: string | undefined;
+      let i = 0;
+      while (i < tail.length && tail[i] === "--name") {
+        label = tail[i + 1];
+        i += 2;
+      }
+      if (tail[i] === "--") i += 1;
+      const cmdline = tail.slice(i);
+      if (cmdline.length === 0) {
+        process.stderr.write("Usage: cephalo mcp proxy [--name <label>] -- <command> [args...]\n");
+        return 1;
+      }
+      return runProxy({ command: cmdline[0], args: cmdline.slice(1), label, input: process.stdin, output: process.stdout });
+    }
+    if (sub === "wrap") {
+      const r = planWrap(rest.slice(1).find((a) => !a.startsWith("-")), `${projectRoot()}/dist/cli.js`);
+      for (const line of r.lines) console.log(line);
+      return r.exitCode;
     }
     if (sub === "pin" || sub === "approve") {
       const name = rest.slice(1).find((a) => !a.startsWith("-"));
