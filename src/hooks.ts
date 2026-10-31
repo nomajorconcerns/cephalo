@@ -1,4 +1,5 @@
 import { currentUser } from "./user.js";
+import { tripwireGate, tripwireObserve, type TripHookOptions } from "./tripwire/hook.js";
 import { appendAudit, type AuditEntry } from "./audit.js";
 import { checkMcpCall, type McpCheckOptions } from "./mcp/check.js";
 import { isMcpToolName } from "./mcp/servers.js";
@@ -66,6 +67,8 @@ export interface HookOptions {
   auditFile?: string;
   /** Overrides for MCP checks (tests): policy, home dir, cwd, Hermes config path, or a fixed server list. */
   mcp?: McpCheckOptions;
+  /** Overrides for the prompt-injection tripwire (tests): state directory, policy. */
+  tripwire?: TripHookOptions;
 }
 
 /** Process raw stdin JSON for an agent hook. Returns the text to print on stdout. Never throws (fail-open). */
@@ -81,6 +84,25 @@ export function runHook(agent: Agent, raw: string, opts: HookOptions = {}): stri
   let tool = "unknown";
   try {
     const payload = JSON.parse(raw);
+    const evName = str(payload?.hook_event_name);
+    if (evName === "PostToolUse" || evName === "post_tool_call") {
+      // After the tool ran: look at what came back for prompt injection. Never blocks (the tool has already run).
+      const obs = tripwireObserve(agent, payload, opts.tripwire);
+      if (!obs.event) return allowOut;
+      const input = payload?.tool_input ?? {};
+      log({
+        tool: obs.tool,
+        ...(str(input.command) !== undefined ? { command: str(input.command) } : {}),
+        ...(str(input.file_path ?? input.path) !== undefined ? { path: str(input.file_path ?? input.path) } : {}),
+        decision: "allow",
+        rule: `tripwire-${obs.event.level}`,
+        note: `possible prompt injection in the output of ${obs.tool}: ${obs.event.findings.map((f) => `${f.id} "${f.excerpt}"`).join("; ")}`.slice(0, 600),
+      });
+      if (agent === "claude" && obs.warning) {
+        return JSON.stringify({ hookSpecificOutput: { hookEventName: "PostToolUse", additionalContext: obs.warning } });
+      }
+      return allowOut;
+    }
     const ex = agent === "claude" ? extractClaude(payload) : extractHermes(payload);
     if (!ex) {
       log({ tool: str(payload?.tool_name) ?? "unknown", decision: "allow" });
@@ -99,6 +121,16 @@ export function runHook(agent: Agent, raw: string, opts: HookOptions = {}): stri
     } else {
       res = evaluate(ex, opts.rules ?? loadEffectiveRules());
     }
+    let tripMessage: string | undefined;
+    if (res.decision === "allow") {
+      const gate = tripwireGate(agent, payload, { tool, command: ex.command, path: ex.path, access: ex.access, mcp: !!ex.mcp }, opts.tripwire);
+      if (gate.blocked) {
+        res = { decision: "block", rule: gate.blocked.rule };
+        tripMessage = gate.blocked.message;
+      } else if (gate.note) {
+        mcpLog = { ...mcpLog, note: [mcpLog.note, gate.note].filter(Boolean).join("; ") };
+      }
+    }
     log({
       tool,
       ...(ex.command !== undefined ? { command: ex.command } : {}),
@@ -108,7 +140,7 @@ export function runHook(agent: Agent, raw: string, opts: HookOptions = {}): stri
       ...mcpLog,
     });
     if (res.decision === "block" && res.rule) {
-      const message = blockMessage(res.rule);
+      const message = tripMessage ?? blockMessage(res.rule);
       return agent === "claude"
         ? JSON.stringify({
             hookSpecificOutput: {

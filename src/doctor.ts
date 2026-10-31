@@ -6,6 +6,7 @@ import { auditPath } from "./audit.js";
 import { runHook } from "./hooks.js";
 import { getPlatform } from "./platform.js";
 import { mcpSummary, type McpCmdOptions } from "./mcpcmd.js";
+import { tripSummary, type TripCmdOptions } from "./tripwirecmd.js";
 import { claudeSettingsPath, hermesConfigPath, projectRoot, HERMES_CMD_RE } from "./install.js";
 import { DEFAULT_RULES, activePlatformRules, defaultRulesPath, parseRules, type Rule } from "./rules.js";
 import { claudeStatus, hermesStatus, type HookStatus } from "./status.js";
@@ -29,6 +30,8 @@ export interface DoctorOptions {
   hermesList?: () => string | null;
   /** MCP lookups (tests): policy file, home dir, cwd, Hermes config. */
   mcp?: McpCmdOptions;
+  /** Tripwire lookups (tests): policy file, state directory. */
+  trip?: TripCmdOptions;
 }
 
 function defaultHermesList(): string | null {
@@ -66,7 +69,8 @@ function checkHook(name: "Claude Code" | "Hermes", st: HookStatus, file: string,
     return;
   }
   if (!st.current) {
-    out.push({ level: "warn", name: `${name} hook`, detail: `installed but outdated or pointing elsewhere (matcher "${st.matcher}", command "${st.command}")`, fix: installCmd });
+    const why = st.postCurrent === false ? `; the after-call hook that powers the prompt-injection tripwire is ${st.postMatcher === undefined ? "missing" : "outdated"}` : "";
+    out.push({ level: "warn", name: `${name} hook`, detail: `installed but outdated or pointing elsewhere (matcher "${st.matcher}", command "${st.command}"${why})`, fix: installCmd });
   } else {
     out.push({ level: "ok", name: `${name} hook`, detail: `installed and current (${file})` });
   }
@@ -114,6 +118,15 @@ export function runDoctor(o: DoctorOptions = {}): { checks: Check[]; exitCode: n
     const plat = getPlatform();
     const active = activePlatformRules(rules, plat);
     checks.push({ level: "info", name: "Platform rules", detail: `${active.length} built-in ${plat.label} rule(s) active on top of the rules file` });
+  }
+
+  {
+    const trip = tripSummary(o.trip ?? {});
+    if (trip.alert > 0) {
+      checks.push({ level: "warn", name: "Prompt-injection tripwire", detail: `${trip.alert} session(s) read text that looks like a prompt injection; risky actions are ${trip.mode === "enforce" ? "blocked" : "only logged"} in them`, fix: "Review with: cephalo tripwire status   then release with: cephalo tripwire clear" });
+    } else {
+      checks.push({ level: trip.mode === "off" ? "warn" : "ok", name: "Prompt-injection tripwire", detail: `${trip.mode} mode, no tripped sessions`, fix: trip.mode === "off" ? "cephalo tripwire mode enforce" : undefined });
+    }
   }
 
   {

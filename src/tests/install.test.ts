@@ -59,7 +59,7 @@ test("claude/hermes: install upgrades an old narrower matcher in place", () => {
   assert.match(installHermes(h, ABS).join("\n"), /Updated Cephalo matcher/);
   const t = fs.readFileSync(h, "utf8");
   assert.ok(t.includes(`matcher: "${HERMES_MATCHER}"`));
-  assert.equal((t.match(/hook hermes/g) ?? []).length, 1);
+  assert.equal((t.match(/hook hermes/g) ?? []).length, 2, "one entry per section (before-call and after-call), never duplicated");
   fs.rmSync(dir, { recursive: true, force: true });
 });
 
@@ -101,7 +101,7 @@ test("hermes: install preserves comments, adds entry once, uninstall restores", 
   assert.equal(fs.readFileSync(path.join(dir, backups(dir, "config.yaml")[0]!), "utf8"), HERMES_SRC);
 
   assert.match(installHermes(f, ABS)[0]!, /Already installed/);
-  assert.equal((fs.readFileSync(f, "utf8").match(/hook hermes/g) ?? []).length, 1);
+  assert.equal((fs.readFileSync(f, "utf8").match(/hook hermes/g) ?? []).length, 2, "re-install adds nothing");
 
   uninstallHermes(f);
   assert.equal(fs.readFileSync(f, "utf8"), HERMES_SRC);
@@ -114,7 +114,7 @@ test("hermes: works when hooks key is absent or empty; uninstall cleans up", () 
     const f = path.join(dir, "config.yaml");
     fs.writeFileSync(f, src);
     installHermes(f, ABS);
-    assert.equal((fs.readFileSync(f, "utf8").match(/hook hermes/g) ?? []).length, 1, src);
+    assert.equal((fs.readFileSync(f, "utf8").match(/hook hermes/g) ?? []).length, 2, src);
     uninstallHermes(f);
     assert.doesNotMatch(fs.readFileSync(f, "utf8"), /cephalo/, src);
     fs.rmSync(dir, { recursive: true, force: true });

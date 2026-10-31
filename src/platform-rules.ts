@@ -9,13 +9,13 @@ const cmd = (id: string, description: string, pattern: string): Rule => ({ id, d
 export const SYSTEM_RULES: Rule[] = [
   {
     id: "protect-cephalo-policy",
-    description: "Writing Cephalo's MCP allowlist or tool approvals",
+    description: "Writing Cephalo's MCP allowlist, tool approvals or tripwire state",
     type: "path",
     on: "write",
-    pattern: "[\\/\\\\]\\.cephalo[\\/\\\\]mcp[^\\/\\\\]*$",
+    pattern: "[\\/\\\\]\\.cephalo[\\/\\\\](mcp[^\\/\\\\]*$|tripwire([\\/\\\\.]|$))",
     action: "block",
   },
-  cmd("no-self-approve", "An agent approving MCP servers or changing the MCP mode itself", "(\\bcephalo(\\.cmd|\\.ps1)?|cli\\.js[\"']?)\\s+mcp\\s+(allow|approve|pin|mode|trust)\\b"),
+  cmd("no-self-approve", "An agent approving MCP servers, or releasing/disabling the tripwire, itself", "(\\bcephalo(\\.cmd|\\.ps1)?|cli\\.js[\"']?)\\s+(mcp\\s+(allow|approve|pin|mode|trust)|tripwire\\s+(clear|mode|reset|allow))\\b"),
 ];
 
 /** Applies on every POSIX system (macOS and Linux). */

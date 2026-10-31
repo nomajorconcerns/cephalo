@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { getPlatform } from "./platform.js";
 import { fileURLToPath } from "node:url";
-import { isMap, isScalar, isSeq, parseDocument, type YAMLMap, type YAMLSeq } from "yaml";
+import { isMap, isScalar, isSeq, parseDocument, type Document, type YAMLMap, type YAMLSeq } from "yaml";
 
 export type Target = "claude" | "hermes";
 
@@ -22,11 +22,23 @@ export function hermesConfigPath(): string {
 // `mcp__.*` / `mcp_.*` route every MCP tool call (mcp__<server>__<tool>) to Cephalo's MCP firewall.
 export const HERMES_MATCHER = "terminal|read_file|write_file|patch|search_files|execute_code|mcp_.*";
 export const CLAUDE_MATCHER = "Bash|Read|Write|Edit|MultiEdit|NotebookEdit|mcp__.*";
+// After-the-call hooks feed the prompt-injection tripwire: they see what came BACK from tools that read outside content.
+export const HERMES_POST_MATCHER = "terminal|read_file|search_files|execute_code|web_search|web_extract|browser_.*|mcp_.*";
+export const CLAUDE_POST_MATCHER = "Bash|Read|Grep|Glob|WebFetch|WebSearch|mcp__.*";
 export const CLAUDE_CMD_RE = /cli\.js["']?\s+hook\s+claude\b/;
 export const HERMES_CMD_RE = /cli\.js["']?\s+hook\s+hermes\b/;
 
 export const claudeCommand = (abs: string) => `node ${abs}/dist/cli.js hook claude`;
 export const hermesCommand = (abs: string) => `node ${abs}/dist/cli.js hook hermes`;
+
+const CLAUDE_SECTIONS: Array<[string, string]> = [
+  ["PreToolUse", CLAUDE_MATCHER],
+  ["PostToolUse", CLAUDE_POST_MATCHER],
+];
+const HERMES_SECTIONS: Array<[string, string]> = [
+  ["pre_tool_call", HERMES_MATCHER],
+  ["post_tool_call", HERMES_POST_MATCHER],
+];
 
 function backup(file: string): string {
   const stamp = new Date().toISOString().replace(/[:.]/g, "-");
@@ -57,61 +69,69 @@ function writeClaude(file: string, settings: unknown): void {
   fs.writeFileSync(file, JSON.stringify(settings, null, 2) + "\n", "utf8");
 }
 
+/** Make sure `hooks.<section>` has Cephalo's entry with the right matcher. Returns what changed, or null if nothing did. */
+function ensureClaudeSection(settings: Record<string, any>, section: string, matcher: string, cmd: string, file: string): string | null {
+  if (settings.hooks[section] === undefined) settings.hooks[section] = [];
+  const list = settings.hooks[section];
+  if (!Array.isArray(list)) throw new Error(`"hooks.${section}" in ${file} is not an array.`);
+  const existing = list.find((e) => Array.isArray(e?.hooks) && e.hooks.some((h: any) => h?.command === cmd));
+  if (existing) {
+    if (existing.matcher === matcher) return null;
+    const old = existing.matcher;
+    existing.matcher = matcher;
+    return `Updated Cephalo matcher in hooks.${section}: "${old}" -> "${matcher}"`;
+  }
+  const entry = { matcher, hooks: [{ type: "command", command: cmd }] };
+  list.push(entry);
+  return `Added to hooks.${section}: ${JSON.stringify(entry)}`;
+}
+
 export function installClaude(file = claudeSettingsPath(), abs = projectRoot()): string[] {
   const cmd = claudeCommand(abs);
   const existed = fs.existsSync(file);
   const settings = readClaude(file);
   if (settings.hooks === undefined) settings.hooks = {};
   if (!isObj(settings.hooks)) throw new Error(`"hooks" in ${file} is not an object.`);
-  if (settings.hooks.PreToolUse === undefined) settings.hooks.PreToolUse = [];
-  const pre = settings.hooks.PreToolUse;
-  if (!Array.isArray(pre)) throw new Error(`"hooks.PreToolUse" in ${file} is not an array.`);
-  const existing = pre.find((e) => Array.isArray(e?.hooks) && e.hooks.some((h: any) => h?.command === cmd));
-  if (existing) {
-    if (existing.matcher === CLAUDE_MATCHER) return [`Already installed in ${file}. No changes made.`];
-    const old = existing.matcher;
-    existing.matcher = CLAUDE_MATCHER;
-    const bk = backup(file);
-    writeClaude(file, settings);
-    return [`Backup: ${bk}`, `Changed: ${file}`, `Updated Cephalo matcher in hooks.PreToolUse: "${old}" -> "${CLAUDE_MATCHER}"`];
-  }
+  const changes = CLAUDE_SECTIONS.map(([section, matcher]) => ensureClaudeSection(settings, section, matcher, cmd, file)).filter((c): c is string => c !== null);
+  if (changes.length === 0) return [`Already installed in ${file}. No changes made.`];
   const out: string[] = [];
   if (existed) out.push(`Backup: ${backup(file)}`);
   else out.push(`Backup: none (${file} did not exist, creating it)`);
-  const entry = { matcher: CLAUDE_MATCHER, hooks: [{ type: "command", command: cmd }] };
-  pre.push(entry);
   writeClaude(file, settings);
-  out.push(`Changed: ${file}`, `Added to hooks.PreToolUse: ${JSON.stringify(entry)}`);
+  out.push(`Changed: ${file}`, ...changes);
   return out;
 }
 
 export function uninstallClaude(file = claudeSettingsPath()): string[] {
   if (!fs.existsSync(file)) return [`${file} does not exist. Nothing to remove.`];
   const settings = readClaude(file);
-  const pre = settings.hooks?.PreToolUse;
-  if (!Array.isArray(pre)) return [`No hooks.PreToolUse in ${file}. Nothing to remove.`];
+  if (!CLAUDE_SECTIONS.some(([section]) => Array.isArray(settings.hooks?.[section]))) return [`No hooks.PreToolUse in ${file}. Nothing to remove.`];
   const removed: string[] = [];
-  const kept: any[] = [];
-  for (const e of pre) {
-    if (!isObj(e) || !Array.isArray(e.hooks)) {
-      kept.push(e);
-      continue;
+  for (const [section] of CLAUDE_SECTIONS) {
+    const list = settings.hooks?.[section];
+    if (!Array.isArray(list)) continue;
+    const kept: any[] = [];
+    for (const e of list) {
+      if (!isObj(e) || !Array.isArray(e.hooks)) {
+        kept.push(e);
+        continue;
+      }
+      const remaining = e.hooks.filter((h: any) => {
+        const hit = typeof h?.command === "string" && CLAUDE_CMD_RE.test(h.command);
+        if (hit) removed.push(`Removed from hooks.${section}: ${h.command}`);
+        return !hit;
+      });
+      if (remaining.length === e.hooks.length) kept.push(e);
+      else if (remaining.length > 0) kept.push({ ...e, hooks: remaining });
     }
-    const remaining = e.hooks.filter((h: any) => {
-      const hit = typeof h?.command === "string" && CLAUDE_CMD_RE.test(h.command);
-      if (hit) removed.push(h.command);
-      return !hit;
-    });
-    if (remaining.length === e.hooks.length) kept.push(e);
-    else if (remaining.length > 0) kept.push({ ...e, hooks: remaining });
+    if (kept.length > 0) settings.hooks[section] = kept;
+    else delete settings.hooks[section];
   }
   if (removed.length === 0) return [`No Cephalo entries found in ${file}. No changes made.`];
   const out = [`Backup: ${backup(file)}`];
-  if (kept.length > 0) settings.hooks.PreToolUse = kept;
-  else delete settings.hooks.PreToolUse;
   if (Object.keys(settings.hooks).length === 0) delete settings.hooks;
   writeClaude(file, settings);
-  out.push(`Changed: ${file}`, ...removed.map((c) => `Removed from hooks.PreToolUse: ${c}`));
+  out.push(`Changed: ${file}`, ...removed);
   return out;
 }
 
@@ -126,65 +146,67 @@ function loadHermesDoc(file: string) {
 
 const isNullNode = (n: unknown) => n == null || (isScalar(n) && n.value == null);
 
+function ensureHermesSection(doc: Document, section: string, matcher: string, cmd: string, file: string): string | null {
+  if (isNullNode(doc.getIn(["hooks", section], true))) doc.setIn(["hooks", section], doc.createNode([]));
+  const seq = doc.getIn(["hooks", section], true);
+  if (!isSeq(seq)) throw new Error(`"hooks.${section}" in ${file} is not a list.`);
+  const dup = (seq as YAMLSeq).items.find((it) => isMap(it) && it.toJSON()?.command === cmd) as YAMLMap | undefined;
+  if (dup) {
+    const old = dup.toJSON().matcher;
+    if (old === matcher) return null;
+    dup.set("matcher", doc.createNode(matcher));
+    const m = dup.get("matcher", true);
+    if (isScalar(m)) m.type = "QUOTE_DOUBLE";
+    return `Updated Cephalo matcher in hooks.${section}: "${old}" -> "${matcher}"`;
+  }
+  const item = doc.createNode({ matcher, command: cmd, timeout: 10 }) as YAMLMap;
+  for (const pair of item.items) {
+    if (isScalar(pair.value) && typeof pair.value.value === "string") pair.value.type = "QUOTE_DOUBLE";
+  }
+  (seq as YAMLSeq).flow = false;
+  (seq as YAMLSeq).add(item);
+  return `Added to hooks.${section}: matcher "${matcher}", command "${cmd}", timeout 10`;
+}
+
 export function installHermes(file = hermesConfigPath(), abs = projectRoot()): string[] {
   if (!fs.existsSync(file)) throw new Error(`${file} does not exist. Is Hermes installed? Not creating it.`);
   const cmd = hermesCommand(abs);
   const doc = loadHermesDoc(file);
   if (isNullNode(doc.get("hooks", true))) doc.set("hooks", doc.createNode({}));
   if (!isMap(doc.get("hooks", true))) throw new Error(`"hooks" in ${file} is not a mapping.`);
-  if (isNullNode(doc.getIn(["hooks", "pre_tool_call"], true))) {
-    doc.setIn(["hooks", "pre_tool_call"], doc.createNode([]));
-  }
-  const seq = doc.getIn(["hooks", "pre_tool_call"], true);
-  if (!isSeq(seq)) throw new Error(`"hooks.pre_tool_call" in ${file} is not a list.`);
-  const dup = (seq as YAMLSeq).items.find((it) => isMap(it) && it.toJSON()?.command === cmd) as YAMLMap | undefined;
-  if (dup) {
-    const old = dup.toJSON().matcher;
-    if (old === HERMES_MATCHER) return [`Already installed in ${file}. No changes made.`];
-    dup.set("matcher", doc.createNode(HERMES_MATCHER));
-    const m = dup.get("matcher", true);
-    if (isScalar(m)) m.type = "QUOTE_DOUBLE";
-    const bk = backup(file);
-    fs.writeFileSync(file, doc.toString({ lineWidth: 0 }), "utf8");
-    return [`Backup: ${bk}`, `Changed: ${file}`, `Updated Cephalo matcher in hooks.pre_tool_call: "${old}" -> "${HERMES_MATCHER}"`];
-  }
-  const item = doc.createNode({ matcher: HERMES_MATCHER, command: cmd, timeout: 10 }) as YAMLMap;
-  for (const pair of item.items) {
-    if (isScalar(pair.value) && typeof pair.value.value === "string") pair.value.type = "QUOTE_DOUBLE";
-  }
-  (seq as YAMLSeq).flow = false;
-  (seq as YAMLSeq).add(item);
+  const changes = HERMES_SECTIONS.map(([section, matcher]) => ensureHermesSection(doc, section, matcher, cmd, file)).filter((c): c is string => c !== null);
+  if (changes.length === 0) return [`Already installed in ${file}. No changes made.`];
   const out = [`Backup: ${backup(file)}`];
   fs.writeFileSync(file, doc.toString({ lineWidth: 0 }), "utf8");
-  out.push(
-    `Changed: ${file}`,
-    `Added to hooks.pre_tool_call: matcher "${HERMES_MATCHER}", command "${cmd}", timeout 10`,
-  );
+  out.push(`Changed: ${file}`, ...changes);
   return out;
 }
 
 export function uninstallHermes(file = hermesConfigPath()): string[] {
   if (!fs.existsSync(file)) return [`${file} does not exist. Nothing to remove.`];
   const doc = loadHermesDoc(file);
-  const seq = doc.getIn(["hooks", "pre_tool_call"], true);
-  if (!isSeq(seq)) return [`No hooks.pre_tool_call list in ${file}. Nothing to remove.`];
+  if (!HERMES_SECTIONS.some(([section]) => isSeq(doc.getIn(["hooks", section], true)))) return [`No hooks.pre_tool_call list in ${file}. Nothing to remove.`];
   const removed: string[] = [];
-  for (let i = seq.items.length - 1; i >= 0; i--) {
-    const it = seq.items[i];
-    const c = isMap(it) ? it.toJSON()?.command : undefined;
-    if (typeof c === "string" && HERMES_CMD_RE.test(c)) {
-      removed.unshift(c);
-      seq.delete(i);
+  for (const [section] of HERMES_SECTIONS) {
+    const seq = doc.getIn(["hooks", section], true);
+    if (!isSeq(seq)) continue;
+    let hit = false;
+    for (let i = seq.items.length - 1; i >= 0; i--) {
+      const it = seq.items[i];
+      const c = isMap(it) ? it.toJSON()?.command : undefined;
+      if (typeof c === "string" && HERMES_CMD_RE.test(c)) {
+        removed.unshift(`Removed from hooks.${section}: ${c}`);
+        seq.delete(i);
+        hit = true;
+      }
     }
+    if (hit && seq.items.length === 0) doc.deleteIn(["hooks", section]);
   }
   if (removed.length === 0) return [`No Cephalo entries found in ${file}. No changes made.`];
   const out = [`Backup: ${backup(file)}`];
-  if (seq.items.length === 0) {
-    doc.deleteIn(["hooks", "pre_tool_call"]);
-    const hooks = doc.get("hooks", true);
-    if (isMap(hooks) && hooks.items.length === 0) doc.delete("hooks");
-  }
+  const hooks = doc.get("hooks", true);
+  if (isMap(hooks) && hooks.items.length === 0) doc.delete("hooks");
   fs.writeFileSync(file, doc.toString({ lineWidth: 0 }), "utf8");
-  out.push(`Changed: ${file}`, ...removed.map((c) => `Removed from hooks.pre_tool_call: ${c}`));
+  out.push(`Changed: ${file}`, ...removed);
   return out;
 }

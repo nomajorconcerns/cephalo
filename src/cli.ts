@@ -8,11 +8,14 @@ import {
   uninstallClaude,
   uninstallHermes,
 } from "./install.js";
+import fs from "node:fs";
 import { createInterface } from "node:readline";
 import { printBanner, supportsColor } from "./banner.js";
 import { runWatch } from "./watch.js";
 import { applyAllow, applyMode, listMcp, planAllow, planMode, planPin, planWrap, runScan } from "./mcpcmd.js";
 import { runProxy } from "./mcp/proxy.js";
+import { applyClear, applyTripMode, planClear, planTripMode, scanReport, tripStatus } from "./tripwirecmd.js";
+import { tripPolicyPath } from "./tripwire/state.js";
 import { projectRoot } from "./install.js";
 import { mcpPolicyPath } from "./mcp/policy.js";
 import { formatChecks, runDoctor } from "./doctor.js";
@@ -29,6 +32,8 @@ const USAGE = `Usage:
                                       Follow the audit log live (Ctrl+C to stop)
   cephalo mcp [list|allow|pin|scan|wrap|mode|path]
                                       MCP firewall: allowlist by command/URL, fingerprint tools, audit or enforce
+  cephalo tripwire [status|scan|clear|mode|path]
+                                      Prompt-injection tripwire: scan what the agent reads, lock down risky actions
   cephalo mcp proxy -- <command...>   Run an MCP server behind Cephalo's runtime proxy (used in agent configs)
   cephalo install claude|hermes       Add Cephalo's hook to the agent's config
   cephalo uninstall claude|hermes     Remove Cephalo's hook from the agent's config
@@ -133,6 +138,66 @@ async function main(): Promise<number> {
       signal: ac.signal,
     });
     return 0;
+  }
+
+  if (cmd === "tripwire") {
+    const sub = rest[0] ?? "status";
+    const yes = rest.includes("--yes") || rest.includes("-y");
+    const confirm = async (question: string): Promise<boolean> => {
+      if (yes) return true;
+      if (!process.stdin.isTTY) {
+        console.log("Not running in a terminal. Nothing was changed. Re-run with --yes to apply.");
+        return false;
+      }
+      const rl = createInterface({ input: process.stdin, output: process.stdout });
+      const answer = await new Promise<string>((resolve) => rl.question(question, resolve));
+      rl.close();
+      return /^y(es)?$/i.test(answer.trim());
+    };
+    if (sub === "status") {
+      const r = tripStatus();
+      for (const line of r.lines) console.log(line);
+      return r.exitCode;
+    }
+    if (sub === "path") {
+      console.log(tripPolicyPath());
+      return 0;
+    }
+    if (sub === "scan") {
+      const target = rest.slice(1).find((a) => a === "-" || !a.startsWith("-"));
+      if (!target) {
+        process.stderr.write("Usage: cephalo tripwire scan <file | ->   (- reads stdin)\n");
+        return 1;
+      }
+      let text = "";
+      try {
+        text = target === "-" ? await readStdin() : fs.readFileSync(target, "utf8");
+      } catch (e) {
+        process.stderr.write(`cephalo: could not read ${target}: ${(e as Error).message}\n`);
+        return 1;
+      }
+      const r = scanReport(text, target === "-" ? "stdin" : target);
+      for (const line of r.lines) console.log(line);
+      return r.exitCode;
+    }
+    if (sub === "clear") {
+      const plan = planClear();
+      for (const line of plan.lines) console.log(line);
+      if (plan.count === 0) return 0;
+      if (!(await confirm("Release these sessions? [y/N] "))) return yes ? 0 : 1;
+      for (const line of applyClear()) console.log(line);
+      return 0;
+    }
+    if (sub === "mode") {
+      const plan = planTripMode(rest[1] ?? "");
+      for (const line of plan.lines) console.log(line);
+      if (!plan.ok) return 1;
+      if (!(await confirm("Apply? [y/N] "))) return yes ? 0 : 1;
+      for (const line of applyTripMode(plan.mode!)) console.log(line);
+      return 0;
+    }
+    process.stderr.write("Usage: cephalo tripwire [status | scan <file|-> | clear | mode enforce|warn|off | path]\n");
+    return 1;
   }
 
   if (cmd === "mcp") {
