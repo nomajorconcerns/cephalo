@@ -14,6 +14,7 @@ import { printBanner, supportsColor } from "./banner.js";
 import { runWatch } from "./watch.js";
 import { applyAllow, applyMode, listMcp, planAllow, planMode, planPin, planWrap, runScan } from "./mcpcmd.js";
 import { runProxy } from "./mcp/proxy.js";
+import { collectReplay, parseReplayArgs, planComment, postComment, render, writeOutput } from "./replaycmd.js";
 import { Vault } from "./vault/store.js";
 import { parseEnvSpec, runWithSecrets, type EnvMapping } from "./vault/run.js";
 import type { BackendId } from "./vault/backends.js";
@@ -36,6 +37,8 @@ const USAGE = `Usage:
                                       Follow the audit log live (Ctrl+C to stop)
   cephalo mcp [list|allow|pin|scan|wrap|mode|path]
                                       MCP firewall: allowlist by command/URL, fingerprint tools, audit or enforce
+  cephalo replay [--pr N] [--format text|md|html|json] [--comment]
+                                      Replay of what the agents did on this branch, for a pull request
   cephalo vault [status|list|set|allow|remove|reveal|path]
                                       Secrets vault: tokens the agent can use but never see
   cephalo run --env NAME -- <command> Run a command with vault secrets injected; output is scrubbed
@@ -48,6 +51,26 @@ const USAGE = `Usage:
   cephalo doctor                      Check rules, hooks, approvals and the audit log
   cephalo rules [list|show <id>|path|reset [--yes]]
                                       Inspect the rules file, or reset it to the defaults (with backup)
+`;
+
+const REPLAY_USAGE = `Usage: cephalo replay [options]
+
+Builds a replay of what the agents did, from the local audit log, scoped to the current git project.
+
+  --since <t>        start (30m, 2h, 1d, today, or a date). Default: a little before this branch's first commit
+  --until <t>        end (default: now)
+  --session <id>     only one agent session (a prefix is enough)
+  --all-projects     do not filter by project directory
+  --strict           leave out entries that have no recorded project
+  --format text|md|html|json
+                     text: summary for the terminal (default). md: PR comment text.
+                     html: one interactive file (default name cephalo-replay.html). json: raw data
+  --out <file>       write to a file (an existing file needs --force; it is kept as a backup copy)
+  --pr <number>      the pull request this belongs to
+  --comment          post the markdown replay to the PR with the GitHub CLI (asks first; --yes skips the question)
+  --update           with --comment: edit your earlier Cephalo replay comment instead of adding another
+  --repo <owner/name>  repository for gh
+  --max-chars <n>    size limit for the markdown (default 60000; GitHub's limit is 65536)
 `;
 
 /** Read a line from the terminal without echoing it (Enter ends, Ctrl+C cancels). */
@@ -179,6 +202,60 @@ async function main(): Promise<number> {
       write: (line) => console.log(line),
       signal: ac.signal,
     });
+    return 0;
+  }
+
+  if (cmd === "replay") {
+    if (rest.includes("--help") || rest.includes("-h")) {
+      console.log(REPLAY_USAGE);
+      return 0;
+    }
+    const parsed = parseReplayArgs(rest);
+    if ("error" in parsed) {
+      process.stderr.write(`cephalo: ${parsed.error}\n`);
+      return 1;
+    }
+    const a = parsed.args;
+    const env = { cwd: process.cwd() };
+    let replay;
+    try {
+      replay = collectReplay(a, env);
+    } catch (e) {
+      process.stderr.write(`cephalo: ${(e as Error).message}\n`);
+      return 1;
+    }
+    if (a.comment) {
+      const plan = planComment(replay, a, env);
+      for (const line of plan.lines) console.log(line);
+      if (!plan.ok) return 1;
+      let ok = a.yes;
+      if (!ok) {
+        if (!process.stdin.isTTY) {
+          console.log("Not running in a terminal. Nothing was posted. Re-run with --yes to post.");
+          return 1;
+        }
+        const rl = createInterface({ input: process.stdin, output: process.stdout });
+        const answer = await new Promise<string>((resolve) => rl.question("Post it? [y/N] ", resolve));
+        rl.close();
+        ok = /^y(es)?$/i.test(answer.trim());
+      }
+      if (!ok) return 1;
+      const res = postComment(plan, a, env);
+      for (const line of res.lines) console.log(line);
+      return res.ok ? 0 : 1;
+    }
+    const outFile = a.out ?? (a.format === "html" ? "cephalo-replay.html" : undefined);
+    const text = render(replay, a);
+    if (outFile) {
+      try {
+        for (const line of writeOutput(text, outFile, a.force)) console.log(line);
+      } catch (e) {
+        process.stderr.write(`cephalo: ${(e as Error).message}\n`);
+        return 1;
+      }
+    } else {
+      console.log(text);
+    }
     return 0;
   }
 

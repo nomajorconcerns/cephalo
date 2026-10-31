@@ -237,7 +237,10 @@ test("agents cannot approve their own MCP servers or edit the allowlist", () => 
     assert.equal(w("/home/a/.cephalo/mcp.yml").rule?.id, "protect-cephalo-policy", id);
     assert.equal(w("C:\\Users\\a\\.cephalo\\mcp-tools.json").rule?.id, "protect-cephalo-policy", id);
     assert.equal(evaluate({ path: "/home/a/.cephalo/mcp.yml", access: "read" }, rules, p).decision, "allow", "reading is fine");
-    assert.equal(w("/home/a/.cephalo/rules.yml").decision, "allow");
+    // the rules file and the audit log are the user's: an agent that could edit them could lift its own limits or erase its trail
+    assert.equal(w("/home/a/.cephalo/rules.yml").rule?.id, "protect-audit-log");
+    assert.equal(w("/home/a/.cephalo/audit.jsonl").rule?.id, "protect-audit-log");
+    assert.equal(evaluate({ path: "/home/a/.cephalo/rules.yml", access: "read" }, rules, p).decision, "allow", "reading them is fine");
     for (const c of ["cephalo mcp allow github --yes", "cephalo.cmd mcp mode audit", "node C:/x/cephalo/dist/cli.js mcp allow --url https://x.dev"]) {
       assert.equal(evaluate({ command: c }, rules, p).rule?.id, "no-self-approve", `${id}: ${c}`);
     }

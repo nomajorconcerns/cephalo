@@ -21,6 +21,9 @@ export interface AuditEntry {
   pin?: string;
   params?: unknown;
   note?: string;
+  /** The agent's session id and working directory (what lets a replay be scoped to one project/branch). */
+  session?: string;
+  cwd?: string;
 }
 
 /** Short text describing what the call acted on, for one-line views. */

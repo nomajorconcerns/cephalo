@@ -27,6 +27,11 @@ export const ESCALATION_RULES: Rule[] = [
     "([\\\\/]\\.ssh[\\\\/]|[\\\\/]\\.aws[\\\\/]|[\\\\/]\\.gnupg[\\\\/]|[\\\\/]\\.(npmrc|pypirc|netrc|git-credentials)$|[\\\\/]id_(rsa|ed25519|ecdsa)(\\.pub)?$|[\\\\/]\\.kube[\\\\/]config$|[\\\\/]\\.docker[\\\\/]config\\.json$|[\\\\/]gh[\\\\/]hosts\\.yml$|[\\\\/]login data$|[\\\\/]cookies$)",
   ),
   cmd(
+    "trip-replay-post",
+    "Publishing a replay to a pull request",
+    "(\\bcephalo(\\.cmd|\\.ps1)?|cli\\.js[\"']?)\\s+replay\\b[^\\n]*--comment",
+  ),
+  cmd(
     "trip-vault",
     "Using the secrets vault (a hijacked agent could point a stored token at an attacker)",
     "(\\bcephalo(\\.cmd|\\.ps1)?|cli\\.js[\"']?)\\s+(run|vault)\\b",

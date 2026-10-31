@@ -51,7 +51,7 @@ export async function runWithSecrets(o: RunOptions): Promise<RunResult> {
   const original = [o.command, ...o.args].join(" ");
   const log = (e: Partial<AuditEntry> & { decision: "allow" | "block" }) => {
     try {
-      appendAudit({ ts: new Date().toISOString(), agent: "cli", tool: "vault-run", user: currentUser(), command: original, ...e }, o.auditFile);
+      appendAudit({ ts: new Date().toISOString(), agent: "cli", tool: "vault-run", user: currentUser(), cwd: (o.cwd ?? process.cwd()).replace(/\\/g, "/"), command: original, ...e }, o.auditFile);
     } catch (x) {
       err.write(`cephalo: audit log failed: ${(x as Error).message}\n`);
     }

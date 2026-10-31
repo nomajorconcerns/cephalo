@@ -17,6 +17,19 @@ export const SYSTEM_RULES: Rule[] = [
     action: "block",
   },
   {
+    id: "protect-audit-log",
+    description: "Writing Cephalo's audit log or rules file (the record of what the agent did, and the limits on it)",
+    type: "path",
+    on: "write",
+    pattern: "[\\/\\\\]\\.cephalo[\\/\\\\](audit\\.jsonl|rules\\.yml)(\\.cephalo-backup-[\\w.-]+)?$",
+    action: "block",
+  },
+  cmd(
+    "no-audit-tamper",
+    "Changing or deleting Cephalo's audit log or rules file from a shell",
+    "(>>?|\\btee\\b|\\bsed\\s+-i|\\brm\\b|\\bdel\\b|\\berase\\b|\\bmv\\b|\\bmove(-item)?\\b|\\bcp\\b|\\bcopy(-item)?\\b|\\btruncate\\b|\\bset-content\\b|\\bout-file\\b|\\badd-content\\b|\\bremove-item\\b|\\bclear-content\\b|\\bren(ame)?(-item)?\\b|\\bdd\\b)[^\\n]*\\.cephalo[\\/\\\\](audit\\.jsonl|rules\\.yml)",
+  ),
+  {
     id: "protect-vault-files",
     description: "Reading or writing Cephalo's secrets vault files",
     type: "path",

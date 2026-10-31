@@ -75,9 +75,10 @@ export interface HookOptions {
 /** Process raw stdin JSON for an agent hook. Returns the text to print on stdout. Never throws (fail-open). */
 export function runHook(agent: Agent, raw: string, opts: HookOptions = {}): string {
   const allowOut = agent === "claude" ? "" : "{}";
+  let where: { session?: string; cwd?: string } = {};
   const log = (e: Omit<AuditEntry, "ts" | "agent">) => {
     try {
-      appendAudit({ ts: new Date().toISOString(), agent, user: currentUser(), ...e }, opts.auditFile);
+      appendAudit({ ts: new Date().toISOString(), agent, user: currentUser(), ...where, ...e }, opts.auditFile);
     } catch (err) {
       process.stderr.write(`cephalo: audit log failed: ${(err as Error).message}\n`);
     }
@@ -85,12 +86,16 @@ export function runHook(agent: Agent, raw: string, opts: HookOptions = {}): stri
   let tool = "unknown";
   try {
     const payload = JSON.parse(raw);
+    where = {
+      ...(str(payload?.session_id) ? { session: str(payload.session_id) } : {}),
+      ...(str(payload?.cwd) ? { cwd: str(payload.cwd) } : {}),
+    };
     const evName = str(payload?.hook_event_name);
     if (evName === "PostToolUse" || evName === "post_tool_call") {
       // After the tool ran: look at what came back for prompt injection. Never blocks (the tool has already run).
       const obs = tripwireObserve(agent, payload, opts.tripwire);
       const input = payload?.tool_input ?? {};
-      const where = {
+      const what = {
         ...(str(input.command) !== undefined ? { command: str(input.command) } : {}),
         ...(str(input.file_path ?? input.path) !== undefined ? { path: str(input.file_path ?? input.path) } : {}),
       };
@@ -98,7 +103,7 @@ export function runHook(agent: Agent, raw: string, opts: HookOptions = {}): stri
       if (obs.event) {
         log({
           tool: obs.tool,
-          ...where,
+          ...what,
           decision: "allow",
           rule: `tripwire-${obs.event.level}`,
           note: `possible prompt injection in the output of ${obs.tool}: ${obs.event.findings.map((f) => `${f.id} "${f.excerpt}"`).join("; ")}`.slice(0, 600),
@@ -110,7 +115,7 @@ export function runHook(agent: Agent, raw: string, opts: HookOptions = {}): stri
       if (!isOwnWrite(obs.tool) && !ownVault) {
         const leaks = findLeaks(toolResponseText(agent, payload));
         if (leaks.length) {
-          log({ tool: obs.tool, ...where, decision: "allow", rule: "secret-in-output", note: `credential in the output of ${obs.tool}: ${leaks.map((l) => `${l.type} ${l.preview}`).join("; ")}` });
+          log({ tool: obs.tool, ...what, decision: "allow", rule: "secret-in-output", note: `credential in the output of ${obs.tool}: ${leaks.map((l) => `${l.type} ${l.preview}`).join("; ")}` });
           warnings.push(`Cephalo: the output of ${obs.tool} contains what looks like a credential (${leaks.map((l) => l.type).join(", ")}). Do not repeat or store it. Tell the user it was exposed so they can rotate it. To use a token, ask the user to add it with "cephalo vault set NAME" and run commands with "cephalo run --env NAME -- ...".`);
         }
       }
