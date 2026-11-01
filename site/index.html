@@ -278,14 +278,6 @@ nav.top .links a:not(.cta){padding:4px 0}
 /* page load: hero rises in, one piece after another */
 @keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
 @keyframes fadein{from{opacity:0}to{opacity:1}}
-.hero-grid>div:first-child>*{animation:rise .8s var(--ease) both}
-.hero-grid>div:first-child>:nth-child(1){animation-delay:.05s}
-.hero-grid>div:first-child>:nth-child(2){animation-delay:.14s}
-.hero-grid>div:first-child>:nth-child(3){animation-delay:.24s}
-.hero-grid>div:first-child>:nth-child(4){animation-delay:.34s}
-.hero-grid>div:first-child>:nth-child(5){animation-delay:.42s}
-.hero-grid>div:first-child>:nth-child(6){animation-delay:.5s}
-.hero-grid>.term{animation:rise 1s var(--ease) .25s both}
 
 /* scroll reveal (only when JS is running, so nothing is ever hidden without it) */
 .js .reveal{opacity:0;transform:translateY(22px);transition:opacity .8s var(--ease),transform .8s var(--ease)}
@@ -492,6 +484,51 @@ ins.add{text-decoration:none;background:color-mix(in srgb,var(--mint) 18%,transp
   #rulesDrawer:not(:popover-open)::backdrop{opacity:0}
 }
 
+
+/* ---------- phase 3: hero ---------- */
+.hero-grid{align-items:start}
+.hl{min-width:0}
+.hero h1{font-size:clamp(40px,5.2vw,64px)}
+.install{margin-top:28px;max-width:540px;display:grid;gap:10px}
+.install .installpill{margin:0;max-width:none}
+.ostab{justify-self:start}
+.setup{margin:6px 0 0;font-size:14px;color:var(--muted)}
+.install .cb{margin:0}
+.hero-actions{margin-top:24px}
+.scene{margin:0;min-width:0;display:grid;gap:14px}
+.scenebox{position:relative;border:1px solid var(--line);border-radius:14px;background:var(--surface);padding:10px;overflow:hidden}
+.pausebtn{position:absolute;top:8px;left:8px;width:44px;height:44px;background:var(--surface);z-index:2}
+.pausebtn[hidden]{display:none}
+.pausebtn .i-play{display:none}.pausebtn[aria-pressed=true] .i-pause{display:none}.pausebtn[aria-pressed=true] .i-play{display:block}
+.pausebtn .i-play{fill:currentColor;stroke:none}
+.sc{display:block;width:100%;height:auto}
+.vsc{display:none}
+@media(max-width:700px){.hsc{display:none}.vsc{display:block;max-width:340px;margin:0 auto}}
+.sc text{font:12px var(--mono);fill:var(--ink)}
+.sc .cap{font:600 11.5px var(--mono);letter-spacing:.14em;fill:var(--faint)}
+.sc .aname{font:600 16px var(--sans);fill:var(--ink)}
+.sc .wire{stroke:var(--hairline-2);stroke-width:1.5;stroke-dasharray:3 5}
+.sc .node rect{fill:var(--bg);stroke:var(--hairline-2);stroke-width:1}
+.sc .dest text{font:600 15px var(--sans)}
+.sc .dest.hit rect{stroke:var(--allow);stroke-width:2}
+.sc .gate circle{fill:var(--bg);stroke:var(--hairline-2);stroke-width:2}
+.sc .gate .inner{fill:none;stroke:var(--hairline);stroke-width:1}
+.sc .gring{transform-box:fill-box;transform-origin:center}
+.sc .gate.g-allow circle:first-child{stroke:var(--allow)}
+.sc .gate.g-block circle:first-child{stroke:var(--block)}
+.sc .pill{offset-rotate:0deg}
+.sc .pill text{font-size:13px}
+.sc .pill rect{fill:var(--surface-2);stroke:var(--hairline-2)}
+.sc .pill.blocked rect{fill:color-mix(in srgb,var(--block) 16%,var(--surface-2));stroke:var(--block);stroke-width:1.5}
+.sc .pill.blocked text{fill:var(--block)}
+.sc .pi{transform-box:fill-box;transform-origin:center}
+.sc .bubble rect{fill:color-mix(in srgb,var(--block) 14%,var(--bg));stroke:var(--block)}
+.sc .bubble text{fill:var(--block);font-weight:600;font-size:13px}
+.scene.live .pill,.scene.live .bubble{opacity:0}
+.scene .term-body{height:176px;min-height:0;max-height:none;overflow:hidden;display:block}
+.scene .term-body .ln{display:block;white-space:pre;overflow:hidden;text-overflow:ellipsis;min-height:1.65em}
+@media(max-width:700px){.scene .term-body{font-size:11.5px}}
+
 /* theme switch: fade colours instead of snapping (class is added for a moment while toggling) */
 html.theming *,html.theming *::before,html.theming *::after{transition:background-color .4s var(--ease),color .4s var(--ease),border-color .4s var(--ease),box-shadow .4s var(--ease)!important}
 @media (prefers-reduced-motion:reduce){.js .reveal{opacity:1;transform:none}}
@@ -516,25 +553,70 @@ html.theming *,html.theming *::before,html.theming *::after{transition:backgroun
 
 <!-- HERO -->
 <section class="hero">
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><symbol id="octo" viewBox="0 0 16 12" shape-rendering="crispEdges"><rect x="6" y="0" width="4" height="1" fill="#f472b6"/><rect x="3" y="1" width="10" height="1" fill="#f472b6"/><rect x="2" y="2" width="2" height="1" fill="#f472b6"/><rect x="4" y="2" width="2" height="1" fill="#f9a8d4"/><rect x="6" y="2" width="8" height="1" fill="#f472b6"/><rect x="1" y="3" width="2" height="1" fill="#f472b6"/><rect x="3" y="3" width="1" height="1" fill="#f9a8d4"/><rect x="4" y="3" width="11" height="1" fill="#f472b6"/><rect x="1" y="4" width="3" height="1" fill="#f472b6"/><rect x="4" y="4" width="2" height="1" fill="#ffffff"/><rect x="6" y="4" width="4" height="1" fill="#f472b6"/><rect x="10" y="4" width="2" height="1" fill="#ffffff"/><rect x="12" y="4" width="3" height="1" fill="#f472b6"/><rect x="1" y="5" width="3" height="1" fill="#f472b6"/><rect x="4" y="5" width="1" height="1" fill="#ffffff"/><rect x="5" y="5" width="1" height="1" fill="#1a1a2e"/><rect x="6" y="5" width="4" height="1" fill="#f472b6"/><rect x="10" y="5" width="1" height="1" fill="#ffffff"/><rect x="11" y="5" width="1" height="1" fill="#1a1a2e"/><rect x="12" y="5" width="3" height="1" fill="#f472b6"/><rect x="1" y="6" width="14" height="1" fill="#f472b6"/><rect x="2" y="7" width="12" height="1" fill="#f472b6"/><rect x="1" y="8" width="2" height="1" fill="#f472b6"/><rect x="4" y="8" width="2" height="1" fill="#f472b6"/><rect x="7" y="8" width="2" height="1" fill="#f472b6"/><rect x="10" y="8" width="2" height="1" fill="#f472b6"/><rect x="13" y="8" width="2" height="1" fill="#f472b6"/><rect x="0" y="9" width="2" height="1" fill="#f472b6"/><rect x="4" y="9" width="1" height="1" fill="#f472b6"/><rect x="7" y="9" width="2" height="1" fill="#f472b6"/><rect x="11" y="9" width="1" height="1" fill="#f472b6"/><rect x="14" y="9" width="2" height="1" fill="#f472b6"/><rect x="0" y="10" width="1" height="1" fill="#f472b6"/><rect x="3" y="10" width="2" height="1" fill="#f472b6"/><rect x="7" y="10" width="2" height="1" fill="#f472b6"/><rect x="11" y="10" width="2" height="1" fill="#f472b6"/><rect x="15" y="10" width="1" height="1" fill="#f472b6"/><rect x="1" y="11" width="2" height="1" fill="#f472b6"/><rect x="5" y="11" width="2" height="1" fill="#f472b6"/><rect x="9" y="11" width="2" height="1" fill="#f472b6"/><rect x="13" y="11" width="2" height="1" fill="#f472b6"/></symbol></svg>
   <div class="wrap hero-grid">
-    <div>
-      <p class="eyebrow">for Claude Code and Hermes Agent</p>
-      <h1>Stop the tool call <em>before</em> it runs.</h1>
-      <p class="lede">Cephalo sits in front of your AI coding agents and checks every shell command, file access and MCP tool call against rules you own. <code>DROP TABLE</code>, <code>rm -rf</code>, a force push, a read of <code>.env</code>, an MCP tool that quietly changed its description: the agent gets a refusal, and nothing happens.</p>
-      <div class="installpill">
-        <code id="heroCmd"><i>$ </i>cephalo init</code>
-        <button class="copy" data-copy="cephalo init" type="button">Copy</button>
+    <div class="hl">
+      <p class="eyebrow">For Claude Code &amp; Hermes Agent</p>
+      <h1>Stop the tool call<br><em>before</em> it runs.</h1>
+      <p class="lede">Cephalo checks every shell command, file access and MCP tool call from your coding agent against rules you own, and refuses the dangerous ones before they run.</p>
+      <div class="install">
+        <div class="seg slide ostab" role="group" aria-label="Your system" id="segHeroOs">
+          <button type="button" data-v="ps" aria-pressed="false">Windows</button>
+          <button type="button" data-v="sh" data-os="darwin" aria-pressed="false">macOS</button>
+          <button type="button" data-v="sh" data-os="linux" aria-pressed="false">Linux</button>
+        </div>
+        <div class="installpill">
+          <code id="heroCmd"><i>$ </i>cephalo init</code>
+          <button class="copy" data-copy="cephalo init" type="button">Copy</button>
+        </div>
+        <p class="setup">First time? From the Cephalo project folder:</p>
+        <div class="cb"><pre id="heroSetup">cd /path/to/cephalo
+npm install
+npm run build
+npm link</pre><button class="copy" data-copy-from="heroSetup" type="button">Copy</button></div>
       </div>
       <div class="hero-actions">
-        <a class="btn primary" href="#playground">Try it in your browser</a>
-        <a class="btn" href="#install">Install steps</a>
+        <a class="btn primary" href="#playground" id="ctaDanger">Try a dangerous command</a>
+        <a class="btn" href="#commands">Read the rules</a><!-- TODO: point at #rules once the "Rules you own" section exists (Phase 4) -->
       </div>
       <p class="compat"><b>Windows, macOS, Linux.</b> Node.js CLI. Rules are plain YAML you own.</p>
     </div>
-    <div class="term" role="img" aria-label="Example output of the cephalo watch command, showing allowed and blocked tool calls">
-      <div class="term-bar"><span class="dots"><i></i><i></i><i></i></span><span class="t">cephalo watch &nbsp;·&nbsp; example output</span></div>
-      <div class="term-body" id="heroTerm"></div>
-    </div>
+    <figure class="scene" id="scene">
+      <div class="scenebox">
+        <svg class="sc hsc" viewBox="0 0 640 300" role="img" aria-label="Diagram: the agent sends a tool call to the Cephalo gate. Safe calls pass on to the shell, files or MCP. Dangerous ones are refused and sent back." data-geo='{"agent":[136,150],"gate":[340,150,46],"dest":{"Shell":{"out":[379.9,127.1],"in":[500,58]},"Files":{"out":[386.0,150.0],"in":[500,150]},"MCP":{"out":[379.9,172.9],"in":[500,242]}},"bubble":[100.0,220],"gateIn":[294.0,150.0]}'>
+<line class="wire" x1="136" y1="150" x2="294.0" y2="150.0"/>
+<line class="wire" x1="379.9" y1="127.1" x2="500" y2="58"/>
+<line class="wire" x1="386.0" y1="150.0" x2="500" y2="150"/>
+<line class="wire" x1="379.9" y1="172.9" x2="500" y2="242"/>
+<g class="node agent"><rect x="16" y="106" width="120" height="88" rx="12"/><text class="cap" x="76.0" y="128" text-anchor="middle">AGENT</text><text class="aname" x="76.0" y="174" text-anchor="middle">Claude Code</text></g>
+<g class="node dest" data-dest="Shell"><rect x="500" y="30" width="124" height="56" rx="10"/><text x="562.0" y="63.0" text-anchor="middle">Shell</text></g>
+<g class="node dest" data-dest="Files"><rect x="500" y="122" width="124" height="56" rx="10"/><text x="562.0" y="155.0" text-anchor="middle">Files</text></g>
+<g class="node dest" data-dest="MCP"><rect x="500" y="214" width="124" height="56" rx="10"/><text x="562.0" y="247.0" text-anchor="middle">MCP</text></g>
+<g class="gate" transform="translate(340 150)"><g class="gring"><circle r="46"/><circle r="37" class="inner"/><use href="#octo" x="-24" y="-18" width="48" height="36"/></g><text class="cap gcap" y="68" text-anchor="middle">CEPHALO</text></g>
+<g class="bubble"><rect x="16.0" y="205" width="168" height="30" rx="15"/><text x="100.0" y="225" text-anchor="middle">✕ Refused · no-drop</text></g>
+<g class="pill blocked" transform="translate(216.0 150.0)"><g class="pi"><rect x="-72" y="-14" width="144" height="28" rx="14"/><text y="4" text-anchor="middle">psql -c "DROP T…</text></g></g>
+</svg>
+        <svg class="sc vsc" viewBox="0 0 320 470" role="img" aria-label="Diagram: the agent sends a tool call to the Cephalo gate. Safe calls pass on to the shell, files or MCP. Dangerous ones are refused and sent back." data-geo='{"agent":[160,88],"gate":[160,214,46],"dest":{"Shell":{"out":[134.0,252.0],"in":[56,366]},"Files":{"out":[160.0,260.0],"in":[160,366]},"MCP":{"out":[186.0,252.0],"in":[264,366]}},"bubble":[160.0,114],"gateIn":[160.0,168.0]}'>
+<line class="wire" x1="160" y1="88" x2="160.0" y2="168.0"/>
+<line class="wire" x1="134.0" y1="252.0" x2="56" y2="366"/>
+<line class="wire" x1="160.0" y1="260.0" x2="160" y2="366"/>
+<line class="wire" x1="186.0" y1="252.0" x2="264" y2="366"/>
+<g class="node agent"><rect x="88" y="8" width="144" height="80" rx="12"/><text class="cap" x="160.0" y="30" text-anchor="middle">AGENT</text><text class="aname" x="160.0" y="68" text-anchor="middle">Claude Code</text></g>
+<g class="node dest" data-dest="Shell"><rect x="8" y="366" width="96" height="56" rx="10"/><text x="56.0" y="399.0" text-anchor="middle">Shell</text></g>
+<g class="node dest" data-dest="Files"><rect x="112" y="366" width="96" height="56" rx="10"/><text x="160.0" y="399.0" text-anchor="middle">Files</text></g>
+<g class="node dest" data-dest="MCP"><rect x="216" y="366" width="96" height="56" rx="10"/><text x="264.0" y="399.0" text-anchor="middle">MCP</text></g>
+<g class="gate" transform="translate(160 214)"><g class="gring"><circle r="46"/><circle r="37" class="inner"/><use href="#octo" x="-24" y="-18" width="48" height="36"/></g><text class="cap gcap" y="68" text-anchor="middle">CEPHALO</text></g>
+<g class="bubble"><rect x="76.0" y="99" width="168" height="30" rx="15"/><text x="160.0" y="119" text-anchor="middle">✕ Refused · no-drop</text></g>
+<g class="pill blocked" transform="translate(160.0 148.0)"><g class="pi"><rect x="-72" y="-14" width="144" height="28" rx="14"/><text y="4" text-anchor="middle">psql -c "DROP T…</text></g></g>
+</svg>
+        <button class="iconbtn pausebtn" id="pauseBtn" type="button" aria-pressed="false" aria-label="Pause animation" hidden><svg class="i-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg><svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12-7.5z"/></svg></button>
+      </div>
+      <div class="term" aria-hidden="true">
+        <div class="term-bar"><span class="dots"><i></i><i></i><i></i></span><span class="t">cephalo watch &nbsp;&middot;&nbsp; example output</span></div>
+        <div class="term-body" id="heroTerm"><span class="ln"><span class="dim">12:04:11</span>  <span class="ok">✓ ALLOW</span>  claude/Bash  git status</span><span class="ln"><span class="dim">12:04:14</span>  <span class="ok">✓ ALLOW</span>  claude/Read  src/app.ts</span><span class="ln"><span class="dim">12:04:19</span>  <span class="bad b">✕ BLOCK</span>  claude/Bash <span class="warn">[no-drop]</span>  psql -c &quot;DROP TABLE users;&quot;</span><span class="ln"><span class="dim">12:04:25</span>  <span class="bad b">✕ BLOCK</span>  hermes/read_file <span class="warn">[no-secret-file]</span>  ./config/.env</span></div>
+      </div>
+      <p class="sr">Example output of cephalo watch. 12:04:11: allowed claude/Bash: git status. 12:04:14: allowed claude/Read: src/app.ts. 12:04:19: blocked claude/Bash by rule no-drop: psql -c "DROP TABLE users;". 12:04:25: blocked hermes/read_file by rule no-secret-file: ./config/.env.</p>
+    </figure>
   </div>
 </section>
 
@@ -1125,20 +1207,108 @@ Player.prototype.play=function(script,loop){
 };
 Player.prototype.stop=function(){this.token++;};
 
-/* ---------- hero terminal ---------- */
-var heroP=new Player($('#heroTerm'));
-var MSG_DROP='🛑 Cephalo blocked this (rule: no-drop - Dropping tables or databases). If it is intended, ask the user to run it themselves.';
-heroP.play([
-  {k:'out',t:'<dim>Watching ~/.cephalo/audit.jsonl  -  Ctrl+C to stop</dim>',d:500},
-  {k:'out',t:'<dim>12:04:11</dim>  <ok>ALLOW</ok>  claude/Bash  git status',d:900},
-  {k:'out',t:'<dim>12:04:14</dim>  <ok>ALLOW</ok>  claude/Read  src/app.ts',d:900},
-  {k:'out',t:'<dim>12:04:19</dim>  <bad><b>BLOCK</b></bad>  claude/Bash <warn>[no-drop]</warn>  psql -c "DROP TABLE users;"',d:500},
-  {k:'out',t:'<dim>  the agent is told: '+MSG_DROP+'</dim>',d:1100},
-  {k:'out',t:'<dim>12:04:25</dim>  <bad><b>BLOCK</b></bad>  hermes/read_file <warn>[no-secret-file]</warn>  C:/proj/.env',d:900},
-  {k:'out',t:'<dim>12:04:31</dim>  <ok>ALLOW</ok>  hermes/terminal  npm test',d:900},
-  {k:'out',t:'<dim>12:04:36</dim>  <bad><b>BLOCK</b></bad>  claude/Bash <warn>[no-force-push]</warn>  git push --force origin main',d:900},
-  {k:'out',t:'<dim>12:04:40</dim>  <ok>ALLOW</ok>  claude/Bash  git push --force-with-lease',d:300}
-],true);
+/* ---------- hero scene: a tool call meets the gate (real engine verdicts) ---------- */
+(function(){
+  var scene=$('#scene');if(!scene)return;
+  var term=$('#heroTerm'),btn=$('#pauseBtn');
+  var SC=[
+    {a:'claude',t:'Bash',v:'git status'},
+    {a:'claude',t:'Bash',v:'psql -c "DROP TABLE users;"'},
+    {a:'hermes',t:'read_file',v:'./config/.env'},
+    {a:'claude',t:'Bash',v:'git push --force-with-lease origin main'},
+    {a:'claude',t:'Bash',v:'git push --force origin main'},
+    {a:'claude',t:'Read',v:'src/app.ts'},
+    {a:'claude',t:'mcp__notes__send_everything',mcp:'mcp-tool-unapproved'}   /* verdict and rule id as captured from the real CLI (see the mcp command above) */
+  ];
+  var clock=11*3600+4*60+11,running=false,userPaused=false,seen=true,live=false,anims=[],tok=0;
+  function setRun(){var r=live&&!userPaused&&seen&&!document.hidden;if(r===running)return;running=r;anims.forEach(function(a){try{r?a.play():a.pause();}catch(e){}});}
+  function wait(ms){return new Promise(function(res){var left=ms,last=performance.now(),my=tok;(function tick(now){if(my!==tok)return res();if(!running){last=now;return requestAnimationFrame(tick);}left-=now-last;last=now;if(left<=0)res();else requestAnimationFrame(tick);})(last);});}
+  function go(node,kf,o){var a=node.animate(kf,Object.assign({fill:'forwards'},o));anims.push(a);if(!running)a.pause();return a.finished.catch(function(){}).then(function(){var i=anims.indexOf(a);if(i>=0)anims.splice(i,1);});}
+  function verdict(sc){
+    if(sc.mcp)return {block:true,rule:sc.mcp,dest:'MCP'};
+    var t=TOOLS[sc.a].filter(function(x){return x.id===sc.t;})[0],inp={};
+    if(t.kind==='command')inp.command=sc.v;else{inp.path=sc.v;inp.access=t.access;}
+    var r=E.evaluate(inp,'linux',{});
+    return {block:r.decision==='block',rule:r.rule&&r.rule.id,dest:t.kind==='command'?'Shell':'Files'};
+  }
+  function stamp(){clock+=3+Math.floor(Math.random()*4);var h=Math.floor(clock/3600),m=Math.floor(clock/60)%60,s=clock%60;return [h,m,s].map(function(n){return String(n).padStart(2,'0');}).join(':');}
+  async function addLine(sc,v){
+    var ln=el('span','ln'),cmd=el('span');
+    ln.appendChild(el('span','dim',stamp()));ln.appendChild(document.createTextNode('  '));
+    ln.appendChild(el('span',v.block?'bad b':'ok',v.block?'\u2715 BLOCK':'\u2713 ALLOW'));
+    ln.appendChild(document.createTextNode('  '+sc.a+'/'+sc.t+' '));
+    if(v.block)ln.appendChild(el('span','warn','['+v.rule+'] '));
+    ln.appendChild(cmd);term.appendChild(ln);
+    while(term.children.length>6)term.removeChild(term.firstChild);
+    var my=tok;for(var i=1;i<=sc.v.length&&my===tok;i+=2){cmd.textContent=sc.v.slice(0,i);await wait(16);}
+    cmd.textContent=sc.v;
+  }
+  var ease='cubic-bezier(.45,0,.25,1)';
+  async function play(sc,svg){
+    var g=JSON.parse(svg.getAttribute('data-geo')),v=verdict(sc),my=tok;
+    var pill=svg.querySelector('.pill'),pi=svg.querySelector('.pi'),gate=svg.querySelector('.gate'),ring=svg.querySelector('.gring'),bub=svg.querySelector('.bubble');
+    var dest=svg.querySelector('[data-dest="'+v.dest+'"]');
+    svg.querySelectorAll('.aname').forEach(function(n){n.textContent=sc.a==='claude'?'Claude Code':'Hermes';});
+    var label=sc.v.length>16?sc.v.slice(0,15)+'\u2026':sc.v,txt=pill.querySelector('text'),rect=pill.querySelector('rect');
+    txt.textContent=label;var w=Math.max(64,label.length*7.8+26);rect.setAttribute('x',-w/2);rect.setAttribute('width',w);
+    bub.querySelector('text').textContent=v.block?'\u2715 Refused \u00B7 '+v.rule:'';
+    var bt=bub.querySelector('text'),bw=Math.max(150,bt.textContent.length*7.9+32),br=bub.querySelector('rect'),bx=g.bubble[0];br.setAttribute('x',bx-bw/2);br.setAttribute('width',bw);
+    pill.removeAttribute('transform');pill.classList.remove('blocked');[pill,pi,bub].forEach(function(n){n.getAnimations().forEach(function(a){a.cancel();});});
+    var dx=g.gateIn[0]-g.agent[0],dy=g.gateIn[1]-g.agent[1],dl=Math.hypot(dx,dy),back=Math.abs(dx)>Math.abs(dy)?w/2+6:19;
+    var stop=[g.gateIn[0]-dx/dl*back,g.gateIn[1]-dy/dl*back];
+    var inP="path('M "+g.agent[0]+" "+g.agent[1]+" L "+stop[0].toFixed(1)+" "+stop[1].toFixed(1)+"')";
+    pill.style.offsetPath=inP;pill.style.offsetDistance='0%';
+    go(pill,[{opacity:0},{opacity:1}],{duration:160});
+    await go(pill,[{offsetDistance:'0%'},{offsetDistance:'100%'}],{duration:640,easing:ease});if(my!==tok)return;
+    gate.classList.add(v.block?'g-block':'g-allow');
+    go(ring,[{transform:'scale(1)'},{transform:'scale(1.12)'},{transform:'scale(1)'}],{duration:420,easing:'ease-out'});
+    addLine(sc,v);
+    if(!v.block){
+      var d=g.dest[v.dest],eased='ease-in';
+      pill.style.offsetPath="path('M "+stop[0].toFixed(1)+" "+stop[1].toFixed(1)+" L "+g.gate[0]+" "+g.gate[1]+"')";pill.style.offsetDistance='0%';
+      go(pi,[{transform:'scale(1)'},{transform:'scale(.5)'}],{duration:230,easing:eased});go(pill,[{opacity:1},{opacity:0}],{duration:230,easing:eased});
+      await go(pill,[{offsetDistance:'0%'},{offsetDistance:'100%'}],{duration:230,easing:eased});if(my!==tok)return;
+      pill.style.offsetPath="path('M "+g.gate[0]+" "+g.gate[1]+" L "+d.in[0]+" "+d.in[1]+"')";pill.style.offsetDistance='0%';
+      go(pi,[{transform:'scale(.5)'},{transform:'scale(1)'}],{duration:380,easing:'ease-out'});go(pill,[{opacity:0},{opacity:1}],{duration:200});
+      await go(pill,[{offsetDistance:'0%'},{offsetDistance:'100%'}],{duration:380,easing:'ease-out'});if(my!==tok)return;
+      dest.classList.add('hit');await go(pill,[{opacity:1},{opacity:0}],{duration:200});await wait(260);
+      dest.classList.remove('hit');
+    }else{
+      pill.classList.add('blocked');
+      await go(pi,[{transform:'translateX(0)'},{transform:'translateX(-6px)'},{transform:'translateX(6px)'},{transform:'translateX(-4px)'},{transform:'translateX(4px)'},{transform:'translateX(0)'}],{duration:300});if(my!==tok)return;
+      go(bub,[{opacity:0,transform:'translateY(6px)'},{opacity:1,transform:'translateY(0)'}],{duration:260,easing:'cubic-bezier(.34,1.4,.64,1)'});
+      pill.style.offsetPath="path('M "+stop[0].toFixed(1)+" "+stop[1].toFixed(1)+" L "+g.agent[0]+" "+g.agent[1]+"')";pill.style.offsetDistance='0%';
+      await go(pill,[{offsetDistance:'0%'},{offsetDistance:'100%'}],{duration:520,easing:'cubic-bezier(.22,1,.36,1)'});if(my!==tok)return;
+      await go(pill,[{opacity:1},{opacity:0}],{duration:160});await wait(560);
+      await go(bub,[{opacity:1},{opacity:0}],{duration:200});
+    }
+    gate.classList.remove('g-allow','g-block');
+    await wait(260);
+  }
+  async function loop(){
+    var my=++tok,i=0;
+    while(my===tok){
+      var svg=$$('.sc',scene).filter(function(x){return getComputedStyle(x).display!=='none';})[0];
+      await play(SC[i%SC.length],svg);i++;
+    }
+  }
+  function sync(){
+    btn.setAttribute('aria-pressed',String(userPaused));
+    btn.setAttribute('aria-label',userPaused?'Play animation':'Pause animation');setRun();
+  }
+  function start(){
+    if(reduce||typeof Element.prototype.animate!=='function'||!(window.CSS&&CSS.supports&&CSS.supports('offset-path','path("M0 0L1 1")')))return; /* keep the static blocked frame */
+    live=true;scene.classList.add('live');term.textContent='';btn.hidden=false;running=false;setRun();loop();
+  }
+  btn.addEventListener('click',function(){userPaused=!userPaused;sync();});
+  document.addEventListener('visibilitychange',setRun);
+  if('IntersectionObserver' in window)new IntersectionObserver(function(es){seen=es[0].isIntersecting;setRun();},{threshold:.1}).observe(scene);
+  /* the dangerous-command button loads a real example into the playground */
+  $('#ctaDanger').addEventListener('click',function(e){e.preventDefault();applyPreset(PRESETS[0]);history.replaceState(null,'','#playground');$('#playground').scrollIntoView({behavior:reduce?'auto':'smooth',block:'start'});});
+  /* OS tab: shows the matching setup commands (and keeps the install section in step) */
+  $('#segHeroOs').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;renderShell(b.getAttribute('data-v'),b.getAttribute('data-os')||(b.getAttribute('data-v')==='ps'?'win32':'linux'));});
+  window.__heroStart=start;
+})();
 
 /* ---------- playground ---------- */
 var TOOLS={
@@ -1740,11 +1910,15 @@ function renderInstall(){
 }
 $('#isteps').addEventListener('click',function(e){var b=e.target.closest('.chk');if(!b)return;var s=b.closest('.istep'),i=s.getAttribute('data-step');done[i]=!done[i];save();renderInstall();});
 $('#progReset').addEventListener('click',function(){done={};save();renderInstall();});
-function renderShell(sh){
+function renderShell(sh,os){
   setSeg($('#segShell'),sh);
-  $('#buildCmds').textContent=sh==='ps'
+  var cmds=sh==='ps'
     ?'cd C:\\path\\to\\cephalo\nnpm install\nnpm run build\nnpm link'
     :'cd /path/to/cephalo\nnpm install\nnpm run build\nnpm link';
+  $('#buildCmds').textContent=cmds;$('#heroSetup').textContent=cmds;
+  var hs=$('#segHeroOs'),o=os||(sh==='ps'?'win32':(state.os==='darwin'?'darwin':'linux'));
+  $$('button',hs).forEach(function(b){var on=(b.getAttribute('data-os')||'win32')===o;b.setAttribute('aria-pressed',String(on));});
+  var bs=$$('button',hs);hs.style.setProperty('--n',bs.length);hs.style.setProperty('--i',Math.max(0,bs.findIndex(function(b){return b.getAttribute('aria-pressed')==='true';})));
 }
 $('#segShell').addEventListener('click',function(e){var b=e.target.closest('button');if(b)renderShell(b.getAttribute('data-v'));});
 
@@ -1752,10 +1926,11 @@ $('#segShell').addEventListener('click',function(e){var b=e.target.closest('butt
 $$('.seg.slide').forEach(function(g){if(!g.querySelector('.thumb'))g.insertBefore(el('span','thumb'),g.firstChild);});
 setSeg($('#segOs'),state.os);setSeg($('#segAgent'),state.agent);
 requestAnimationFrame(function(){requestAnimationFrame(function(){$$('.seg.slide').forEach(function(g){g.classList.add('ready');});});});
-renderShell(state.os==='win32'?'ps':'sh');
+renderShell(state.os==='win32'?'ps':'sh',state.os);
 fillTools();buildChips();buildRuleList();renderPlug();renderPlat();renderNormer();renderInstall();renderSeats();
 $('#input').value='psql -c "DROP TABLE users;"';
 showEx('test');
+setTimeout(function(){window.__heroStart();},350);
 var linked=fromUrl();
 /* show a finished result immediately, then replay it animated the first time it scrolls into view */
 instant=true;
