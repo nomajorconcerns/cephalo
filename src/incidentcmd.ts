@@ -106,7 +106,7 @@ export function planIncident(a: IncidentArgs, env: IncidentEnv = {}): IncidentPl
     const lines = [`Last ${shown.length} action(s). Pick one: cephalo incident <number>`, ""];
     for (const { n, e } of shown) {
       const when = e.ts.slice(5, 16).replace("T", " ");
-      lines.push(`${pad(String(n), 6)} ${when}  ${pad(e.decision === "block" ? "BLOCKED" : "allowed", 7)}  ${pad(e.agent, 7)} ${clip(sanitize(entrySubject(e)), 90)}`);
+      lines.push(`${pad(String(n), 6)} ${when}  ${pad(e.decision === "block" ? "BLOCKED" : e.decision === "ask" ? "asked" : "allowed", 7)}  ${pad(e.agent, 7)} ${clip(sanitize(entrySubject(e)), 90)}`);
     }
     return { lines, exitCode: 0 };
   }

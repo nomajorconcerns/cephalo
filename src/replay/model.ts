@@ -13,6 +13,8 @@ export interface ReplayEvent {
   tool: string;
   kind: EventKind;
   decision: "allow" | "block";
+  /** Cephalo had the user approve this call first (the entry's decision was "ask"). */
+  asked?: boolean;
   rule?: string;
   /** What the call acted on: the command, the path, or a short form of the MCP parameters. */
   subject: string;
@@ -109,7 +111,8 @@ export function toEvents(entries: AuditEntry[]): ReplayEvent[] {
     ...(e.session ? { session: e.session } : {}),
     tool: e.tool,
     kind: kindOf(e),
-    decision: e.decision,
+    decision: e.decision === "block" ? "block" : "allow",
+    ...(e.decision === "ask" ? { asked: true } : {}),
     ...(e.rule ? { rule: e.rule } : {}),
     subject: subjectOf(e),
     ...(e.note ? { note: clean(e.note, 400) } : {}),
@@ -183,7 +186,7 @@ export function statsOf(events: ReplayEvent[]): ReplayStats {
 }
 
 /** Events a reviewer should look at first. */
-export const needsAttention = (e: ReplayEvent) => e.decision === "block" || e.kind === "tripwire" || e.kind === "leak";
+export const needsAttention = (e: ReplayEvent) => e.decision === "block" || !!e.asked || e.kind === "tripwire" || e.kind === "leak";
 
 export function formatDuration(ms: number): string {
   const s = Math.round(ms / 1000);

@@ -23,6 +23,10 @@ export interface ModelsConfig {
   mode: JudgeMode;
   host: string;
   timeoutMs: number;
+  /** enforce mode, model unsure about a command: ask the user (Claude Code) or let it run and log it. */
+  onUnsure: "ask" | "allow";
+  /** enforce mode, no model could answer: ask the user (Claude Code) or let it run and log it. Hermes cannot ask, so it always logs. */
+  onFailure: "ask" | "allow";
   /** How long Ollama keeps a model loaded after Cephalo used it (a cold load takes seconds on a CPU). */
   keepAlive: string;
   /** Decision models (like d3) answer with a probability: at or above this it counts as "block"/"injection"... */
@@ -43,6 +47,8 @@ export const DEFAULT_MODELS_CONFIG: ModelsConfig = {
   mode: "warn",
   host: "http://127.0.0.1:11434",
   timeoutMs: 8000,
+  onUnsure: "ask",
+  onFailure: "ask",
   keepAlive: "10m",
   decisionBlock: 0.9,
   decisionAllow: 0.3,
@@ -109,6 +115,11 @@ export function parseModelsConfig(text: string): { config: ModelsConfig; problem
     const n = doc.timeout_ms;
     if (Number.isInteger(n) && n >= 200 && n <= 120000) config.timeoutMs = n;
     else problems.push(`timeout_ms must be a whole number from 200 to 120000 (got ${JSON.stringify(n)}); using ${config.timeoutMs}`);
+  }
+  for (const [key, field] of [["on_unsure", "onUnsure"], ["on_failure", "onFailure"]] as const) {
+    if (doc[key] === undefined) continue;
+    if (doc[key] === "ask" || doc[key] === "allow") config[field] = doc[key];
+    else problems.push(`${key} must be ask or allow (got ${JSON.stringify(doc[key])}); using ${config[field]}`);
   }
   if (doc.keep_alive !== undefined) {
     if (typeof doc.keep_alive === "string" && /^\d{1,4}[smh]$/.test(doc.keep_alive)) config.keepAlive = doc.keep_alive;
@@ -182,6 +193,10 @@ export function serializeModelsConfig(c: ModelsConfig): string {
     `mode: ${c.mode}\n` +
     `host: ${c.host}\n` +
     `timeout_ms: ${c.timeoutMs}\n` +
+    "# In enforce mode: on_unsure / on_failure say what happens when the model is unsure, or no model could answer.\n" +
+    "# ask = Claude Code asks you to approve the command (Hermes cannot ask, so it lets the call run and logs it). allow = let it run and log it.\n" +
+    `on_unsure: ${c.onUnsure}\n` +
+    `on_failure: ${c.onFailure}\n` +
     "# keep_alive: how long Ollama keeps a model loaded after use (a cold load can take 10+ seconds on a CPU).\n" +
     `keep_alive: ${c.keepAlive}\n` +
     "# Decision models (d3) give a probability that a command or text is harmful: at or above decision_block it counts as block/injection,\n" +

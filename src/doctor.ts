@@ -8,6 +8,7 @@ import { getPlatform } from "./platform.js";
 import { mcpSummary, type McpCmdOptions } from "./mcpcmd.js";
 import { tripSummary, type TripCmdOptions } from "./tripwirecmd.js";
 import { loadModelsConfig } from "./models/config.js";
+import { readModelsCheck } from "./judge/state.js";
 import { vaultSummary, type VaultCmdOptions } from "./vaultcmd.js";
 import { claudeSettingsPath, hermesConfigPath, projectRoot, HERMES_CMD_RE } from "./install.js";
 import { DEFAULT_RULES, activePlatformRules, defaultRulesPath, parseRules, type Rule } from "./rules.js";
@@ -36,6 +37,8 @@ export interface DoctorOptions {
   trip?: TripCmdOptions;
   /** Local-model judge config file (tests). */
   modelsFile?: string;
+  /** Where the hook keeps its last model check (tests). */
+  modelsCheckFile?: string;
   /** Vault lookups (tests): directory and backend. */
   vault?: VaultCmdOptions;
 }
@@ -141,11 +144,16 @@ export function runDoctor(o: DoctorOptions = {}): { checks: Check[]; exitCode: n
 
   {
     const models = loadModelsConfig(o.modelsFile, () => {});
-    checks.push(
-      models.enabled
-        ? { level: "ok", name: "Local-model judge", detail: `on, ${models.mode} mode; decider ${models.roles.decider.join(" then ")}`, fix: "cephalo models status   (checks that Ollama is running and the models are installed)" }
-        : { level: "info", name: "Local-model judge", detail: "off (no model is ever called)", fix: "cephalo models enable" },
-    );
+    const last = models.enabled ? readModelsCheck(o.modelsCheckFile) : null;
+    if (!models.enabled) {
+      checks.push({ level: "info", name: "Local-model judge", detail: "off (no model is ever called)", fix: "cephalo models enable" });
+    } else if (last && !last.reachable) {
+      checks.push({ level: "warn", name: "Local-model judge", detail: `on, ${models.mode} mode, but Ollama was not reachable at the last check (${last.error ?? "no answer"})${models.mode === "enforce" ? "; risky commands are being " + (models.onFailure === "ask" ? "put to you (Claude Code) or logged (Hermes)" : "let through and logged") : ""}`, fix: "Start Ollama, then: cephalo models status" });
+    } else if (last && last.missing.length) {
+      checks.push({ level: "warn", name: "Local-model judge", detail: `on, ${models.mode} mode, but these models are missing: ${last.missing.join(", ")}`, fix: "cephalo models pull   (prints the ollama pull commands)" });
+    } else {
+      checks.push({ level: "ok", name: "Local-model judge", detail: `on, ${models.mode} mode; decider ${models.roles.decider.join(" then ")}${last ? "" : " (models not checked yet; the hook checks them every 10 minutes)"}`, fix: "cephalo models status   (checks that Ollama is running and the models are installed)" });
+    }
     const trip = tripSummary(o.trip ?? {});
     if (trip.alert > 0) {
       checks.push({ level: "warn", name: "Prompt-injection tripwire", detail: `${trip.alert} session(s) read text that looks like a prompt injection; risky actions are ${trip.mode === "enforce" ? "blocked" : "only logged"} in them`, fix: "Review with: cephalo tripwire status   then release with: cephalo tripwire clear" });

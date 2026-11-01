@@ -3,14 +3,30 @@ import path from "node:path";
 import { cephaloDir } from "./rules.js";
 import { redactTokens } from "./vault/patterns.js";
 
+/** One question put to a local model. `verdict` is the model's answer, or "no-answer" when nothing usable came back. */
+export interface ModelEvent {
+  role: "decider" | "reviewer" | "embedding";
+  /** The model that answered; when none did, the models that were tried, joined with "+". */
+  name: string;
+  verdict: string;
+  /** Probability from a decision model (0..1), when it gave one. */
+  p?: number;
+  ms: number;
+  cached: boolean;
+  signals?: string[];
+}
+
 export interface AuditEntry {
   ts: string;
   agent: string;
   tool: string;
   command?: string;
   path?: string;
-  decision: "allow" | "block";
+  /** "ask" = the agent was told to get the user's approval first (Claude Code only; see judge/apply.ts). */
+  decision: "allow" | "block" | "ask";
   rule?: string;
+  /** What a local model said about this call (structured, so thresholds can be tuned from the log). */
+  model?: ModelEvent;
   error?: string;
   /** OS account that ran the agent. */
   user?: string;

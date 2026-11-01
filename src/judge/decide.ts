@@ -10,11 +10,18 @@ export type Verdict = "allow" | "block" | "unsure";
 export interface Judgement {
   verdict: Verdict;
   reason: string;
+  p?: number;
   model: string;
   signals: string[];
   cached: boolean;
   ms: number;
 }
+
+/** What happened when the decider was consulted about a command. */
+export type JudgeOutcome =
+  | { kind: "skipped" } // no risk signal: nothing to ask
+  | { kind: "failed"; tried: string[]; ms: number } // models were asked, none gave a usable answer
+  | { kind: "answer"; judgement: Judgement };
 
 export interface JudgeOptions {
   config?: ModelsConfig;
@@ -52,9 +59,16 @@ export function parseVerdict(text: string): { verdict: Verdict; reason: string }
  * One time budget (timeout_ms) covers every model tried.
  */
 export async function judgeCommand(command: string, o: JudgeOptions = {}): Promise<Judgement | null> {
+  const r = await judgeOutcome(command, o);
+  return r.kind === "answer" ? r.judgement : null;
+}
+
+/** Like judgeCommand, but says why there is no answer: nothing to ask (no risk signal), or the models failed. */
+export async function judgeOutcome(command: string, o: JudgeOptions = {}): Promise<JudgeOutcome> {
   const config = o.config ?? loadModelsConfig();
   const signals = findSignals(command);
-  if (signals.length === 0) return null;
+  if (signals.length === 0) return { kind: "skipped" };
+  const t0 = (o.now ?? Date.now)();
   const a = await askModels({
     models: config.roles.decider,
     timeoutMs: config.timeoutMs,
@@ -69,11 +83,12 @@ export async function judgeCommand(command: string, o: JudgeOptions = {}): Promi
         instructions: "Is running this shell command clearly harmful to the user?",
         trueMeans: "It destroys data outside a project, sends secrets or private files to a third party, downloads and runs unknown code, installs persistence or a backdoor, disables security, or publishes something the user did not ask for.",
         falseMeans: "It is ordinary development or administration work, such as installing dependencies, fetching a public page, running tests, or pushing to the project's own remote.",
-        toAnswer: (p) => ({ verdict: p >= config.decisionBlock ? "block" : p <= config.decisionAllow ? "allow" : "unsure", reason: `harm probability ${p.toFixed(2)}` }),
+        toAnswer: (p) => ({ verdict: p >= config.decisionBlock ? "block" : p <= config.decisionAllow ? "allow" : "unsure", reason: `harm probability ${p.toFixed(2)}`, p: Math.round(p * 1000) / 1000 }),
       },
     }),
     cacheFile: o.cacheFile,
     now: o.now,
   });
-  return a ? { verdict: a.verdict as Verdict, reason: a.reason, model: a.model, signals, cached: a.cached, ms: a.ms } : null;
+  if (!a) return { kind: "failed", tried: [...config.roles.decider], ms: (o.now ?? Date.now)() - t0 };
+  return { kind: "answer", judgement: { verdict: a.verdict as Verdict, reason: a.reason, ...(typeof a.p === "number" ? { p: a.p } : {}), model: a.model, signals, cached: a.cached, ms: a.ms } };
 }

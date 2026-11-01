@@ -14,11 +14,11 @@ function tagOf(e: ReplayEvent): string {
   if (e.kind === "tripwire") return e.rule === "tripwire-alert" ? "ALERT" : "WATCH";
   if (e.kind === "leak") return "LEAK";
   if (e.kind === "vault") return e.decision === "block" ? "VAULT!" : "VAULT";
-  return e.decision === "block" ? "BLOCK" : "ALLOW";
+  return e.decision === "block" ? "BLOCK" : e.asked ? "ASK" : "ALLOW";
 }
 
 function lineOf(e: ReplayEvent): string {
-  const rule = e.decision === "block" && e.rule ? ` [${e.rule}]` : e.kind === "tripwire" || e.kind === "leak" ? ` [${e.rule}]` : "";
+  const rule = (e.decision === "block" || e.asked) && e.rule ? ` [${e.rule}]` : e.kind === "tripwire" || e.kind === "leak" ? ` [${e.rule}]` : "";
   const subject = e.subject || (e.note ? clip(e.note, 120) : "");
   return `${stamp(e.ts)}  ${tagOf(e).padEnd(6)} ${e.agent}/${e.tool}${rule}  ${clip(subject, 140)}`.replace(/```/g, "'''");
 }

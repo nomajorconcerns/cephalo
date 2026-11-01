@@ -14,6 +14,8 @@ export function judgeCachePath(): string {
 export interface Answer {
   verdict: string;
   reason: string;
+  /** Probability from a decision model, when there is one. */
+  p?: number;
 }
 
 export interface Asked extends Answer {
@@ -96,7 +98,7 @@ export async function askModels(o: AskOptions): Promise<Asked | null> {
   for (const model of o.models) {
     // A model's cached answer is used at that model's turn, so a backup's old answer never beats the preferred model.
     const hit = cache[cacheKey(o.purpose, model, o.subject)];
-    if (hit && started - hit.t < CACHE_TTL_MS) return { verdict: hit.verdict, reason: hit.reason, model, cached: true, ms: 0 };
+    if (hit && started - hit.t < CACHE_TTL_MS) return { verdict: hit.verdict, reason: hit.reason, ...(typeof hit.p === "number" ? { p: hit.p } : {}), model, cached: true, ms: 0 };
     const left = deadline - now();
     if (left < 100) break;
     try {

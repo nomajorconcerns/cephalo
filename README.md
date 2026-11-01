@@ -235,12 +235,28 @@ Settings are in `~/.cephalo/models.yml`; defaults:
 | `embedding` | `nomic-embed-text` (spots paraphrased injections in tool output) |
 
 - **It can only tighten.** Rules decide first. The model is not asked about a call a rule already blocks, and
-  its answer can never lift a block. In `warn` mode (the default) a `block` verdict is only written to the
-  audit note; in `enforce` mode it denies the call as rule `judge-decider`.
-- **It fails open.** A model that is down, slow, missing or answers in the wrong format means "no opinion".
-  One time budget (`timeout_ms`, default 8000) covers all models tried. Models stay loaded for `keep_alive`
-  (default 10m); a cold load of a model can take 10+ seconds on a CPU, so the first risky command after an idle
-  spell may be let through unjudged.
+  its answer can never lift a block. In `warn` mode (the default) every verdict is only written to the audit
+  log. In `enforce` mode:
+
+  | The model said | Claude Code | Hermes |
+  |---|---|---|
+  | `block` | denied (rule `judge-decider`) | blocked |
+  | `unsure` (`on_unsure: ask`) | Claude Code asks you to approve the command | allowed and logged (Hermes cannot ask) |
+  | nothing usable (`on_failure: ask`): Ollama down, model missing, too slow, bad reply | Claude Code asks you (fail closed) | allowed and logged |
+  | `allow` | runs | runs |
+
+  Set `on_unsure: allow` or `on_failure: allow` to log instead of asking. Only commands that show a risk
+  signal are ever put to a model, so with Ollama stopped an ordinary `npm test` is not affected.
+- **Time budget.** One budget (`timeout_ms`, default 8000) covers all models tried. Models stay loaded for
+  `keep_alive` (default 10m); a cold load can take 10+ seconds on a CPU, so the first risky command after an
+  idle spell is asked about rather than judged.
+- **Every ask is logged.** The audit entry has `decision: ask` and a structured `model` field (role, model,
+  verdict, probability, milliseconds, cached, risk signals). If the command then runs, a
+  `judge-ask-approved` entry records that you approved it; an ask that never ran shows up later as
+  `judge-ask-unanswered`. `cephalo log`, `watch` and `replay` show `ASK`.
+- **Startup check.** At most every 10 minutes the hook checks which configured models Ollama has. Missing
+  models (`models-missing`) and an unreachable Ollama (`models-unreachable`) are logged, and `cephalo doctor`
+  reports the last result.
 - **It stays local.** Cephalo refuses any `host` that is not localhost, so commands are never sent elsewhere.
 - **The command is data.** It is fenced in the prompt and the model is told not to follow it, and a
   model's `allow` changes nothing, so a command that talks the model into "allow" ends up exactly where it
@@ -381,7 +397,7 @@ tools.
 | `audit.jsonl` | The audit log |
 | `mcp.yml`, `mcp-tools.json` | MCP allowlist and mode; approved tool fingerprints |
 | `tripwire.yml`, `tripwire/` | Tripwire mode; per-session state (`cleared/` holds released records) |
-| `models.yml`, `judge-cache.json`, `embed-cache.json` | Local-model judge settings (created only by `cephalo models enable`/`mode`); cached verdicts; embeddings of the known injection phrasings |
+| `models.yml`, `judge-cache.json`, `embed-cache.json`, `models-check.json`, `asks/` | Local-model judge settings (created only by `cephalo models enable`/`mode`); cached verdicts; embeddings of the known injection phrasings; the last model check; asks waiting for your answer |
 | `vault.json`, `vault.key` | Encrypted secrets, and the master key file: wrapped by DPAPI on Windows; on macOS and Linux the key lives in the OS keystore instead; with the fallback `file` backend it is a plain key file readable only by you (mode 0600) |
 | `*.cephalo-backup-<timestamp>` | Backups made before any change to a file |
 

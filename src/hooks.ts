@@ -7,8 +7,7 @@ import { isMcpToolName } from "./mcp/servers.js";
 import { redactParams } from "./redact.js";
 import { evaluate, type EvalInput } from "./engine.js";
 import { loadEffectiveRules, type Rule } from "./rules.js";
-import type { Judgement } from "./judge/decide.js";
-import type { JudgeMode } from "./models/config.js";
+import { applyJudge, type JudgeInput } from "./judge/apply.js";
 
 export type Agent = "claude" | "hermes";
 
@@ -81,7 +80,9 @@ export function judgeTarget(agent: Agent, raw: string): { command: string; cwd?:
 
 export interface HookOptions {
   /** What the local-model judge said about this call's command (computed before the hook runs; see judge/hook.ts). */
-  judge?: { command: string; judgement: Judgement; mode: JudgeMode };
+  judge?: JudgeInput;
+  /** Called when the user is being asked to approve a call, so a later "it ran" can be recorded as their approval (judge/state.ts). */
+  onAsk?: (ask: { command: string; session?: string }) => void;
   /** What the local models found in a tool's output (after-call events; see judge/hook.ts). */
   assessment?: Assessment;
   rules?: Rule[];
@@ -176,28 +177,27 @@ export function runHook(agent: Agent, raw: string, opts: HookOptions = {}): stri
         mcpLog = { ...mcpLog, note: [mcpLog.note, gate.note].filter(Boolean).join("; ") };
       }
     }
-    // The local-model judge can only add a block (and only in enforce mode); it never lifts one.
+    // The local-model judge only ever makes the outcome stricter (block, or ask the user); it never lifts a block.
+    let askText: string | undefined;
     const j = opts.judge;
-    if (res.decision === "allow" && j && ex.command === j.command && j.judgement.verdict !== "allow") {
-      const jj = j.judgement;
-      const note = `local model ${jj.model}${jj.cached ? " (cached)" : ""}: ${jj.verdict}${jj.reason ? ` - ${jj.reason}` : ""} [${jj.signals.join(", ")}]`;
-      if (jj.verdict === "block" && j.mode === "enforce") {
-        res = { decision: "block", rule: { id: "judge-decider", description: `a local model judged this harmful: ${jj.reason || "no reason given"}`, type: "command", pattern: "", action: "block" } };
-        mcpLog = { ...mcpLog, note };
-      } else {
-        mcpLog = { ...mcpLog, note: [mcpLog.note, jj.verdict === "block" ? `would block in enforce mode - ${note}` : note].filter(Boolean).join("; ") };
-      }
-    } else if (res.decision === "allow" && j && ex.command === j.command) {
-      mcpLog = { ...mcpLog, note: [mcpLog.note, `local model ${j.judgement.model}${j.judgement.cached ? " (cached)" : ""}: allow [${j.judgement.signals.join(", ")}]`].filter(Boolean).join("; ") };
+    if (res.decision === "allow" && j && ex.command === j.command) {
+      const eff = applyJudge(agent, j);
+      if (eff.block) res = { decision: "block", rule: eff.block };
+      askText = eff.ask;
+      mcpLog = { ...mcpLog, note: [mcpLog.note, eff.note].filter(Boolean).join("; "), model: eff.model };
     }
     log({
       tool,
       ...(ex.command !== undefined ? { command: ex.command } : {}),
       ...(ex.path !== undefined ? { path: ex.path } : {}),
-      decision: res.decision,
-      ...(res.rule ? { rule: res.rule.id } : {}),
+      decision: askText ? "ask" : res.decision,
+      ...(res.rule ? { rule: res.rule.id } : askText ? { rule: "judge-ask" } : {}),
       ...mcpLog,
     });
+    if (askText && res.decision === "allow") {
+      opts.onAsk?.({ command: ex.command ?? "", session: where.session });
+      return JSON.stringify({ hookSpecificOutput: { hookEventName: "PreToolUse", permissionDecision: "ask", permissionDecisionReason: askText } });
+    }
     if (res.decision === "block" && res.rule) {
       const message = tripMessage ?? blockMessage(res.rule);
       return agent === "claude"

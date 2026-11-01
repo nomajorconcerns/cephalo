@@ -61,6 +61,7 @@ function fakeOllama(chat: Record<string, Reply | undefined> = {}, opts: { embedD
   const embedCalls: number[] = [];
   const chatCalls: Array<{ model: string; user: string }> = [];
   const fetch: FetchLike = async (url, init) => {
+    if (url.endsWith("/api/tags")) return { ok: true, status: 200, json: async () => ({ models: ["d3:2b", "qwen3.5:4b", "qwen3.5:9b", "nomic-embed-text:latest"].map((name) => ({ name })) }) };
     const body = JSON.parse(init!.body!);
     const hang = () => new Promise<never>((_, rej) => init!.signal!.addEventListener("abort", () => rej(Object.assign(new Error("aborted"), { name: "AbortError" }))));
     if (url.endsWith("/api/embed")) {
@@ -241,7 +242,7 @@ function env(models: ModelsConfig, chat: Record<string, Reply | undefined>, trip
   const dir = tmp();
   const f = fakeOllama(chat);
   const tripwire = { dir: path.join(dir, "trip"), policy: { mode: trip } };
-  const opts = { rules: DEFAULT_RULES, auditFile: path.join(dir, "audit.jsonl"), tripwire, models, fetch: f.fetch, cacheFile: path.join(dir, "j.json"), embedCacheFile: path.join(dir, "e.json") };
+  const opts = { rules: DEFAULT_RULES, auditFile: path.join(dir, "audit.jsonl"), tripwire, models, fetch: f.fetch, cacheFile: path.join(dir, "j.json"), embedCacheFile: path.join(dir, "e.json"), stateDir: path.join(dir, "state") };
   return { dir, f, opts };
 }
 const post = (text: string, over: Record<string, unknown> = {}) =>
@@ -311,7 +312,7 @@ test("hook: no model call when the judge is off, assist is off, the tripwire is 
 test("hook: a dead or hung model server fails open", async () => {
   const dead = fakeOllama({}, { embedDown: true });
   const dir = tmp();
-  const opts = { rules: DEFAULT_RULES, auditFile: path.join(dir, "a.jsonl"), tripwire: { dir: path.join(dir, "trip"), policy: { mode: "enforce" as const } }, models: cfg(), fetch: dead.fetch, cacheFile: path.join(dir, "j.json"), embedCacheFile: path.join(dir, "e.json") };
+  const opts = { rules: DEFAULT_RULES, auditFile: path.join(dir, "a.jsonl"), tripwire: { dir: path.join(dir, "trip"), policy: { mode: "enforce" as const } }, models: cfg(), fetch: dead.fetch, cacheFile: path.join(dir, "j.json"), embedCacheFile: path.join(dir, "e.json"), stateDir: path.join(dir, "state") };
   assert.equal(await runHookJudged("claude", post(PARAPHRASE), opts), "");
   const hung = fakeOllama({}, { embedHang: true });
   const t0 = Date.now();

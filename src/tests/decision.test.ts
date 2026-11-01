@@ -22,6 +22,7 @@ function fake(opts: { p?: number | (() => number); d3Error?: string; badReply?: 
   const fetch: FetchLike = async (url, init) => {
     const body = init?.body ? JSON.parse(init.body) : {};
     calls.push({ url: url.replace(/^http:\/\/[^/]+/, ""), body });
+    if (url.endsWith("/api/tags")) return { ok: true, status: 200, json: async () => ({ models: ["d3:2b", "qwen3.5:4b", "qwen3.5:9b", "nomic-embed-text:latest"].map((name) => ({ name })) }) };
     if (url.endsWith("/api/show")) {
       if (opts.showDown) throw new Error("ECONNREFUSED");
       const caps = body.model === "d3:2b" ? ["decision", "vision"] : ["completion", "tools"];
@@ -135,7 +136,7 @@ test("hook, enforce: a decision model's confident block denies the call", async 
   const dir = tmp();
   const f = fake({ p: 0.99 });
   const raw = JSON.stringify({ tool_name: "Bash", tool_input: { command: RISKY }, session_id: "s" });
-  const opts = { rules: DEFAULT_RULES, auditFile: path.join(dir, "a.jsonl"), tripwire: { dir: path.join(dir, "t"), policy: { mode: "off" as const } }, models: cfg({ mode: "enforce" }), fetch: f.fetch, cacheFile: path.join(dir, "j.json") };
+  const opts = { rules: DEFAULT_RULES, auditFile: path.join(dir, "a.jsonl"), tripwire: { dir: path.join(dir, "t"), policy: { mode: "off" as const } }, models: cfg({ mode: "enforce" }), fetch: f.fetch, cacheFile: path.join(dir, "j.json"), stateDir: path.join(dir, "state") };
   const out = JSON.parse(await runHookJudged("claude", raw, opts));
   assert.equal(out.hookSpecificOutput.permissionDecision, "deny");
   assert.match(out.hookSpecificOutput.permissionDecisionReason, /harm probability 0\.99/);

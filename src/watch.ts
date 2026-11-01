@@ -20,9 +20,9 @@ export function formatWatchLine(e: AuditEntry, opts: { color: boolean; width?: n
   const time = Number.isNaN(t.getTime())
     ? "--:--:--"
     : [t.getHours(), t.getMinutes(), t.getSeconds()].map((n) => String(n).padStart(2, "0")).join(":");
-  const label = e.decision === "block" ? "BLOCK" : "ALLOW";
+  const label = e.decision === "block" ? "BLOCK" : e.decision === "ask" ? "ASK" : "ALLOW";
   const paint = (s: string, code: string) => (opts.color ? `${ESC}${code}m${s}${RESET}` : s);
-  const decision = paint(label, e.decision === "block" ? "1;31" : "32");
+  const decision = paint(label, e.decision === "block" ? "1;31" : e.decision === "ask" ? "1;33" : "32");
   const who = `${e.agent}/${e.tool}`;
   const rule = e.rule ? ` ${paint(`[${e.rule}]`, "33")}` : "";
   const err = e.error ? ` ${paint(`(error: ${sanitize(e.error)})`, "90")}` : "";
