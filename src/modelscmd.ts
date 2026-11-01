@@ -1,10 +1,13 @@
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { ROLES, loadModelsConfig, modelsConfigPath, normalizeTag, requiredTags, serializeModelsConfig, type JudgeMode, type ModelsConfig } from "./models/config.js";
 import { judgeCachePath, judgeCommand } from "./judge/decide.js";
 import { SIGNAL_IDS, findSignals } from "./judge/signals.js";
 import { assessText } from "./judge/assess.js";
 import { REFERENCE_PHRASES } from "./judge/semantic.js";
+import { formatReport, loadCases, runEval, type CaseResult } from "./eval/run.js";
+import { projectRoot } from "./install.js";
 import { ollamaStatus, type FetchLike } from "./models/ollama.js";
 
 export interface ModelsCmdOptions {
@@ -169,4 +172,43 @@ export async function judgeReport(command: string, o: ModelsCmdOptions & { cache
       : "Cephalo would let this run.",
   );
   return { lines, exitCode: 0 };
+}
+
+export interface EvalOptions extends ModelsCmdOptions {
+  /** Cases file. Default: eval/cases.jsonl in the project. */
+  casesFile?: string;
+  only?: "commands" | "diffs";
+  /** Use this one model for both the decider and reviewer roles (to compare models on the same cases). */
+  model?: string;
+  limit?: number;
+  /** Write the per-case results here as JSON. */
+  jsonOut?: string;
+  onProgress?: (line: string) => void;
+}
+
+/** `cephalo models eval`: run the labeled cases through rules + models and report what was caught, missed and falsely flagged. Works whatever the on/off setting. */
+export async function modelsEval(o: EvalOptions = {}): Promise<{ lines: string[]; exitCode: number; results?: CaseResult[] }> {
+  const file = o.casesFile ?? path.join(projectRoot(), "eval", "cases.jsonl");
+  let cases;
+  try {
+    cases = loadCases(file);
+  } catch (e) {
+    return { lines: [`Cannot read the cases in ${file}: ${(e as Error).message}`], exitCode: 1 };
+  }
+  if (o.only) cases = cases.filter((c) => c.kind === (o.only === "commands" ? "command" : "diff"));
+  if (o.limit && o.limit > 0) cases = cases.slice(0, o.limit);
+  if (cases.length === 0) return { lines: ["No cases to run."], exitCode: 1 };
+  const base = loadModelsConfig(o.file);
+  const config = o.model ? { ...base, roles: { ...base.roles, decider: [o.model], reviewer: [o.model] } } : base;
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "cephalo-eval-"));
+  const results = await runEval(cases, {
+    config,
+    fetch: o.fetch,
+    cacheFile: path.join(dir, "cache.json"),
+    onProgress: (done, total, r) => o.onProgress?.(`${String(done).padStart(3)}/${total} ${r.id.padEnd(14)} ${r.model.padEnd(9)} ${r.ms} ms`),
+  });
+  fs.rmSync(dir, { recursive: true, force: true });
+  if (o.jsonOut) fs.writeFileSync(o.jsonOut, JSON.stringify(results, null, 1), "utf8");
+  const models = o.model ? o.model : `decider ${config.roles.decider.join(" > ")}; reviewer ${config.roles.reviewer.join(" > ")}`;
+  return { lines: formatReport(results, cases, models), exitCode: 0, results };
 }

@@ -30,7 +30,7 @@ import { runInit } from "./init.js";
 import { listRules, resetRules, showRule } from "./rulescmd.js";
 import { defaultRulesPath } from "./rules.js";
 import { getVersion } from "./version.js";
-import { applyModelsEnabled, applyModelsMode, judgeReport, modelsPullPlan, modelsScan, modelsStatus, planModelsEnabled, planModelsMode } from "./modelscmd.js";
+import { applyModelsEnabled, applyModelsMode, judgeReport, modelsEval, modelsPullPlan, modelsScan, modelsStatus, planModelsEnabled, planModelsMode } from "./modelscmd.js";
 import { modelsConfigPath } from "./models/config.js";
 
 const USAGE = `Usage:
@@ -50,7 +50,7 @@ const USAGE = `Usage:
   cephalo run --env NAME -- <command> Run a command with vault secrets injected; output is scrubbed
   cephalo tripwire [status|scan|clear|mode|path]
                                       Prompt-injection tripwire: scan what the agent reads, lock down risky actions
-  cephalo models [status|pull|enable|disable|mode|judge|scan|path]
+  cephalo models [status|pull|enable|disable|mode|judge|scan|eval|path]
                                       Local-model judge (Ollama on this machine): roles, installed models
   cephalo mcp proxy -- <command...>   Run an MCP server behind Cephalo's runtime proxy (used in agent configs)
   cephalo install claude|hermes       Add Cephalo's hook to the agent's config
@@ -522,6 +522,22 @@ async function main(): Promise<number> {
       for (const line of r.lines) console.log(line);
       return r.exitCode;
     }
+    if (sub === "eval") {
+      const flag = (name: string) => {
+        const i = rest.indexOf(name);
+        return i >= 0 ? rest[i + 1] : undefined;
+      };
+      const only = flag("--only");
+      if (only !== undefined && only !== "commands" && only !== "diffs") {
+        process.stderr.write("Usage: cephalo models eval [cases.jsonl] [--only commands|diffs] [--model <tag>] [--limit N] [--json <file>]\n");
+        return 1;
+      }
+      const valued = new Set(["--only", "--model", "--limit", "--json"]);
+      const file = rest.slice(1).find((a, i, arr) => !a.startsWith("-") && !valued.has(arr[i - 1] ?? ""));
+      const r = await modelsEval({ casesFile: file, only: only as "commands" | "diffs" | undefined, model: flag("--model"), limit: flag("--limit") ? Number(flag("--limit")) : undefined, jsonOut: flag("--json"), onProgress: (l) => process.stderr.write(l + "\n") });
+      for (const line of r.lines) console.log(line);
+      return r.exitCode;
+    }
     if (sub === "judge") {
       const command = rest.slice(1).filter((a) => a !== "--yes" && a !== "-y").join(" ");
       if (!command) {
@@ -553,7 +569,7 @@ async function main(): Promise<number> {
       for (const line of modePlan ? applyModelsMode(modePlan.mode!) : applyModelsEnabled(sub as "enable" | "disable")) console.log(line);
       return 0;
     }
-    process.stderr.write("Usage: cephalo models [status | pull | enable | disable | mode warn|enforce | judge \"<command>\" | scan <file|-> | path]\n");
+    process.stderr.write("Usage: cephalo models [status | pull | enable | disable | mode warn|enforce | judge \"<command>\" | scan <file|-> | eval | path]\n");
     return 1;
   }
 
