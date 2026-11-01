@@ -2,7 +2,9 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { cephaloDir } from "../rules.js";
+import type { ModelsConfig } from "../models/config.js";
 import { ollamaChat } from "../models/chat.js";
+import { ollamaCapabilities, ollamaNoul } from "../models/systemone.js";
 import type { FetchLike } from "../models/ollama.js";
 
 export function judgeCachePath(): string {
@@ -66,19 +68,17 @@ export function parseJsonObject(text: string): any | null {
   }
 }
 
+/** Ask one model. `timeLeftMs` is what remains of the shared budget. Return null for an unusable reply; throw for a failure. */
+export type Run = (model: string, timeLeftMs: number) => Promise<Answer | null>;
+
 export interface AskOptions {
   models: string[];
-  host: string;
   /** One time budget for all models tried. */
   timeoutMs: number;
-  system: string;
-  user: string;
   /** What the answer is about (the cache is keyed on this, per model and purpose). */
   subject: string;
   purpose: string;
-  /** Returns null for a reply that is not the expected shape (that model is skipped). */
-  parse: (text: string) => Answer | null;
-  fetch?: FetchLike;
+  run: Run;
   cacheFile?: string;
   now?: () => number;
 }
@@ -92,17 +92,15 @@ export async function askModels(o: AskOptions): Promise<Asked | null> {
   const started = now();
   const cacheFile = o.cacheFile ?? judgeCachePath();
   const cache = readCache(cacheFile);
-  for (const model of o.models) {
-    const hit = cache[cacheKey(o.purpose, model, o.subject)];
-    if (hit && started - hit.t < CACHE_TTL_MS) return { verdict: hit.verdict, reason: hit.reason, model, cached: true, ms: 0 };
-  }
   const deadline = started + o.timeoutMs;
   for (const model of o.models) {
+    // A model's cached answer is used at that model's turn, so a backup's old answer never beats the preferred model.
+    const hit = cache[cacheKey(o.purpose, model, o.subject)];
+    if (hit && started - hit.t < CACHE_TTL_MS) return { verdict: hit.verdict, reason: hit.reason, model, cached: true, ms: 0 };
     const left = deadline - now();
     if (left < 100) break;
     try {
-      const text = await ollamaChat({ host: o.host, model, system: o.system, user: o.user, timeoutMs: left, fetch: o.fetch });
-      const parsed = o.parse(text);
+      const parsed = await o.run(model, left);
       if (!parsed) continue;
       cache[cacheKey(o.purpose, model, o.subject)] = { ...parsed, model, t: now() };
       writeCache(cacheFile, cache, now());
@@ -112,4 +110,31 @@ export async function askModels(o: AskOptions): Promise<Asked | null> {
     }
   }
   return null;
+}
+
+export interface RunnerSpec {
+  config: ModelsConfig;
+  fetch?: FetchLike;
+  /** For chat models: ask for JSON and parse it. */
+  chat: { system: string; user: string; parse: (text: string) => Answer | null };
+  /** For decision models (d3): a yes/no question, and what a probability of "true" means. */
+  decision: { state: string; instructions: string; trueMeans: string; falseMeans: string; toAnswer: (p: number) => Answer };
+}
+
+/**
+ * Build the per-model call: decision models (found out from Ollama's capabilities) get a yes/no question and
+ * answer with a probability; everything else is asked in chat and must reply with JSON.
+ */
+export function makeRun(s: RunnerSpec): Run {
+  return async (model, left) => {
+    const started = Date.now();
+    const caps = await ollamaCapabilities(s.config.host, model, Math.min(2000, left), s.fetch);
+    const rest = () => Math.max(1, left - (Date.now() - started));
+    if (caps.includes("decision")) {
+      const p = await ollamaNoul({ host: s.config.host, model, ...s.decision, timeoutMs: rest(), keepAlive: s.config.keepAlive, fetch: s.fetch });
+      return s.decision.toAnswer(p);
+    }
+    const text = await ollamaChat({ host: s.config.host, model, ...s.chat, timeoutMs: rest(), keepAlive: s.config.keepAlive, fetch: s.fetch });
+    return s.chat.parse(text);
+  };
 }

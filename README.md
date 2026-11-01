@@ -208,8 +208,15 @@ It misses some attacks and flags some harmless text (for example a document abou
 An optional second opinion from a small model running in [Ollama](https://ollama.com) **on this machine**.
 It is off by default. When on, a shell command that shows a risk signal (pipe to a shell, network tools,
 encoded payloads, persistence, privilege, publishing or pushing, credential files, disk-destructive
-commands) is shown to the `decider` model, which answers `allow`, `block` or `unsure` as JSON. Everyday
+commands) is shown to the `decider` model, which answers `allow`, `block` or `unsure`. Everyday
 commands (`npm test`, `git status`) never reach a model.
+
+Two kinds of model work here, and Cephalo finds out which a model is from Ollama (`/api/show`):
+
+- **Decision models** (such as `d3:2b`) do not chat. They answer a yes/no question with a probability, through
+  Ollama's `/v1/systemone` endpoint. At or above `decision_block` (0.9) that is `block`, at or below
+  `decision_allow` (0.3) `allow`, in between `unsure`. This is the fast path: about 2.5 s on a CPU-only PC.
+- **Chat models** (such as `qwen3.5:4b`) are asked for a JSON verdict, with thinking switched off.
 
 ```powershell
 cephalo models status          # config, whether Ollama is reachable, which models are installed
@@ -224,14 +231,16 @@ Settings are in `~/.cephalo/models.yml`; defaults:
 | Role | Models (first, then fallbacks) |
 |---|---|
 | `decider` | `d3:2b`, `qwen3.5:4b` |
-| `reviewer` | `qwen3.5:9b` (reads suspicious tool output; see the tripwire assist below) |
+| `reviewer` | `d3:2b`, `qwen3.5:9b` (reads suspicious tool output; see the tripwire assist below) |
 | `embedding` | `nomic-embed-text` (spots paraphrased injections in tool output) |
 
 - **It can only tighten.** Rules decide first. The model is not asked about a call a rule already blocks, and
   its answer can never lift a block. In `warn` mode (the default) a `block` verdict is only written to the
   audit note; in `enforce` mode it denies the call as rule `judge-decider`.
 - **It fails open.** A model that is down, slow, missing or answers in the wrong format means "no opinion".
-  One time budget (`timeout_ms`, default 8000) covers all models tried.
+  One time budget (`timeout_ms`, default 8000) covers all models tried. Models stay loaded for `keep_alive`
+  (default 10m); a cold load of a model can take 10+ seconds on a CPU, so the first risky command after an idle
+  spell may be let through unjudged.
 - **It stays local.** Cephalo refuses any `host` that is not localhost, so commands are never sent elsewhere.
 - **The command is data.** It is fenced in the prompt and the model is told not to follow it, and a
   model's `allow` changes nothing, so a command that talks the model into "allow" ends up exactly where it
@@ -252,16 +261,21 @@ recorded as ordinary tripwire events, so `cephalo tripwire status` and `cephalo 
 
 - **They can only raise the level.** A `benign` verdict never lowers or removes a finding the regex scan made.
 - **The reference phrasings** are embedded once and kept in `~/.cephalo/embed-cache.json`; after that only the
-  tool output itself is embedded. The reviewer's budget is `reviewer_timeout_ms` (default 15000).
+  tool output itself is embedded. The reviewer's budget is `reviewer_timeout_ms` (default 20000).
+  The default reviewer is `d3:2b` with `qwen3.5:9b` as backup: on a CPU-only PC both judged a set of test texts
+  correctly, but the 9B took 15-29 s per text and `d3:2b` about 2.6 s.
 - `cephalo models scan <file|->` runs the whole pipeline on some text and shows each step (best similarity,
-  matched phrasing, reviewer verdict). It records nothing. Use it to tune `similarity_threshold` (default 0.75).
+  matched phrasing, reviewer verdict). It records nothing. Use it to tune `similarity_threshold` (default 0.72).
 - Cost: with the judge on, every non-empty tool output is embedded once. Only a match reaches the reviewer.
 
 **Limits.** Small models are wrong sometimes, in both directions. Watch `cephalo log` in `warn` mode before
 switching to `enforce`. The decider needs a command with a risk signal, so it does not look at file writes or MCP
-calls. The default similarity threshold is a guess: it was not tuned on a real embedding model, so expect to
-adjust it with `cephalo models scan`. All of this has been tested against a simulated Ollama server, not yet
-against real models.
+calls. The similarity threshold (0.72) was set from a small hand-made sample with `nomic-embed-text`: injection
+paraphrases scored 0.76-0.85, ordinary text 0.53-0.69. That is a narrow gap and a small sample, so expect to
+adjust it with `cephalo models scan` on your own material. A page that merely quotes injection phrases (such as a
+tutorial about prompt injection) is caught by the regex scan as an alert, and the models never lower that.
+The judge was run against real models (`d3:2b`, `qwen3.5:4b`, `qwen3.5:9b`, `nomic-embed-text`) on one
+CPU-only Windows PC; other hardware will have different timings.
 
 ## Secrets vault
 

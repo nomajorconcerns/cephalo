@@ -343,7 +343,7 @@ test("models scan: shows each step and what the tripwire would record, and recor
 
 test("config: assist settings are read, validated and written", () => {
   const d = DEFAULT_MODELS_CONFIG;
-  assert.deepEqual([d.tripwireAssist, d.similarityThreshold, d.reviewerTimeoutMs], [true, 0.75, 15000]);
+  assert.deepEqual([d.tripwireAssist, d.similarityThreshold, d.reviewerTimeoutMs], [true, 0.72, 20000]);
   const ok = parseModelsConfig("tripwire_assist: false\nsimilarity_threshold: 0.8\nreviewer_timeout_ms: 30000\n");
   assert.deepEqual(ok.problems, []);
   assert.deepEqual([ok.config.tripwireAssist, ok.config.similarityThreshold, ok.config.reviewerTimeoutMs], [false, 0.8, 30000]);

@@ -6,6 +6,7 @@ export interface EmbedOptions {
   model: string;
   input: string[];
   timeoutMs: number;
+  keepAlive?: string;
   fetch?: FetchLike;
 }
 
@@ -17,7 +18,7 @@ export async function ollamaEmbed(o: EmbedOptions): Promise<number[][]> {
   const ac = new AbortController();
   const timer = setTimeout(() => ac.abort(), Math.max(1, o.timeoutMs));
   try {
-    const r = await f(`${o.host}/api/embed`, { method: "POST", signal: ac.signal, headers: { "content-type": "application/json" }, body: JSON.stringify({ model: o.model, input: o.input }) });
+    const r = await f(`${o.host}/api/embed`, { method: "POST", signal: ac.signal, headers: { "content-type": "application/json" }, body: JSON.stringify({ model: o.model, input: o.input, ...(o.keepAlive ? { keep_alive: o.keepAlive } : {}) }) });
     let j: any = {};
     try {
       j = await r.json();

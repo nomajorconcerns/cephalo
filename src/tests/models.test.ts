@@ -30,7 +30,7 @@ test("defaults: off, local host, the four configured models in their roles", () 
   assert.equal(d.enabled, false);
   assert.equal(d.host, "http://127.0.0.1:11434");
   assert.deepEqual(d.roles.decider, ["d3:2b", "qwen3.5:4b"]);
-  assert.deepEqual(d.roles.reviewer, ["qwen3.5:9b"]);
+  assert.deepEqual(d.roles.reviewer, ["d3:2b", "qwen3.5:9b"]);
   assert.deepEqual(d.roles.embedding, ["nomic-embed-text"]);
   assert.deepEqual(requiredTags(d).map((r) => r.tag), ["d3:2b", "qwen3.5:4b", "qwen3.5:9b", "nomic-embed-text"]);
 });

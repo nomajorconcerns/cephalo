@@ -1,6 +1,6 @@
 import { loadModelsConfig, type ModelsConfig } from "../models/config.js";
 import type { FetchLike } from "../models/ollama.js";
-import { askModels, cleanReason, parseJsonObject } from "./ask.js";
+import { askModels, cleanReason, makeRun, parseJsonObject } from "./ask.js";
 import { findSignals } from "./signals.js";
 
 export { judgeCachePath } from "./ask.js";
@@ -57,14 +57,21 @@ export async function judgeCommand(command: string, o: JudgeOptions = {}): Promi
   if (signals.length === 0) return null;
   const a = await askModels({
     models: config.roles.decider,
-    host: config.host,
     timeoutMs: config.timeoutMs,
-    system: JUDGE_SYSTEM,
-    user: buildUserPrompt(command, signals, o.cwd),
     subject: command,
     purpose: "command",
-    parse: parseVerdict,
-    fetch: o.fetch,
+    run: makeRun({
+      config,
+      fetch: o.fetch,
+      chat: { system: JUDGE_SYSTEM, user: buildUserPrompt(command, signals, o.cwd), parse: parseVerdict },
+      decision: {
+        state: buildUserPrompt(command, signals, o.cwd),
+        instructions: "Is running this shell command clearly harmful to the user?",
+        trueMeans: "It destroys data outside a project, sends secrets or private files to a third party, downloads and runs unknown code, installs persistence or a backdoor, disables security, or publishes something the user did not ask for.",
+        falseMeans: "It is ordinary development or administration work, such as installing dependencies, fetching a public page, running tests, or pushing to the project's own remote.",
+        toAnswer: (p) => ({ verdict: p >= config.decisionBlock ? "block" : p <= config.decisionAllow ? "allow" : "unsure", reason: `harm probability ${p.toFixed(2)}` }),
+      },
+    }),
     cacheFile: o.cacheFile,
     now: o.now,
   });

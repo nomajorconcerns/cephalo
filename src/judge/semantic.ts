@@ -150,10 +150,10 @@ export async function semanticScan(text: string, o: SemanticOptions): Promise<Se
     try {
       let refs = readRefCache(cacheFile, model);
       if (!refs) {
-        refs = await ollamaEmbed({ host: o.config.host, model, input: REFERENCE_PHRASES.map((p) => EMBED_PREFIX + p), timeoutMs: deadline - now(), fetch: o.fetch });
+        refs = await ollamaEmbed({ host: o.config.host, model, input: REFERENCE_PHRASES.map((p) => EMBED_PREFIX + p), timeoutMs: deadline - now(), keepAlive: o.config.keepAlive, fetch: o.fetch });
         writeRefCache(cacheFile, model, refs);
       }
-      const vecs = await ollamaEmbed({ host: o.config.host, model, input: chunks.map((c) => EMBED_PREFIX + c), timeoutMs: deadline - now(), fetch: o.fetch });
+      const vecs = await ollamaEmbed({ host: o.config.host, model, input: chunks.map((c) => EMBED_PREFIX + c), timeoutMs: deadline - now(), keepAlive: o.config.keepAlive, fetch: o.fetch });
       let top = 0;
       const hits: SemanticHit[] = [];
       vecs.forEach((v, i) => {

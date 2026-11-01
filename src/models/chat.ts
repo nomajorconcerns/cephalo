@@ -8,6 +8,7 @@ export interface ChatOptions {
   user: string;
   /** Milliseconds left for this one request. */
   timeoutMs: number;
+  keepAlive?: string;
   fetch?: FetchLike;
 }
 
@@ -27,6 +28,7 @@ export async function ollamaChat(o: ChatOptions): Promise<string> {
       stream: false,
       format: "json",
       ...(think ? {} : { think: false }),
+      ...(o.keepAlive ? { keep_alive: o.keepAlive } : {}),
       options: { temperature: 0, num_predict: 200 },
       messages: [
         { role: "system", content: o.system },

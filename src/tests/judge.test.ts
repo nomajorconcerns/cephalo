@@ -33,6 +33,7 @@ interface Reply {
 function fakeChat(replies: Record<string, Reply | Reply[]>) {
   const calls: Array<{ model: string; body: any }> = [];
   const fetch: FetchLike = async (url, init) => {
+    if (url.endsWith("/api/show")) return { ok: false, status: 404, json: async () => ({}) }; // capabilities unknown: treated as a chat model
     assert.match(url, /\/api\/chat$/);
     const body = JSON.parse(init!.body!);
     calls.push({ model: body.model, body });
@@ -64,7 +65,11 @@ test("signals: risky commands are flagged, everyday ones are not", () => {
     "disk-destructive": "git clean -fdx",
   };
   for (const [id, cmd] of Object.entries(risky)) assert.ok(findSignals(cmd).includes(id), `${id}: ${cmd}`);
-  for (const cmd of ["ls -la", "npm test", "git status", "git commit -m fix", "node dist/cli.js models", "echo hello", "npm install", "python -m pytest"]) {
+  // Found by running the real models: a flag starting with "-" has no word boundary before it, so these were missed.
+  for (const cmd of ["powershell -EncodedCommand SQBFAFgA", "pwsh -enc SQBFAFgA", "powershell -ec SQBFAFgA", "echo aGk= | base64 --decode", "eval $(cat x)"]) {
+    assert.ok(findSignals(cmd).includes("encoded"), cmd);
+  }
+  for (const cmd of ["git log --encoding=utf-8", "node -e 1", "ls -la", "npm test", "git status", "git commit -m fix", "node dist/cli.js models", "echo hello", "npm install", "python -m pytest"]) {
     assert.deepEqual(findSignals(cmd), [], cmd);
   }
 });
