@@ -600,6 +600,52 @@ html.vt-morph::view-transition-old(root),html.vt-morph::view-transition-new(root
 .js .tile.reveal:not(.in) .vd{transform:scale(.6)}
 .js .tile.reveal.in .vd{transform:none}
 
+
+/* ---------- phase 4b: rules builder, platform hub ---------- */
+.rb{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:20px;align-items:start}
+@media(max-width:900px){.rb{grid-template-columns:minmax(0,1fr)}}
+.rbcol{display:grid;grid-template-columns:minmax(0,1fr);gap:20px;min-width:0}
+.rblist{list-style:none;margin:0;padding:8px;display:grid;gap:6px}
+.rbi{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;border:1px solid var(--line);border-radius:8px;background:var(--bg2);cursor:grab}
+.rbi.dragging{opacity:.4}
+.rbi:has(.rbsel[aria-pressed=true]){border-color:color-mix(in srgb,var(--mint) 55%,var(--line))}
+.rbsel{display:flex;gap:10px;align-items:baseline;text-align:left;border:0;background:transparent;padding:10px 12px;min-height:44px;min-width:0;font:600 13.5px var(--mono);color:var(--text)}
+.rbsel .no{color:var(--faint);font-weight:500}.rbsel .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.rbsel .ty{margin-left:auto;font:11px var(--mono);color:var(--muted);flex:none}
+.mv{width:40px;min-height:44px;border:0;background:transparent;color:var(--muted);font-size:12px}
+.mv:disabled{opacity:.3}.mv:not(:disabled):hover{color:var(--mint)}
+.rbform{padding:16px;display:grid;gap:12px}.rbform .field{margin:0}
+.rberr{margin:0;min-height:1.5em;font-size:13px;color:var(--block)}
+.rbyaml pre{margin:0;padding:14px 16px;font:13px/1.7 var(--mono);min-height:300px;overflow:auto}
+.yl{position:relative;display:block;white-space:pre}
+.yl.flash::before{content:'';position:absolute;inset:0 -10px;background:var(--mint);opacity:0;pointer-events:none;animation:rbflash 1s var(--ease-out)}
+@keyframes rbflash{0%{opacity:.3}100%{opacity:0}}
+.yl.cm{color:var(--faint)}
+.rbtb{padding:14px 16px;display:grid;gap:12px}
+.rbres{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;align-items:start;min-height:84px}
+.rbres p{margin:0 0 8px;color:var(--muted);font-size:14px}
+.rbchips{display:flex;flex-wrap:wrap;gap:6px}
+.rbchip{font:12px var(--mono);padding:3px 8px;border:1px solid var(--line2);border-radius:6px;color:var(--muted)}
+.rbchip.hit{color:var(--block);border-color:var(--block)}.rbchip.pass{color:var(--allow)}.rbchip.skip{opacity:.6}
+.hubwrap{margin-bottom:26px}
+.hub{width:100%;height:auto;display:block}.hub.v{display:none;max-width:420px;margin:0 auto}
+@media(max-width:700px){.hub.h{display:none}.hub.v{display:block}}
+.hub .cap{font:600 10.5px var(--mono);letter-spacing:.1em;fill:var(--faint)}
+.hub .node rect{fill:var(--surface);stroke:var(--line2)}
+.hub .node.dash rect{stroke-dasharray:4 3}
+.hub text{fill:var(--text);font:600 14px var(--sans)}
+.hub text.sub{font:11px var(--mono);fill:var(--muted);font-weight:400}
+.hub .ln{stroke:var(--line2);stroke-width:1.5;fill:none}
+.hub .ln.hot{stroke:var(--mint);opacity:0;transition:opacity var(--dur-med) var(--ease-out)}
+.hub .ln.hot.on{opacity:1}
+.hub .gate circle{fill:var(--bg2);stroke:var(--mint);stroke-width:2}.hub .gate .inner{fill:none;stroke:var(--line2);stroke-width:1}
+.hub .os{cursor:pointer;outline:none}
+.hub .os .b{fill:var(--surface);stroke:var(--line2)}
+.hub .os .hl{fill:color-mix(in srgb,var(--mint) 14%,transparent);stroke:var(--mint);opacity:0;transition:opacity var(--dur-med) var(--ease-out)}
+.hub .os.on .hl{opacity:1}
+.hub .os:focus-visible .b{stroke:var(--mint);stroke-width:2}
+.hubleg{font-size:13px;margin:10px 2px 0}
+
 /* theme switch: fade colours instead of snapping (class is added for a moment while toggling) */
 html.theming *,html.theming *::before,html.theming *::after{transition:background-color .4s var(--ease),color .4s var(--ease),border-color .4s var(--ease),box-shadow .4s var(--ease)!important}
 @media (prefers-reduced-motion:reduce){.js .reveal{opacity:1;transform:none}}
@@ -611,7 +657,7 @@ html.theming *,html.theming *::before,html.theming *::after{transition:backgroun
   <div class="wrap">
     <a class="brand" href="#top"><span id="logo" aria-hidden="true"></span>Cephalo</a>
     <div class="links">
-      <a href="#how">How it works</a><a href="#playground">Playground</a><a href="#commands">Rules</a><!-- TODO: point "Rules" at #rules once the "Rules you own" section exists (Phase 4) --><a href="#pricing">Pricing</a><a href="https://github.com/nomajorconcerns/cephalo#readme" rel="noopener">Docs</a><!-- TODO: verify: URL comes from package.json "homepage"; this checkout has no git remote, so confirm the repository is public -->
+      <a href="#how">How it works</a><a href="#playground">Playground</a><a href="#rules">Rules</a><a href="#pricing">Pricing</a><a href="https://github.com/nomajorconcerns/cephalo#readme" rel="noopener">Docs</a><!-- TODO: verify: URL comes from package.json "homepage"; this checkout has no git remote, so confirm the repository is public -->
       <a class="cta" href="#install">Install</a>
       <button class="iconbtn" id="themeBtn" type="button" aria-label="Switch colour theme" aria-pressed="false"><svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg><svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
     </div>
@@ -648,7 +694,7 @@ npm link</pre><button class="copy" data-copy-from="heroSetup" type="button">Copy
       </div>
       <div class="hero-actions">
         <a class="btn primary" href="#playground" id="ctaDanger">Try a dangerous command</a>
-        <a class="btn" href="#commands">Read the rules</a><!-- TODO: point at #rules once the "Rules you own" section exists (Phase 4) -->
+        <a class="btn" href="#rules">Read the rules</a>
       </div>
       <p class="compat"><b>Windows, macOS, Linux.</b> Node.js CLI. Rules are plain YAML you own.</p>
     </div>
@@ -889,6 +935,64 @@ psql -c &quot;DROP TABLE users;&quot;
   </div>
 </section>
 
+<!-- RULES YOU OWN -->
+<section id="rules">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Rules you own</p>
+      <h2>Write a rule. Test it before you save it.</h2>
+      <p>Rules are plain text in <code>~/.cephalo/rules.yml</code>, one block per rule. This builder only writes the preview on the right; it never touches a file, so copy the text into your own file. <strong>First match wins</strong>, so the order of rules in the file matters.</p>
+    </div>
+    <div class="rb" id="rb">
+      <div class="rbcol">
+        <div class="card"><div class="hd">Rules, in order <span class="sp"></span><span class="dim">drag, or use ▲▼</span></div>
+          <ol class="rblist" id="rbList" aria-label="Rules in order"></ol>
+          <div style="padding:0 8px 8px;display:flex;gap:8px"><button class="chip" type="button" id="rbAdd">+ Add rule</button><button class="chip" type="button" id="rbDel">Delete selected</button></div>
+        </div>
+        <div class="card rbform" id="rbForm">
+          <div class="field"><label for="rbId">id</label><input type="text" id="rbId" autocomplete="off" spellcheck="false" maxlength="60"></div>
+          <div class="field"><label for="rbDesc">description</label><input type="text" id="rbDesc" autocomplete="off" maxlength="120"></div>
+          <div class="field"><span class="lbl" id="rbTypeL">type</span><div class="seg" role="group" aria-labelledby="rbTypeL" id="rbType"><button type="button" data-v="command" aria-pressed="true">command</button><button type="button" data-v="path" aria-pressed="false">path</button></div></div>
+          <div class="field" id="rbOnF" hidden><span class="lbl" id="rbOnL">on (path rules only)</span><div class="seg" role="group" aria-labelledby="rbOnL" id="rbOn"><button type="button" data-v="any" aria-pressed="true">any</button><button type="button" data-v="read" aria-pressed="false">read</button><button type="button" data-v="write" aria-pressed="false">write</button></div></div>
+          <div class="field"><label for="rbPat">pattern (regular expression)</label><input type="text" id="rbPat" autocomplete="off" spellcheck="false" maxlength="200"></div>
+          <p class="rberr" id="rbErr" aria-live="polite"></p>
+        </div>
+      </div>
+      <div class="rbcol">
+        <div class="card rbyaml"><div class="hd">rules.yml preview <span class="sp"></span><button class="copy" id="rbCopy" type="button" data-copy="">Copy</button></div>
+          <pre id="rbYaml" aria-label="rules.yml preview"><code># Cephalo rules. Patterns are case-insensitive JavaScript regexes.
+# type: command | path    on (path rules only): read | write | any
+rules:
+  - id: no-prod-db
+    description: psql against the production database
+    type: command
+    pattern: \bpsql\b.*\bprod\b
+    action: block
+  - id: no-npm-publish
+    description: Publishing a package to npm
+    type: command
+    pattern: \bnpm\s+publish\b
+    action: block
+  - id: no-terraform-destroy
+    description: Destroying infrastructure
+    type: command
+    pattern: \bterraform\s+destroy\b
+    action: block</code></pre>
+        </div>
+        <div class="card rbtest"><div class="hd">Test this rule <span class="sp"></span><span class="dim" id="rbOs"></span></div>
+          <div class="rbtb">
+            <div class="seg" role="group" aria-label="What to test" id="rbKind"><button type="button" data-v="command" aria-pressed="true">command</button><button type="button" data-v="read" aria-pressed="false">file read</button><button type="button" data-v="write" aria-pressed="false">file write</button></div>
+            <div class="field" style="margin:0"><label for="rbIn">Try an input</label><input type="text" id="rbIn" autocomplete="off" spellcheck="false" value="terraform destroy -auto-approve"></div>
+            <div class="chips" id="rbChips"></div>
+            <div class="rbres" id="rbRes" aria-live="polite"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="sr" id="rbLive" aria-live="polite"></p>
+  </div>
+</section>
+
 <!-- COMMANDS -->
 <section id="commands">
   <div class="wrap">
@@ -898,11 +1002,11 @@ psql -c &quot;DROP TABLE users;&quot;
       <p>Choose a command to replay it. Output for <code>rules</code>, <code>test</code>, <code>mcp</code>, <code>tripwire</code>, <code>vault</code>, <code>replay</code> and <code>incident</code> was captured from real runs on throwaway data (paths shortened, a few lines trimmed). <code>doctor</code> shows a healthy, fully installed machine using the real line formats. <code>log</code>, <code>watch</code> and <code>init</code> are representative.</p>
     </div>
     <div class="explorer">
-      <div class="cmdlist" role="tablist" aria-label="Commands" id="cmdList"></div>
+      <div class="cmdlist" role="tablist" aria-label="Commands" aria-orientation="vertical" id="cmdList"></div>
       <div>
         <div class="term">
           <div class="term-bar"><span class="dots"><i></i><i></i><i></i></span><span class="t" id="exTitle"></span><button type="button" id="exReplay">Replay</button></div>
-          <div class="term-body" id="exTerm" tabindex="0" aria-label="Command output"></div>
+          <div class="term-body" id="exTerm" role="tabpanel" tabindex="0"></div>
         </div>
         <p class="explain" id="exExplain"></p>
       </div>
@@ -1010,6 +1114,15 @@ psql -c &quot;DROP TABLE users;&quot;
       <p class="eyebrow">Native on every OS</p>
       <h2>One rule set, three platform adapters.</h2>
       <p>An adapter decides where configs live, how paths and commands are cleaned up before matching, and which extra built-in rules apply. Rules are tested against the raw text and the cleaned copy, so cleaning can only add blocks, never remove one.</p>
+    </div>
+    <div class="hubwrap">
+      <svg class="hub h" viewBox="0 0 760 360" aria-hidden="true" focusable="false"><text class="cap" x="16" y="14">AGENTS</text><text class="cap" x="584" y="46">GUARDED</text><text class="cap" x="16" y="322">RUNS ON</text><path class="ln" d="M176 48 C 280 48, 280 147, 334 147"/><path class="ln" d="M176 114 C 280 114, 280 147, 334 147"/><path class="ln" d="M176 180 C 280 180, 280 147, 334 147"/><path class="ln" d="M176 246 C 280 246, 280 147, 334 147"/><g class="node"><rect x="16" y="24" width="160" height="48" rx="10"/><text x="96" y="53" text-anchor="middle">Claude Code</text></g><g class="node"><rect x="16" y="90" width="160" height="48" rx="10"/><text x="96" y="119" text-anchor="middle">Hermes</text></g><g class="node dash"><rect x="16" y="156" width="160" height="48" rx="10"/><text x="96" y="180" text-anchor="middle">Codex</text><text class="sub" x="96" y="194" text-anchor="middle">adapter only</text></g><g class="node dash"><rect x="16" y="222" width="160" height="48" rx="10"/><text x="96" y="246" text-anchor="middle">Cursor</text><text class="sub" x="96" y="260" text-anchor="middle">adapter only</text></g><path class="ln" d="M426 147 C 500 147, 500 87, 584 87"/><g class="node"><rect x="584" y="63" width="160" height="48" rx="10"/><text x="664" y="85" text-anchor="middle">Shell</text><text class="sub" x="664" y="101" text-anchor="middle">commands</text></g><path class="ln" d="M426 147 C 500 147, 500 147, 584 147"/><g class="node"><rect x="584" y="123" width="160" height="48" rx="10"/><text x="664" y="145" text-anchor="middle">Files</text><text class="sub" x="664" y="161" text-anchor="middle">reads and writes</text></g><path class="ln" d="M426 147 C 500 147, 500 207, 584 207"/><g class="node"><rect x="584" y="183" width="160" height="48" rx="10"/><text x="664" y="205" text-anchor="middle">MCP</text><text class="sub" x="664" y="221" text-anchor="middle">tool calls</text></g><path class="ln" d="M240 296 C 240 250, 380 250, 380 193"/><path class="ln hot" data-os="win32" d="M240 296 C 240 250, 380 250, 380 193"/><path class="ln" d="M380 296 C 380 250, 380 250, 380 193"/><path class="ln hot" data-os="darwin" d="M380 296 C 380 250, 380 250, 380 193"/><path class="ln" d="M520 296 C 520 250, 380 250, 380 193"/><path class="ln hot" data-os="linux" d="M520 296 C 520 250, 380 250, 380 193"/><g transform="translate(380 147)" class="gate"><circle r="46"/><circle r="37" class="inner"/><use href="#octo" x="-24" y="-18" width="48" height="36"/></g><text class="gname" x="380" y="214" text-anchor="middle" style="display:none">Cephalo</text><g class="os" data-os="win32" role="button" tabindex="0" aria-label="Show Windows details" aria-pressed="false"><rect class="b" x="175" y="296" width="130" height="44" rx="10"/><rect class="hl" x="175" y="296" width="130" height="44" rx="10"/><text x="240" y="323" text-anchor="middle">Windows</text></g><g class="os" data-os="darwin" role="button" tabindex="0" aria-label="Show macOS details" aria-pressed="false"><rect class="b" x="315" y="296" width="130" height="44" rx="10"/><rect class="hl" x="315" y="296" width="130" height="44" rx="10"/><text x="380" y="323" text-anchor="middle">macOS</text></g><g class="os" data-os="linux" role="button" tabindex="0" aria-label="Show Linux details" aria-pressed="false"><rect class="b" x="455" y="296" width="130" height="44" rx="10"/><rect class="hl" x="455" y="296" width="130" height="44" rx="10"/><text x="520" y="323" text-anchor="middle">Linux</text></g></svg><svg class="hub v" viewBox="0 0 340 372" aria-hidden="true" focusable="false"><text class="cap" x="4" y="14">AGENTS</text><text class="cap" x="4" y="296">GUARDED</text><path class="ln" d="M42 76 C 42 112, 170 112, 170 150"/><path class="ln" d="M128 76 C 128 112, 170 112, 170 150"/><path class="ln" d="M214 76 C 214 112, 170 112, 170 150"/><path class="ln" d="M300 76 C 300 112, 170 112, 170 150"/><g class="node"><rect x="4" y="24" width="76" height="52" rx="10"/><text x="42" y="46" text-anchor="middle"><tspan x="42" dy="-6">Claude</tspan><tspan x="42" dy="16">Code</tspan></text></g><g class="node"><rect x="90" y="24" width="76" height="52" rx="10"/><text x="128" y="54" text-anchor="middle">Hermes</text></g><g class="node dash"><rect x="176" y="24" width="76" height="52" rx="10"/><text x="214" y="54" text-anchor="middle">Codex</text></g><g class="node dash"><rect x="262" y="24" width="76" height="52" rx="10"/><text x="300" y="54" text-anchor="middle">Cursor</text></g><g transform="translate(170 196)" class="gate"><circle r="46"/><circle r="37" class="inner"/><use href="#octo" x="-24" y="-18" width="48" height="36"/></g><text class="sub" id="hubCap" x="170" y="262" text-anchor="middle"></text><path class="ln" d="M170 242 C 170 272, 54 270, 54 306"/><g class="node"><rect x="4" y="306" width="100" height="56" rx="10"/><text x="54" y="331" text-anchor="middle">Shell</text><text class="sub" x="54" y="348" text-anchor="middle">commands</text></g><path class="ln" d="M170 242 C 170 272, 166 270, 166 306"/><g class="node"><rect x="116" y="306" width="100" height="56" rx="10"/><text x="166" y="331" text-anchor="middle">Files</text><text class="sub" x="166" y="348" text-anchor="middle">reads, writes</text></g><path class="ln" d="M170 242 C 170 272, 278 270, 278 306"/><g class="node"><rect x="228" y="306" width="100" height="56" rx="10"/><text x="278" y="331" text-anchor="middle">MCP</text><text class="sub" x="278" y="348" text-anchor="middle">tool calls</text></g></svg>
+      <ul class="sr">
+        <li>Agents Cephalo hooks into: Claude Code and Hermes (run in the real apps), Codex and Cursor (adapters tested against the vendors' documented formats, not run inside the real apps).</li>
+        <li>Cephalo checks each tool call before it runs: shell commands, file reads and writes, and MCP tool calls.</li>
+        <li>It runs on Windows, macOS and Linux, each with its own adapter.</li>
+      </ul>
+      <p class="dim hubleg"><span class="lg"></span> Dashed agents have an adapter that is unit-tested against the vendor's documented hook format but has not been run inside the real app.</p>
     </div>
     <div class="plat" id="plat"></div>
     <div class="normer">
@@ -1301,7 +1414,7 @@ function retrigger(node,cls){node.classList.remove(cls);void node.offsetWidth;no
 
 /* ---------- scroll reveal + nav highlight ---------- */
 (function(){
-  var targets=$$('.sec-head,.split,.tile,.lab,.plug,.explorer,.more>div,.plat,.normer>.card,.inst,.limits>div,.feat>.fcard,.subhead,.tiers>.tier,.calc,.pricenote');
+  var targets=$$('.sec-head,.split,.tile,.rb>.rbcol>.card,.hubwrap,.lab,.plug,.explorer,.more>div,.plat,.normer>.card,.inst,.limits>div,.feat>.fcard,.subhead,.tiers>.tier,.calc,.pricenote');
   targets.forEach(function(t,i){t.classList.add('reveal');});
   // stagger siblings inside the same grid
   [['.more','div'],['.limits','div'],['.normer','.card'],['#feat','.fcard'],['#planned','.fcard'],['.tiers','.tier']].forEach(function(g){
@@ -1754,7 +1867,7 @@ function applyPreset(p){
   state.tool=p.t;fillTools();$('#input').value=p.v;runPlayground();
 }
 function setOs(os,keepRun){
-  state.os=os;setSeg($('#segOs'),os);buildRuleList();renderPlat();renderNormer();
+  state.os=os;setSeg($('#segOs'),os);buildRuleList();renderPlat();renderNormer();if(window.renderHub)renderHub();
   if(!keepRun&&hasRun)runPlayground();
 }
 $('#segAgent').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;state.agent=b.getAttribute('data-v');setSeg(this,state.agent);setSeg($('#segPlug'),state.agent);fillTools();renderPlug();if(hasRun)runPlayground();});
@@ -1823,8 +1936,11 @@ function fromUrl(){
     if(reduce||!document.startViewTransition){chars(host,cl,d.ins,false);return;}
     setTimeout(function(){
       document.documentElement.classList.add('vt-morph');
-      var vt=document.startViewTransition(function(){chars(host,cl,d.ins,false);});
-      vt.finished.then(function(){document.documentElement.classList.remove('vt-morph');},function(){document.documentElement.classList.remove('vt-morph');});
+      var ran=false,once=function(){if(ran)return;ran=true;chars(host,cl,d.ins,false);};
+      var vt=document.hidden?null:document.startViewTransition(once);
+      if(vt)vt.finished.then(function(){document.documentElement.classList.remove('vt-morph');},function(){document.documentElement.classList.remove('vt-morph');});
+      else document.documentElement.classList.remove('vt-morph');
+      setTimeout(once,900);
     },reduce?0:500);
   }
   function build(){
@@ -1859,6 +1975,7 @@ $('#bento').addEventListener('click',function(e){
   $('#playground').scrollIntoView({behavior:reduce?'auto':'smooth',block:'start'});
 });
 
+/* hub and rules builder are wired after PLAT and setOs exist (see the end of this script) */
 /* ---------- how it plugs in ---------- */
 var PLUG_STEPS=[
   {h:'The agent is about to use a tool',p:'Bash, a file write, a read. Before it runs, the agent consults its pre-tool hook.'},
@@ -2066,18 +2183,24 @@ var exP=new Player($('#exTerm')),exCur='test';
 function buildCmdList(){
   var box=$('#cmdList');
   EX_ORDER.forEach(function(k){
-    var b=el('button');b.type='button';b.setAttribute('role','tab');b.setAttribute('data-k',k);b.setAttribute('aria-selected',String(k===exCur));
+    var b=el('button');b.type='button';b.id='tab-'+k;b.tabIndex=k===exCur?0:-1;b.setAttribute('role','tab');b.setAttribute('aria-controls','exTerm');b.setAttribute('data-k',k);b.setAttribute('aria-selected',String(k===exCur));
     b.appendChild(el('span','c','cephalo '+k));b.appendChild(el('span','s2',EX[k].sub));box.appendChild(b);
   });
 }
 function showEx(k){
-  exCur=k;$$('#cmdList button').forEach(function(b){b.setAttribute('aria-selected',String(b.getAttribute('data-k')===k));});
+  exCur=k;$$('#cmdList button').forEach(function(b){var on=b.getAttribute('data-k')===k;b.setAttribute('aria-selected',String(on));b.tabIndex=on?0:-1;});$('#exTerm').setAttribute('aria-labelledby','tab-'+k);
   $('#exTitle').textContent=EX[k].cmd;$('#exExplain').textContent=EX[k].explain;
   retrigger($('#exTerm'),'swap');retrigger($('#exExplain'),'swap');
   exP.play(EX[k].script,false);
 }
 $('#cmdList').addEventListener('click',function(e){var b=e.target.closest('button');if(b)showEx(b.getAttribute('data-k'));});
 $('#exReplay').addEventListener('click',function(){showEx(exCur);});
+$('#cmdList').addEventListener('keydown',function(e){
+  var keys={ArrowDown:1,ArrowRight:1,ArrowUp:-1,ArrowLeft:-1,Home:'h',End:'e'};if(!(e.key in keys))return;
+  e.preventDefault();var i=EX_ORDER.indexOf(exCur),v=keys[e.key];
+  i=v==='h'?0:v==='e'?EX_ORDER.length-1:(i+v+EX_ORDER.length)%EX_ORDER.length;
+  showEx(EX_ORDER[i]);$('#tab-'+EX_ORDER[i]).focus();
+});
 buildCmdList();
 
 /* ---------- feature cards jump to the matching command replay ---------- */
@@ -2129,6 +2252,152 @@ function renderPlat(){
 }
 $('#plat').addEventListener('click',function(e){var b=e.target.closest('.pick');if(b)setOs(b.getAttribute('data-os'));});
 
+/* ---------- rules you own ---------- */
+(function(){
+  var root=$('#rb');if(!root)return;
+  var uid=0,MAX=8,sel=0,prevSet=null,anim=!reduce&&!!document.startViewTransition;
+  function mk(id,d,t,p){return {u:++uid,id:id,d:d,t:t,on:'any',p:p};}
+  var rules=[mk('no-prod-db','psql against the production database','command','\\bpsql\\b.*\\bprod\\b'),
+    mk('no-npm-publish','Publishing a package to npm','command','\\bnpm\\s+publish\\b'),
+    mk('no-terraform-destroy','Destroying infrastructure','command','\\bterraform\\s+destroy\\b')];
+  var kind='command',dragU=null;
+  function yq(v){return v===''||/^[\s'"\[\]{}&*!|>%@`#?,-]|: | #|:$|\s$/.test(v)?"'"+v.replace(/'/g,"''")+"'":v;}
+  function check(r){
+    if(!r.id.trim())return 'Give the rule an id.';
+    if(rules.some(function(o){return o!==r&&o.id===r.id;}))return 'Another rule already uses this id.';
+    if(!r.p)return 'Add a pattern. An empty pattern would match everything, so it is left out of the test.';
+    try{new RegExp(r.p,'i');}catch(e){return 'Not a valid regular expression, so this rule is left out of the test.';}
+    return '';
+  }
+  function yamlLines(){
+    var L=[{c:1,t:'# Cephalo rules. Patterns are case-insensitive JavaScript regexes.'},{c:1,t:'# type: command | path    on (path rules only): read | write | any'},{t:'rules:',k:'rules',v:''}];
+    rules.forEach(function(r){
+      L.push({i:'  - ',k:'id',v:yq(r.id)});L.push({i:'    ',k:'description',v:yq(r.d)});L.push({i:'    ',k:'type',v:r.t});
+      if(r.t==='path')L.push({i:'    ',k:'on',v:r.on});
+      L.push({i:'    ',k:'pattern',v:yq(r.p)});L.push({i:'    ',k:'action',v:'block'});
+    });
+    return L;
+  }
+  function lineText(l){return l.c?l.t:(l.i||'')+l.k+':'+(l.v?' '+l.v:'');}
+  function renderYaml(){
+    var L=yamlLines(),pre=$('#rbYaml'),code=el('code'),set={},all=[];
+    L.forEach(function(l){
+      var t=lineText(l),d=el('span','yl'+(l.c?' cm':''));all.push(t);set[t]=1;
+      if(prevSet&&!prevSet[t]&&!reduce)d.classList.add('flash');
+      if(l.c)d.textContent=t;else{d.appendChild(document.createTextNode(l.i||''));d.appendChild(el('span','k',l.k));d.appendChild(document.createTextNode(':'+(l.v?' ':'')));if(l.v)d.appendChild(el('span','s',l.v));}
+      code.appendChild(d);
+    });
+    prevSet=set;pre.textContent='';pre.appendChild(code);$('#rbCopy').setAttribute('data-copy',all.join('\n')+'\n');
+  }
+  function renderList(focusSel){
+    var ol=$('#rbList');ol.textContent='';
+    rules.forEach(function(r,i){
+      var li=el('li','rbi');li.setAttribute('data-u',r.u);li.draggable=true;li.style.viewTransitionName='rb'+r.u;
+      var b=el('button','rbsel');b.type='button';b.setAttribute('aria-pressed',String(i===sel));b.setAttribute('data-i',i);
+      b.appendChild(el('span','no',String(i+1)));b.appendChild(el('span','nm',r.id||'(no id)'));b.appendChild(el('span','ty',r.t));li.appendChild(b);
+      [['\u25B2',-1,'up'],['\u25BC',1,'down']].forEach(function(m){
+        var mv=el('button','mv',m[0]);mv.type='button';mv.setAttribute('data-d',m[1]);mv.setAttribute('data-i',i);mv.setAttribute('aria-label','Move '+(r.id||'rule')+' '+m[2]);
+        if((m[1]<0&&i===0)||(m[1]>0&&i===rules.length-1))mv.disabled=true;li.appendChild(mv);
+      });
+      ol.appendChild(li);
+    });
+    $('#rbDel').disabled=rules.length<2;$('#rbAdd').disabled=rules.length>=MAX;
+  }
+  function loadForm(){
+    var r=rules[sel];$('#rbId').value=r.id;$('#rbDesc').value=r.d;$('#rbPat').value=r.p;
+    setSeg($('#rbType'),r.t);setSeg($('#rbOn'),r.on);$('#rbOnF').hidden=r.t!=='path';$('#rbErr').textContent=check(r);
+  }
+  function engineRules(){
+    var mine=[];rules.forEach(function(r){if(check(r))return;mine.push({id:r.id,d:r.d,t:r.t,on:r.t==='path'?r.on:undefined,p:r.p,o:'custom'});});
+    return mine.concat(E.rulesFor(state.os));
+  }
+  function runTest(){
+    var v=$('#rbIn').value,input=kind==='command'?{command:v}:{path:v,access:kind},res=E.evaluate(input,state.os,{},engineRules());
+    var box=$('#rbRes');box.textContent='';var block=res.decision==='block';
+    box.appendChild(el('div','badge '+(block?'block':'allow'),block?'BLOCKED':'ALLOWED'));
+    var right=el('div'),msg;
+    if(!v.trim())msg='Type something to test.';
+    else if(block)msg=res.rule.o==='custom'?'Your rule '+res.rule.id+' matched, and it was checked before the built-in rules.':'A built-in rule, '+res.rule.id+', matched. '+res.rule.d+'.';
+    else msg='No rule matched, so the call would go ahead.';
+    right.appendChild(el('p',null,msg));
+    var chips=el('div','rbchips');
+    res.steps.forEach(function(st){
+      if(st.rule.o!=='custom')return;
+      chips.appendChild(el('span','rbchip '+(st.state==='hit'?'hit':st.state==='pass'?'pass':'skip'),(st.state==='hit'?'\u2715 ':st.state==='pass'?'\u2713 ':'\u2013 ')+st.rule.id+(st.state==='hit'?' MATCH':st.state==='pass'?' no match':st.state==='na'?' n/a':'')));
+    });
+    var reached={};res.steps.forEach(function(st){reached[st.rule.id]=1;});
+    rules.forEach(function(r){if(!check(r)&&!reached[r.id])chips.appendChild(el('span','rbchip skip','\u2013 '+r.id+' not needed'));});
+    right.appendChild(chips);box.appendChild(right);
+    $('#rbOs').textContent=E.ADAPT[state.os].label+' rules follow yours';
+  }
+  function refresh(){renderList();renderYaml();runTest();}
+  function reorder(fn,label){
+    var apply=function(){fn();renderList();renderYaml();runTest();};
+    if(anim&&!document.hidden){
+      var h=document.documentElement,ran=false,once=function(){if(ran)return;ran=true;apply();};
+      h.classList.add('vt-morph');var vt=document.startViewTransition(once);var done=function(){h.classList.remove('vt-morph');};vt.finished.then(done,done);
+      setTimeout(once,400); /* never leave the list stale if the browser does not run the transition */
+    }else apply();
+    if(label)$('#rbLive').textContent=label;
+  }
+  function moveTo(from,to){
+    if(to<0||to>=rules.length||from===to)return;
+    var r=rules[from],cur=rules[sel];
+    reorder(function(){rules.splice(from,1);rules.splice(to,0,r);sel=rules.indexOf(cur);},r.id+' moved to position '+(to+1)+' of '+rules.length);
+  }
+  $('#rbList').addEventListener('click',function(e){
+    var b=e.target.closest('button');if(!b||b.disabled)return;var i=+b.getAttribute('data-i');
+    if(b.classList.contains('mv')){
+      var to=i+(+b.getAttribute('data-d'));moveTo(i,to);
+      var r=rules[to];setTimeout(function(){var nb=$('#rbList .rbi[data-u="'+r.u+'"] .mv[data-d="'+b.getAttribute('data-d')+'"]');if(nb&&!nb.disabled)nb.focus();else{var o=$('#rbList .rbi[data-u="'+r.u+'"] .mv:not(:disabled)');if(o)o.focus();}},anim?400:0);
+      return;
+    }
+    sel=i;renderList();loadForm();
+  });
+  var ol=$('#rbList');
+  ol.addEventListener('dragstart',function(e){var li=e.target.closest('.rbi');if(!li)return;dragU=+li.getAttribute('data-u');li.classList.add('dragging');e.dataTransfer.effectAllowed='move';try{e.dataTransfer.setData('text/plain',String(dragU));}catch(x){}});
+  ol.addEventListener('dragend',function(){dragU=null;$$('.rbi.dragging',ol).forEach(function(n){n.classList.remove('dragging');});});
+  ol.addEventListener('dragover',function(e){if(dragU!==null)e.preventDefault();});
+  ol.addEventListener('drop',function(e){
+    var li=e.target.closest('.rbi');if(!li||dragU===null)return;e.preventDefault();
+    var from=rules.findIndex(function(r){return r.u===dragU;}),to=rules.findIndex(function(r){return r.u===+li.getAttribute('data-u');});
+    dragU=null;moveTo(from,to);
+  });
+  function edit(fn){var r=rules[sel];fn(r);$('#rbErr').textContent=check(r);renderList();renderYaml();runTest();}
+  $('#rbId').addEventListener('input',function(){var v=this.value;edit(function(r){r.id=v;});});
+  $('#rbDesc').addEventListener('input',function(){var v=this.value;edit(function(r){r.d=v;});});
+  $('#rbPat').addEventListener('input',function(){var v=this.value;edit(function(r){r.p=v;});});
+  $('#rbType').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;var v=b.getAttribute('data-v');setSeg(this,v);$('#rbOnF').hidden=v!=='path';edit(function(r){r.t=v;});});
+  $('#rbOn').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;var v=b.getAttribute('data-v');setSeg(this,v);edit(function(r){r.on=v;});});
+  $('#rbAdd').addEventListener('click',function(){
+    if(rules.length>=MAX)return;var n=1;while(rules.some(function(r){return r.id==='my-rule-'+n;}))n++;
+    rules.push(mk('my-rule-'+n,'What this rule stops','command',''));sel=rules.length-1;refresh();loadForm();$('#rbId').focus();$('#rbId').select();
+  });
+  $('#rbDel').addEventListener('click',function(){
+    if(rules.length<2)return;var gone=rules.splice(sel,1)[0];sel=Math.min(sel,rules.length-1);refresh();loadForm();$('#rbLive').textContent='Deleted '+gone.id;
+  });
+  $('#rbKind').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;kind=b.getAttribute('data-v');setSeg(this,kind);runTest();});
+  $('#rbIn').addEventListener('input',runTest);
+  [['terraform destroy -auto-approve','command'],['psql -h prod-db -c "select 1"','command'],['npm publish','command'],['git status','command'],['rm -rf ./build','command']].forEach(function(x){
+    var c=el('button','chip',x[0]);c.type='button';c.addEventListener('click',function(){kind=x[1];setSeg($('#rbKind'),kind);$('#rbIn').value=x[0];runTest();});$('#rbChips').appendChild(c);
+  });
+  root.__rbRefresh=runTest;
+  loadForm();refresh();
+})();
+
+/* ---------- platforms hub: the selected OS lights up ---------- */
+function renderHub(){
+  $$('.hub .os').forEach(function(n){var on=n.getAttribute('data-os')===state.os;n.classList.toggle('on',on);n.setAttribute('aria-pressed',String(on));});
+  $$('.hub .ln.hot').forEach(function(n){n.classList.toggle('on',n.getAttribute('data-os')===state.os);});
+  var cap=$('#hubCap');if(cap)cap.textContent=PLAT[state.os].name+' adapter';
+  var rb=$('#rb');if(rb&&rb.__rbRefresh)rb.__rbRefresh();
+}
+$$('.hub .os').forEach(function(n){
+  n.addEventListener('click',function(){setOs(n.getAttribute('data-os'));});
+  n.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();setOs(n.getAttribute('data-os'));}});
+});
+
+window.renderHub=renderHub;renderHub();
 /* ---------- cleaner widget ---------- */
 var NORM_EX=[
   {n:"r''m",v:"r''m -rf /tmp/x"},{n:'\\rm',v:'\\rm -rf ~/work'},{n:'cmd ^',v:'r^d /s /q C:\\x'},{n:'PS backtick',v:'Remove`-Item x -Recurse -Force'},
