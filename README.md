@@ -499,3 +499,13 @@ Nothing here is hosted. Both features work through files, so your code and logs 
 - `cephalo sync audit` copies your audit log to `<folder>/audit/<user>@<machine>.jsonl`. Anyone with access to the folder can read it, so it asks first and says so. `cephalo dashboard --team` then shows every developer's log together.
 
 Limits: the manifest hash only shows that the file arrived intact. It is not a signature, so anyone who can write to the folder can publish a policy (signed bundles are not built). Nothing pulls automatically; each developer runs `pull`. If the folder is a git repo, you commit and push it yourself. The audit copy is a snapshot you re-publish, not a live feed. Agents cannot edit `sync.yml` or `prices.yml`.
+
+## Replay bundle (one shareable file)
+
+`cephalo replay --format bundle [--out file] [--no-github]` writes a single self-contained HTML file (default `cephalo-bundle.html`): the interactive replay, plus what the sessions in it cost and how the work ended. Same scoping flags as any replay (`--since`, `--session`, `--pr`, `--all-projects`).
+
+- **Cost:** only sessions that appear in the replay. Claude Code sessions are matched by session id. Hermes' audit entries carry no session id, so its sessions are matched by overlapping time inside the project directory, and the file says so. Dollars are the same list-price estimate as `cephalo cost`, labelled as an estimate.
+- **Outcome:** the branch's pull request, looked up with `gh` when you export: shipped (merged with passing CI), merged with failing or no CI, open, closed, none, or "could not check". The file records when it looked, because a PR can be merged later.
+- The page makes no network requests, and the data is embedded, so it works offline and can be attached to a PR or sent to a colleague.
+
+Limits: like any replay it is built from the local audit log, not a signed attestation. Whoever receives it sees every command and path in the window (tokens are redacted, but review it before sharing). If no token usage is found, it says so instead of showing zero.

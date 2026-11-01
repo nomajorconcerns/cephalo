@@ -30,6 +30,7 @@ import { runInit } from "./init.js";
 import { listRules, resetRules, showRule } from "./rulescmd.js";
 import { defaultRulesPath } from "./rules.js";
 import { getVersion } from "./version.js";
+import { buildBundle } from "./replay/bundle.js";
 import { DASH_USAGE, SYNC_USAGE, runDashboard, runSync } from "./synccmd.js";
 import { COST_USAGE, costReport, parseCostArgs } from "./costcmd.js";
 import { applyModelsEnabled, applyModelsMode, judgeReport, modelsEval, modelsPullPlan, modelsScan, modelsStatus, planModelsEnabled, planModelsMode } from "./modelscmd.js";
@@ -78,9 +79,11 @@ Builds a replay of what the agents did, from the local audit log, scoped to the 
   --session <id>     only one agent session (a prefix is enough)
   --all-projects     do not filter by project directory
   --strict           leave out entries that have no recorded project
-  --format text|md|html|json
+  --format text|md|html|json|bundle
                      text: summary for the terminal (default). md: PR comment text.
-                     html: one interactive file (default name cephalo-replay.html). json: raw data
+                     html: one interactive file (default name cephalo-replay.html). json: raw data.
+                     bundle: one shareable HTML file with the replay plus what the sessions cost and whether
+                     the work shipped (default name cephalo-bundle.html). --no-github skips the PR lookup
   --out <file>       write to a file (an existing file needs --force; it is kept as a backup copy)
   --pr <number>      the pull request this belongs to
   --comment          post the markdown replay to the PR with the GitHub CLI (asks first; --yes skips the question)
@@ -323,8 +326,9 @@ async function main(): Promise<number> {
       for (const line of res.lines) console.log(line);
       return res.ok ? 0 : 1;
     }
-    const outFile = a.out ?? (a.format === "html" ? "cephalo-replay.html" : undefined);
-    const text = render(replay, a);
+    const outFile = a.out ?? (a.format === "html" ? "cephalo-replay.html" : a.format === "bundle" ? "cephalo-bundle.html" : undefined);
+    const bundle = a.format === "bundle" ? await buildBundle(replay, { cwd: env.cwd, noGithub: rest.includes("--no-github") }) : undefined;
+    const text = render(replay, a, bundle);
     if (outFile) {
       try {
         for (const line of writeOutput(text, outFile, a.force)) console.log(line);

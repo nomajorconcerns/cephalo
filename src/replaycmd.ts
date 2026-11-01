@@ -3,12 +3,13 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { readAudit } from "./audit.js";
 import { buildReplay, parseTimeSpec, webUrlOf, type GitRun } from "./replay/collect.js";
+import type { Bundle } from "./replay/bundle.js";
 import { renderHtml } from "./replay/html.js";
 import { DEFAULT_MAX_CHARS, MARKER, renderMarkdown } from "./replay/markdown.js";
 import { formatDuration, needsAttention, type Replay } from "./replay/model.js";
 import { sanitize } from "./watch.js";
 
-export type ReplayFormat = "text" | "md" | "html" | "json";
+export type ReplayFormat = "text" | "md" | "html" | "json" | "bundle";
 
 export interface ReplayArgs {
   since?: string;
@@ -35,7 +36,7 @@ export function parseReplayArgs(argv: string[]): { args: ReplayArgs } | { error:
     return i >= 0 ? argv[i + 1] : undefined;
   };
   for (const f of VALUE_FLAGS) if (argv.includes(f) && (val(f) === undefined || val(f)!.startsWith("--"))) return { error: `${f} needs a value.` };
-  const known = new Set([...VALUE_FLAGS, "--all-projects", "--strict", "--comment", "--update", "--yes", "-y", "--force"]);
+  const known = new Set([...VALUE_FLAGS, "--all-projects", "--strict", "--comment", "--update", "--yes", "-y", "--force", "--no-github"]);
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (VALUE_FLAGS.includes(a)) {
@@ -45,7 +46,7 @@ export function parseReplayArgs(argv: string[]): { args: ReplayArgs } | { error:
     if (!known.has(a)) return { error: `Unknown option ${a}. See: cephalo replay --help` };
   }
   const format = (val("--format") ?? (argv.includes("--comment") ? "md" : "text")) as ReplayFormat;
-  if (!["text", "md", "html", "json"].includes(format)) return { error: `--format must be text, md, html or json (got ${format}).` };
+  if (!["text", "md", "html", "json", "bundle"].includes(format)) return { error: `--format must be text, md, html, json or bundle (got ${format}).` };
   const pr = val("--pr");
   if (pr !== undefined && !/^\d+$/.test(pr)) return { error: "--pr needs a pull request number." };
   const max = val("--max-chars");
@@ -121,12 +122,14 @@ export function terminalSummary(r: Replay): string[] {
   return lines;
 }
 
-export function render(r: Replay, a: ReplayArgs): string {
+export function render(r: Replay, a: ReplayArgs, bundle?: Bundle): string {
   switch (a.format) {
     case "md":
       return renderMarkdown(r, { maxChars: a.maxChars ?? DEFAULT_MAX_CHARS });
     case "html":
       return renderHtml(r);
+    case "bundle":
+      return renderHtml(r, bundle);
     case "json":
       return JSON.stringify(r, null, 2);
     default:

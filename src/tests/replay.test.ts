@@ -47,7 +47,7 @@ test("replay arguments: defaults, flags, and every kind of mistake", () => {
   assert.match(err(["--bogus"]), /Unknown option --bogus/);
   assert.match(err(["--since"]), /--since needs a value/);
   assert.match(err(["--since", "--format"]), /--since needs a value/);
-  assert.match(err(["--format", "pdf"]), /must be text, md, html or json/);
+  assert.match(err(["--format", "pdf"]), /must be text, md, html, json or bundle/);
   assert.match(err(["--pr", "abc"]), /pull request number/);
   assert.match(err(["--update"]), /only makes sense together with --comment/);
   assert.match(err(["--max-chars", "5"]), /--max-chars needs a number/);

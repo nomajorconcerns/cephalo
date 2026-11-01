@@ -1,3 +1,4 @@
+import type { Bundle } from "./bundle.js";
 import type { Replay } from "./model.js";
 
 /** Make JSON safe to sit inside a <script> element: no "</script>", no HTML comments, no line separators. */
@@ -64,7 +65,23 @@ setFilter('all');
 })();
 `;
 
-export function renderHtml(r: Replay): string {
+const BUNDLE_SCRIPT = `
+(function(){
+var B=JSON.parse(document.getElementById('b').textContent),box=document.getElementById('bundle');
+function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!==undefined)e.textContent=x;return e}
+function usd(v){return v==null?'n/a':'$'+v.toFixed(2)}
+var o=B.outcome,c=B.cost,cards=el('div','cards');
+var label={shipped:'Shipped (merged, CI passing)','merged-ci-failed':'Merged, CI not passing','merged-no-ci':'Merged, no CI checks',open:'PR still open',closed:'PR closed, not merged','no-pr':'No pull request found','no-branch':'No branch to look up',unknown:'Could not check GitHub','not-checked':'Not checked'};
+[['Outcome',label[o.status]||o.status+(o.pr?' (#'+o.pr.number+')':'')],['Estimated cost',usd(c.totalUsd)],['Sessions with usage',String(c.sessions.length)]].forEach(function(x){var d=el('div','card');d.appendChild(el('b',null,x[1]));d.appendChild(el('span',null,x[0]));cards.appendChild(d)});
+box.appendChild(cards);
+if(o.pr)box.appendChild(el('div','note','Pull request #'+o.pr.number+(o.branch?' on branch '+o.branch:'')));
+c.sessions.forEach(function(s){box.appendChild(el('div','note',s.agent+' session '+s.id.slice(0,8)+': '+usd(s.usd)+(s.partial?'+':'')+' ('+s.models.join(', ')+'; matched by '+s.matchedBy+')'))});
+box.appendChild(el('div','note',o.basis+' Looked up '+B.checkedAt.slice(0,16).replace('T',' ')+'Z; the outcome can change later.'));
+if(c.note)box.appendChild(el('div','note',c.note));
+})();
+`;
+
+export function renderHtml(r: Replay, bundle?: Bundle): string {
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'">
@@ -72,7 +89,7 @@ export function renderHtml(r: Replay): string {
 <title>Cephalo replay</title>
 <style>${STYLE}</style></head>
 <body><main>
-<h1 id="title">Cephalo replay</h1><p class="sub" id="sub"></p>
+<h1 id="title">Cephalo replay</h1><p class="sub" id="sub"></p>${bundle ? '<div id="bundle"></div>' : ""}
 <div class="cards" id="cards"></div>
 <div class="bar">
 <button id="play">Play</button><button id="step">Step</button><button id="restart">Restart</button>
@@ -85,7 +102,9 @@ export function renderHtml(r: Replay): string {
 <div id="notes" style="margin-top:18px"></div>
 </main>
 <script type="application/json" id="d">${jsonForScript(r)}</script>
+${bundle ? `<script type="application/json" id="b">${jsonForScript(bundle)}</script>` : ""}
 <script>${SCRIPT}</script>
+${bundle ? `<script>${BUNDLE_SCRIPT}</script>` : ""}
 </body></html>
 `;
 }
