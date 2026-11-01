@@ -547,6 +547,24 @@ html.theming *,html.theming *::before,html.theming *::after{transition:backgroun
       </div>
       <div class="fcard">
         <div class="fmeta"><span class="badge built">Built</span><span class="badge">Pro</span></div>
+        <h3>Cost per shipped result</h3>
+        <p><code>cephalo cost</code> adds up what your Claude Code and Hermes sessions cost and divides it by the pull requests that were merged with passing CI. It also shows how much went on work that did not ship.</p>
+        <p class="lim"><b>Limit:</b> Claude Code dollars are an estimate (token counts times Anthropic’s list prices), not what a subscription charged you. A session is linked to a PR by its branch name, and Hermes often records none. Needs a logged-in <code>gh</code>.</p>
+      </div>
+      <div class="fcard">
+        <div class="fmeta"><span class="badge built">Built</span><span class="badge">Team</span></div>
+        <h3>Dashboard</h3>
+        <p><code>cephalo dashboard</code> writes one HTML file: overview, sessions and cost, and what the seatbelt blocked. <code>--team</code> shows every developer’s published log together. Nothing is hosted and the page makes no network requests.</p>
+        <p class="lim"><b>Limit:</b> a file you generate and open yourself, not a hosted service, and only as fresh as the last time you generated it.</p>
+      </div>
+      <div class="fcard">
+        <div class="fmeta"><span class="badge built">Built</span><span class="badge">Team</span></div>
+        <h3>Shared policy and audit sync</h3>
+        <p><code>cephalo sync</code> shares your rules and audit log through a folder you already have: a synced drive, a network share, or a git clone. Pulling shows what would be added, changed or removed, asks, and backs up first. Every developer’s log lands in one folder, with user and time.</p>
+        <p class="lim"><b>Limit:</b> a hash shows the file arrived intact, not who wrote it, so anyone who can write to the folder can publish a policy. Nothing syncs by itself; each developer runs <code>pull</code>.</p>
+      </div>
+      <div class="fcard">
+        <div class="fmeta"><span class="badge built">Built</span><span class="badge">Pro</span></div>
         <h3>Local-model judge</h3>
         <p>Optional and off by default. A small model running in your own Ollama looks only at commands that show a risk signal and that the rules allow. It can block or ask you; it can never lift a rule’s block. If the model is down, slow or confused, Claude Code asks you instead of letting the command through. Nothing leaves the laptop. <code>cephalo models eval</code> scores it on 128 labelled cases.</p>
         <p class="lim"><b>Limit:</b> on our own set it caught 37 of 38 risky commands but also stopped or asked about 17 of 73 safe ones, and a model call takes about 3 seconds on a CPU. Hermes, Codex and Cursor cannot be asked, so there an unsure answer is logged and allowed. It is a second opinion, not a guarantee.</p>
@@ -566,17 +584,16 @@ html.theming *,html.theming *::before,html.theming *::after{transition:backgroun
         <button class="try" type="button" data-ex="incident">See a rule being made →</button>
       </div>
       <div class="fcard">
-        <div class="fmeta"><span class="badge built">Built</span><span class="badge">Team</span></div>
-        <h3>PR replay</h3>
-        <p>A replay of what the agents did on a branch: counts, a needs-attention list, files written. As PR comment text, an interactive HTML file, or JSON. Posting needs <code>--comment</code> and a confirmation, using your own GitHub login.</p>
-        <p class="lim"><b>Limit:</b> a record from a local log, not a signed attestation. Agents are blocked from editing the log, but anything running as you could. The posting path has only run against a stand-in for <code>gh</code>.</p>
+        <div class="fmeta"><span class="badge built">Built</span><span class="badge">Pro</span></div>
+        <h3>PR replay and replay bundle</h3>
+        <p>A replay of what the agents did on a branch: counts, a needs-attention list, files written. As PR comment text, an interactive HTML file, or JSON. <code>--format bundle</code> makes one shareable file with the replay, what its sessions cost, and whether the branch shipped. Posting to a PR needs <code>--comment</code> and a confirmation, using your own GitHub login.</p>
+        <p class="lim"><b>Limit:</b> a record from a local log, not a signed attestation. Agents are blocked from editing the log, but anything running as you could. The posting path has only run against a stand-in for <code>gh</code>. A bundle shows every command in its window, so read it before you send it.</p>
         <button class="try" type="button" data-ex="replay">See a replay →</button>
       </div>
     </div>
     <p class="subhead">Planned, not built</p>
     <div class="feat" id="planned">
-      <div class="fcard planned"><div class="fmeta"><span class="badge planned">Planned</span><span class="badge">Team</span></div><h3>Shared policy</h3><p>One policy for a whole team instead of one rules file per machine.</p></div>
-      <div class="fcard planned"><div class="fmeta"><span class="badge planned">Planned</span><span class="badge">Team</span></div><h3>Central audit log</h3><p>Every developer’s audit entries in one place, with user and time. Each entry already records the OS user and a timestamp, but only on that machine.</p></div>
+      <div class="fcard planned"><div class="fmeta"><span class="badge planned">Planned</span><span class="badge">Team</span></div><h3>Hosted dashboard</h3><p>The same dashboard served from an account, with live data, instead of a file you generate. Not built; there is no server.</p></div>
       <div class="fcard planned"><div class="fmeta"><span class="badge planned">Planned</span><span class="badge">Enterprise</span></div><h3>Single sign-on</h3><p>Sign in with your company identity provider.</p></div>
       <div class="fcard planned"><div class="fmeta"><span class="badge planned">Planned</span><span class="badge">Enterprise</span></div><h3>On-prem deployment</h3><p>Run the central pieces inside your own network.</p></div>
       <div class="fcard planned"><div class="fmeta"><span class="badge planned">Planned</span><span class="badge">Enterprise</span></div><h3>Signed policy bundles</h3><p>Policies you can verify were issued by your admins and not edited on the way.</p></div>
@@ -637,6 +654,8 @@ html.theming *,html.theming *::before,html.theming *::after{transition:backgroun
         <ul>
           <li class="base">Everything in Free</li>
           <li>Local-model judge (Ollama, off by default)</li>
+          <li>Cost per shipped result</li>
+          <li>PR replay and replay bundle</li>
           <li>Secrets vault</li>
           <li>MCP tool fingerprinting and re-approval</li>
           <li>Incident to rule</li>
@@ -645,13 +664,14 @@ html.theming *,html.theming *::before,html.theming *::after{transition:backgroun
       </div>
       <div class="tier">
         <h3>Team</h3>
-        <p class="who">For teams that review what agents did before merging.</p>
+        <p class="who">For teams that want one policy and one view across developers.</p>
         <div class="price">$25<small> / dev / month</small></div>
         <ul>
           <li class="base">Everything in Pro</li>
-          <li>PR replay</li>
-          <li class="pl">Shared policy <span class="badge planned">Planned</span></li>
-          <li class="pl">Central audit log with user and time <span class="badge planned">Planned</span></li>
+          <li>Dashboard (a local HTML file)</li>
+          <li>Shared policy through a shared folder</li>
+          <li>Audit log sync with user and time, through a shared folder</li>
+          <li class="pl">Hosted dashboard <span class="badge planned">Planned</span></li>
         </ul>
         <span class="btn soon">Not on sale yet</span>
       </div>
