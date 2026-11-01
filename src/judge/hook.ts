@@ -26,7 +26,7 @@ function parseEvent(raw: string): { after: boolean; session?: string; cwd?: stri
     const p = JSON.parse(raw);
     const ev = p?.hook_event_name;
     return {
-      after: ev === "PostToolUse" || ev === "post_tool_call",
+      after: ev === "PostToolUse" || ev === "post_tool_call" || ev === "postToolUse",
       ...(typeof p?.session_id === "string" ? { session: p.session_id } : {}),
       ...(typeof p?.cwd === "string" ? { cwd: p.cwd } : {}),
       ...(typeof p?.tool_input?.command === "string" ? { command: p.tool_input.command } : {}),
@@ -80,7 +80,7 @@ export async function runHookJudged(agent: Agent, raw: string, opts: JudgedHookO
       if (config.tripwireAssist) {
         // After the tool ran: let the embedding and reviewer models look at what came back. They can only raise the tripwire's level.
         const payload = JSON.parse(raw);
-        const text = scannableText(agent, payload, hookOpts.tripwire);
+        const text = scannableText(agent === "hermes" ? "hermes" : "claude", payload, hookOpts.tripwire);
         if (text !== null) {
           const a = await assessText(text, String(payload?.tool_name ?? "tool"), { config, fetch, cacheFile, embedCacheFile });
           if (a.assessment) out = runHook(agent, raw, { ...hookOpts, assessment: a.assessment });

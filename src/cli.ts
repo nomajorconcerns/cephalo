@@ -129,7 +129,7 @@ async function main(): Promise<number> {
     // NEVER print the banner (or any non-JSON text) here: Claude Code and
     // Hermes parse hook stdout as JSON, so extra output breaks the decision.
     const agent = rest[0];
-    if (agent !== "claude" && agent !== "hermes") {
+    if (agent !== "claude" && agent !== "hermes" && agent !== "codex" && agent !== "cursor") {
       process.stderr.write(USAGE);
       return 1; // non-blocking error for the agent
     }

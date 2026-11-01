@@ -77,7 +77,7 @@ and keep a backup. `cephalo doctor` warns when the installed hooks are out of da
 | `cephalo vault ...`, `cephalo run ...` | Secrets vault. See [below](#secrets-vault) |
 | `cephalo incident ...` | Turn an incident into a rule. See [below](#incident-to-rule) |
 | `cephalo replay ...` | Replay of what the agents did. See [below](#pr-replay) |
-| `cephalo hook claude\|hermes` | The entry point the agents call. Not for humans |
+| `cephalo hook claude\|hermes\|codex\|cursor` | The entry point the agents call. Not for humans. `codex` and `cursor` are adapters you wire up by hand (see below); `cephalo init` does not touch them |
 
 ## Rules
 
@@ -463,3 +463,12 @@ Nothing has been published or signed yet.
 ## Licence
 
 [MIT](LICENSE)
+
+## Codex and Cursor (adapters, not installed for you)
+
+`cephalo hook codex` and `cephalo hook cursor` read each agent's payload and answer in its format. Command rules, protected paths and the tripwire apply; `cephalo init`/`install` do not edit their config files, so you add the hook yourself:
+
+- Codex: a `PreToolUse` and `PostToolUse` command hook in `~/.codex/hooks.json` (or `[hooks]` in `config.toml`) running `node <project>/dist/cli.js hook codex`. Same JSON answer as Claude Code.
+- Cursor: `preToolUse` and `postToolUse` in `~/.cursor/hooks.json` running `node <project>/dist/cli.js hook cursor`. Answers are `{"permission": "allow"|"deny", ...}`.
+
+Limits: MCP calls and Codex `apply_patch` are not checked. Neither agent can be asked by the local-model judge, so a judge `unsure` or failure is logged and allowed there (a judge `block` still blocks). Both agents let the call through if the hook crashes or times out. These adapters were built from the vendors' docs and unit-tested; they have not been run inside the real Codex or Cursor.

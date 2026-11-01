@@ -9,7 +9,40 @@ import { evaluate, type EvalInput } from "./engine.js";
 import { loadEffectiveRules, type Rule } from "./rules.js";
 import { applyJudge, type JudgeInput } from "./judge/apply.js";
 
-export type Agent = "claude" | "hermes";
+/** claude and hermes have their own adapters; codex speaks Claude Code's hook format; cursor has its own (flat) answer format. */
+export type Agent = "claude" | "hermes" | "codex" | "cursor";
+
+/** The agents whose payloads look like Claude Code's (tool_name, tool_input, tool_response). */
+const claudeShaped = (agent: Agent): "claude" | "hermes" => (agent === "hermes" ? "hermes" : "claude");
+
+/** Codex: Claude-style names. MCP calls are not checked (their servers are not in a config Cephalo reads); apply_patch has no path field. */
+function extractCodex(p: any): Extracted | null {
+  const ex = extractClaude(p);
+  return ex && !ex.mcp ? ex : null;
+}
+
+/** Cursor: shell is "Shell"; file tools carry a path. MCP calls ("MCP:<tool>") are not checked. */
+function extractCursor(p: any): Extracted | null {
+  const tool = str(p?.tool_name) ?? "unknown";
+  const ti = p?.tool_input ?? {};
+  const path = str(ti.file_path) ?? str(ti.path) ?? str(ti.target_file);
+  switch (tool) {
+    case "Shell":
+      return { tool, command: str(ti.command) ?? str(p?.command) };
+    case "Read":
+      return { tool, path, access: "read" };
+    case "Write":
+    case "Delete":
+      return { tool, path, access: "write" };
+    default:
+      return null;
+  }
+}
+
+const extractFor = (agent: Agent, p: any): Extracted | null =>
+  agent === "claude" ? extractClaude(p) : agent === "hermes" ? extractHermes(p) : agent === "codex" ? extractCodex(p) : extractCursor(p);
+
+const isAfter = (ev: string | undefined) => ev === "PostToolUse" || ev === "post_tool_call" || ev === "postToolUse";
 
 export function blockMessage(rule: Rule): string {
   return `🛑 Cephalo blocked this (rule: ${rule.id} - ${rule.description}). If it is intended, ask the user to run it themselves.`;
@@ -69,8 +102,8 @@ export function judgeTarget(agent: Agent, raw: string): { command: string; cwd?:
   try {
     const payload = JSON.parse(raw);
     const ev = str(payload?.hook_event_name);
-    if (ev === "PostToolUse" || ev === "post_tool_call") return null;
-    const ex = agent === "claude" ? extractClaude(payload) : extractHermes(payload);
+    if (isAfter(ev)) return null;
+    const ex = extractFor(agent, payload);
     if (!ex || ex.mcp || ex.command === undefined) return null;
     return { command: ex.command, cwd: str(payload?.cwd) };
   } catch {
@@ -95,7 +128,9 @@ export interface HookOptions {
 
 /** Process raw stdin JSON for an agent hook. Returns the text to print on stdout. Never throws (fail-open). */
 export function runHook(agent: Agent, raw: string, opts: HookOptions = {}): string {
-  const allowOut = agent === "claude" ? "" : "{}";
+  // Claude Code and Codex take empty output as "allow". Hermes and Cursor want JSON (Cursor blocks on anything it cannot parse).
+  const allowOut = agent === "claude" || agent === "codex" ? "" : agent === "cursor" ? JSON.stringify({ permission: "allow" }) : "{}";
+  const family = claudeShaped(agent);
   let where: { session?: string; cwd?: string } = {};
   const log = (e: Omit<AuditEntry, "ts" | "agent">) => {
     try {
@@ -112,9 +147,9 @@ export function runHook(agent: Agent, raw: string, opts: HookOptions = {}): stri
       ...(str(payload?.cwd) ? { cwd: str(payload.cwd) } : {}),
     };
     const evName = str(payload?.hook_event_name);
-    if (evName === "PostToolUse" || evName === "post_tool_call") {
+    if (isAfter(evName)) {
       // After the tool ran: look at what came back for prompt injection. Never blocks (the tool has already run).
-      const obs = tripwireObserve(agent, payload, opts.tripwire);
+      const obs = tripwireObserve(family, payload, opts.tripwire);
       const input = payload?.tool_input ?? {};
       const what = {
         ...(str(input.command) !== undefined ? { command: str(input.command) } : {}),
@@ -122,7 +157,7 @@ export function runHook(agent: Agent, raw: string, opts: HookOptions = {}): stri
       };
       const warnings: string[] = [];
       // What the local models added (embedding match, reviewer verdict) is recorded as one more event; it can only raise the level.
-      const add = opts.assessment ? tripwireAddAssessment(agent, payload, opts.assessment, opts.tripwire) : undefined;
+      const add = opts.assessment ? tripwireAddAssessment(family, payload, opts.assessment, opts.tripwire) : undefined;
       const event = add?.event ?? obs.event;
       const warning = add?.warning ?? obs.warning;
       if (event) {
@@ -138,18 +173,18 @@ export function runHook(agent: Agent, raw: string, opts: HookOptions = {}): stri
       // A credential in the output is now in the agent's context; log it (type and first characters only) and say so.
       const ownVault = /(^|[\s;&|])((cephalo(\.cmd|\.ps1)?)|(node\s+\S*cephalo\S*[\\/]dist[\\/]cli\.js))\s+vault\s/i.test(`${str(input.command) ?? ""} `);
       if (!isOwnWrite(obs.tool) && !ownVault) {
-        const leaks = findLeaks(toolResponseText(agent, payload));
+        const leaks = findLeaks(toolResponseText(family, payload));
         if (leaks.length) {
           log({ tool: obs.tool, ...what, decision: "allow", rule: "secret-in-output", note: `credential in the output of ${obs.tool}: ${leaks.map((l) => `${l.type} ${l.preview}`).join("; ")}` });
           warnings.push(`Cephalo: the output of ${obs.tool} contains what looks like a credential (${leaks.map((l) => l.type).join(", ")}). Do not repeat or store it. Tell the user it was exposed so they can rotate it. To use a token, ask the user to add it with "cephalo vault set NAME" and run commands with "cephalo run --env NAME -- ...".`);
         }
       }
-      if (agent === "claude" && warnings.length) {
+      if ((agent === "claude" || agent === "codex") && warnings.length) {
         return JSON.stringify({ hookSpecificOutput: { hookEventName: "PostToolUse", additionalContext: warnings.join("\n") } });
       }
-      return allowOut;
+      return agent === "cursor" ? "{}" : allowOut;
     }
-    const ex = agent === "claude" ? extractClaude(payload) : extractHermes(payload);
+    const ex = extractFor(agent, payload);
     if (!ex) {
       log({ tool: str(payload?.tool_name) ?? "unknown", decision: "allow" });
       return allowOut;
@@ -158,7 +193,7 @@ export function runHook(agent: Agent, raw: string, opts: HookOptions = {}): stri
     let res: { decision: "allow" | "block"; rule?: Rule };
     let mcpLog: Partial<AuditEntry> = {};
     if (ex.mcp) {
-      const v = checkMcpCall(agent, tool, { cwd: ex.mcp.cwd, ...opts.mcp });
+      const v = checkMcpCall(family, tool, { cwd: ex.mcp.cwd, ...opts.mcp });
       res = v ? { decision: v.decision, rule: v.rule } : { decision: "allow" };
       mcpLog = {
         params: redactParams(ex.mcp.params),
@@ -169,7 +204,7 @@ export function runHook(agent: Agent, raw: string, opts: HookOptions = {}): stri
     }
     let tripMessage: string | undefined;
     if (res.decision === "allow") {
-      const gate = tripwireGate(agent, payload, { tool, command: ex.command, path: ex.path, access: ex.access, mcp: !!ex.mcp }, opts.tripwire);
+      const gate = tripwireGate(family, payload, { tool, command: ex.command, path: ex.path, access: ex.access, mcp: !!ex.mcp }, opts.tripwire);
       if (gate.blocked) {
         res = { decision: "block", rule: gate.blocked.rule };
         tripMessage = gate.blocked.message;
@@ -200,7 +235,8 @@ export function runHook(agent: Agent, raw: string, opts: HookOptions = {}): stri
     }
     if (res.decision === "block" && res.rule) {
       const message = tripMessage ?? blockMessage(res.rule);
-      return agent === "claude"
+      if (agent === "cursor") return JSON.stringify({ permission: "deny", user_message: message, agent_message: message });
+      return agent === "claude" || agent === "codex"
         ? JSON.stringify({
             hookSpecificOutput: {
               hookEventName: "PreToolUse",

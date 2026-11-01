@@ -35,7 +35,7 @@ const judgeRule = (id: string, description: string): Rule => ({ id, description,
  *   "allow"                        -> nothing
  * Hermes cannot ask, so for it an "ask" becomes "let it run and log it". In warn mode everything is only logged.
  */
-export function applyJudge(agent: "claude" | "hermes", j: JudgeInput): JudgeEffect {
+export function applyJudge(agent: string, j: JudgeInput): JudgeEffect {
   const enforce = j.mode === "enforce";
   const canAsk = agent === "claude";
   const askOrLog = (wanted: boolean, text: string, why: string): Pick<JudgeEffect, "ask" | "note"> => {
