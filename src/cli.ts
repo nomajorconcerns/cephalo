@@ -30,6 +30,7 @@ import { runInit } from "./init.js";
 import { listRules, resetRules, showRule } from "./rulescmd.js";
 import { defaultRulesPath } from "./rules.js";
 import { getVersion } from "./version.js";
+import { DASH_USAGE, SYNC_USAGE, runDashboard, runSync } from "./synccmd.js";
 import { COST_USAGE, costReport, parseCostArgs } from "./costcmd.js";
 import { applyModelsEnabled, applyModelsMode, judgeReport, modelsEval, modelsPullPlan, modelsScan, modelsStatus, planModelsEnabled, planModelsMode } from "./modelscmd.js";
 import { modelsConfigPath } from "./models/config.js";
@@ -42,6 +43,10 @@ const USAGE = `Usage:
                                       Follow the audit log live (Ctrl+C to stop)
   cephalo mcp [list|allow|pin|scan|wrap|mode|path]
                                       MCP firewall: allowlist by command/URL, fingerprint tools, audit or enforce
+  cephalo sync [status|set|push|pull|audit]
+                                      Share policy and audit logs through a folder you already have (no cloud)
+  cephalo dashboard [--team] [--out file]
+                                      One self-contained HTML page: overview, sessions and cost, seatbelt
   cephalo cost [--since 7d] [--all-projects] [--json]
                                       What sessions cost, and cost per shipped result (merged PR + passing CI)
   cephalo replay [--pr N] [--format text|md|html|json] [--comment]
@@ -214,6 +219,46 @@ async function main(): Promise<number> {
       signal: ac.signal,
     });
     return 0;
+  }
+
+  if (cmd === "sync") {
+    if (rest.includes("--help") || rest.includes("-h")) {
+      console.log(SYNC_USAGE);
+      return 0;
+    }
+    const sub = rest[0] ?? "status";
+    const confirm = async (q: string): Promise<boolean> => {
+      if (!process.stdin.isTTY) {
+        console.log("Not running in a terminal. Nothing was changed. Re-run with --yes to apply.");
+        return false;
+      }
+      const rl = createInterface({ input: process.stdin, output: process.stdout });
+      const answer = await new Promise<string>((resolve) => rl.question(`${q} [y/N] `, resolve));
+      rl.close();
+      return /^y(es)?$/i.test(answer.trim());
+    };
+    const r = await runSync(sub, rest[1] && !rest[1].startsWith("-") ? rest[1] : undefined, { confirm, yes: rest.includes("--yes") || rest.includes("-y") });
+    for (const line of r.lines) console.log(line);
+    return r.exitCode;
+  }
+
+  if (cmd === "dashboard") {
+    if (rest.includes("--help") || rest.includes("-h")) {
+      console.log(DASH_USAGE);
+      return 0;
+    }
+    const flag = (name: string) => {
+      const i = rest.indexOf(name);
+      return i >= 0 ? rest[i + 1] : undefined;
+    };
+    const days = flag("--days") === undefined ? undefined : Number(flag("--days"));
+    if (days !== undefined && (!Number.isInteger(days) || days < 1 || days > 365)) {
+      process.stderr.write("cephalo: --days needs a whole number from 1 to 365." +  + "");
+      return 1;
+    }
+    const r = await runDashboard({ out: flag("--out"), team: rest.includes("--team"), days, noCost: rest.includes("--no-cost"), force: rest.includes("--force"), cwd: process.cwd() });
+    for (const line of r.lines) console.log(line);
+    return r.exitCode;
   }
 
   if (cmd === "cost") {

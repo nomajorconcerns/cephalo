@@ -484,3 +484,18 @@ Limits: MCP calls and Codex `apply_patch` are not checked. Neither agent can be 
 - By default only sessions run in the current directory are counted.
 
 Limits: the link from a session to a PR is its branch name, so a reused branch name can mislink, and Hermes sessions often record no branch. `gh` must be logged in; without it sessions show as "unknown" and none count as shipped.
+
+## Dashboard and team sync (no cloud)
+
+Nothing here is hosted. Both features work through files, so your code and logs stay on machines and folders you control.
+
+`cephalo dashboard [--out file] [--team] [--days N] [--no-cost]` writes one self-contained HTML page with three tabs: Overview (calls per day, by agent), Sessions and cost (the `cephalo cost` numbers), and Seatbelt (most-hit rules, and what needed a look). The page makes no network requests and sets all text with `textContent`, so text from an audit entry cannot run as script.
+
+`cephalo sync` shares policy and audit logs through a folder you already have: a synced drive, a network share, or a clone of a git repo.
+
+- `cephalo sync set <folder>` chooses the folder. Each write below asks first (or use `--yes`).
+- `cephalo sync push` publishes your `rules.yml` to `<folder>/policy/` with a manifest (SHA-256, who, when). It refuses an invalid rules file.
+- `cephalo sync pull` checks the manifest hash, shows what would be added, changed or **removed** (removals are flagged as weakening), asks, backs up your file, then applies it.
+- `cephalo sync audit` copies your audit log to `<folder>/audit/<user>@<machine>.jsonl`. Anyone with access to the folder can read it, so it asks first and says so. `cephalo dashboard --team` then shows every developer's log together.
+
+Limits: the manifest hash only shows that the file arrived intact. It is not a signature, so anyone who can write to the folder can publish a policy (signed bundles are not built). Nothing pulls automatically; each developer runs `pull`. If the folder is a git repo, you commit and push it yourself. The audit copy is a snapshot you re-publish, not a live feed. Agents cannot edit `sync.yml` or `prices.yml`.
