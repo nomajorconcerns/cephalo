@@ -30,6 +30,7 @@ import { runInit } from "./init.js";
 import { listRules, resetRules, showRule } from "./rulescmd.js";
 import { defaultRulesPath } from "./rules.js";
 import { getVersion } from "./version.js";
+import { COST_USAGE, costReport, parseCostArgs } from "./costcmd.js";
 import { applyModelsEnabled, applyModelsMode, judgeReport, modelsEval, modelsPullPlan, modelsScan, modelsStatus, planModelsEnabled, planModelsMode } from "./modelscmd.js";
 import { modelsConfigPath } from "./models/config.js";
 
@@ -41,6 +42,8 @@ const USAGE = `Usage:
                                       Follow the audit log live (Ctrl+C to stop)
   cephalo mcp [list|allow|pin|scan|wrap|mode|path]
                                       MCP firewall: allowlist by command/URL, fingerprint tools, audit or enforce
+  cephalo cost [--since 7d] [--all-projects] [--json]
+                                      What sessions cost, and cost per shipped result (merged PR + passing CI)
   cephalo replay [--pr N] [--format text|md|html|json] [--comment]
                                       Replay of what the agents did on this branch, for a pull request
   cephalo incident [<n> | --last] [--use K]
@@ -211,6 +214,29 @@ async function main(): Promise<number> {
       signal: ac.signal,
     });
     return 0;
+  }
+
+  if (cmd === "cost") {
+    if (rest.includes("--help") || rest.includes("-h")) {
+      console.log(COST_USAGE);
+      return 0;
+    }
+    const parsed = parseCostArgs(rest);
+    if ("error" in parsed) {
+      process.stderr.write(`cephalo: ${parsed.error}
+`);
+      return 1;
+    }
+    try {
+      const r = await costReport(parsed.args, { cwd: process.cwd() });
+      if (parsed.args.json) console.log(JSON.stringify(r.report, null, 2));
+      else for (const line of r.lines) console.log(line);
+      return 0;
+    } catch (e) {
+      process.stderr.write(`cephalo: ${(e as Error).message}
+`);
+      return 1;
+    }
   }
 
   if (cmd === "replay") {

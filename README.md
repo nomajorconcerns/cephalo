@@ -472,3 +472,15 @@ Nothing has been published or signed yet.
 - Cursor: `preToolUse` and `postToolUse` in `~/.cursor/hooks.json` running `node <project>/dist/cli.js hook cursor`. Answers are `{"permission": "allow"|"deny", ...}`.
 
 Limits: MCP calls and Codex `apply_patch` are not checked. Neither agent can be asked by the local-model judge, so a judge `unsure` or failure is logged and allowed there (a judge `block` still blocks). Both agents let the call through if the hook crashes or times out. These adapters were built from the vendors' docs and unit-tested; they have not been run inside the real Codex or Cursor.
+
+## Cost per shipped result
+
+`cephalo cost [--since 7d] [--all-projects] [--json] [--rows N] [--no-github]` adds up what your agent sessions cost and how many of them shipped.
+
+- **Sessions** come from Claude Code's transcripts (`~/.claude/projects`) and Hermes' state database (read-only). A streamed message is counted once.
+- **Dollars** for Claude Code are an estimate: token counts times Anthropic's API list prices. A subscription plan is a flat fee, so this is not what you were charged. Hermes' own cost figure is used for Hermes sessions. Models with no price are counted in tokens only and flagged; add prices in `~/.cephalo/prices.yml` (`model-prefix: {input, output, cache_write, cache_read}`, USD per million tokens).
+- **Shipped** means the session's branch has a pull request that was merged with passing CI on its head commit, looked up with the `gh` CLI. A merged PR with no CI checks is reported separately and not counted. Sessions on `main`/`master` or with no branch can never count as shipped.
+- **Cost per shipped result** is all the dollars in the window divided by the number of distinct shipped PRs, so work that never shipped raises the figure. The report also splits the spend into "sessions that shipped" and "everything else".
+- By default only sessions run in the current directory are counted.
+
+Limits: the link from a session to a PR is its branch name, so a reused branch name can mislink, and Hermes sessions often record no branch. `gh` must be logged in; without it sessions show as "unknown" and none count as shipped.
