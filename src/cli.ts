@@ -30,6 +30,8 @@ import { runInit } from "./init.js";
 import { listRules, resetRules, showRule } from "./rulescmd.js";
 import { defaultRulesPath } from "./rules.js";
 import { getVersion } from "./version.js";
+import { applyModelsEnabled, modelsPullPlan, modelsStatus, planModelsEnabled } from "./modelscmd.js";
+import { modelsConfigPath } from "./models/config.js";
 
 const USAGE = `Usage:
   cephalo test "<command>"            Check a shell command against the rules
@@ -48,6 +50,8 @@ const USAGE = `Usage:
   cephalo run --env NAME -- <command> Run a command with vault secrets injected; output is scrubbed
   cephalo tripwire [status|scan|clear|mode|path]
                                       Prompt-injection tripwire: scan what the agent reads, lock down risky actions
+  cephalo models [status|pull|enable|disable|path]
+                                      Local-model judge (Ollama on this machine): roles, installed models
   cephalo mcp proxy -- <command...>   Run an MCP server behind Cephalo's runtime proxy (used in agent configs)
   cephalo install claude|hermes       Add Cephalo's hook to the agent's config
   cephalo uninstall claude|hermes     Remove Cephalo's hook from the agent's config
@@ -481,6 +485,46 @@ async function main(): Promise<number> {
       return 0;
     }
     process.stderr.write("Usage: cephalo tripwire [status | scan <file|-> | clear | mode enforce|warn|off | path]\n");
+    return 1;
+  }
+
+  if (cmd === "models") {
+    const sub = rest[0] ?? "status";
+    const yes = rest.includes("--yes") || rest.includes("-y");
+    if (sub === "status") {
+      const r = await modelsStatus();
+      for (const line of r.lines) console.log(line);
+      return r.exitCode;
+    }
+    if (sub === "path") {
+      console.log(modelsConfigPath());
+      return 0;
+    }
+    if (sub === "pull") {
+      const r = await modelsPullPlan();
+      for (const line of r.lines) console.log(line);
+      return r.exitCode;
+    }
+    if (sub === "enable" || sub === "disable") {
+      const plan = planModelsEnabled(sub);
+      for (const line of plan.lines) console.log(line);
+      if (!plan.changed) return 0;
+      let ok = yes;
+      if (!ok) {
+        if (!process.stdin.isTTY) {
+          console.log("Not running in a terminal. Nothing was changed. Re-run with --yes to apply.");
+          return 1;
+        }
+        const rl = createInterface({ input: process.stdin, output: process.stdout });
+        const answer = await new Promise<string>((resolve) => rl.question("Apply? [y/N] ", resolve));
+        rl.close();
+        ok = /^y(es)?$/i.test(answer.trim());
+      }
+      if (!ok) return 1;
+      for (const line of applyModelsEnabled(sub)) console.log(line);
+      return 0;
+    }
+    process.stderr.write("Usage: cephalo models [status | pull | enable | disable | path]\n");
     return 1;
   }
 
