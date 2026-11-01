@@ -646,6 +646,82 @@ html.vt-morph::view-transition-old(root),html.vt-morph::view-transition-new(root
 .hub .os:focus-visible .b{stroke:var(--mint);stroke-width:2}
 .hubleg{font-size:13px;margin:10px 2px 0}
 
+
+/* ---------- phase 5: trust, pricing, polish ---------- */
+.hn.on{box-shadow:none}
+.tier.hl{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset,0 22px 60px -26px var(--mint)}
+.tier.hl{position:relative}
+.reco{position:absolute;top:-11px;left:20px;font:700 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--mint-ink);background:var(--mint);border-radius:5px;padding:3px 8px}
+.lim{border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--panel)}
+.lim table{width:100%;border-collapse:collapse}
+.lim th{text-align:left;font:700 12px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:14px 20px;background:var(--bg2);border-bottom:1px solid var(--line);width:50%}
+.lim td{vertical-align:top;padding:16px 20px;border-bottom:1px solid var(--line);font-size:15.5px;color:var(--muted);width:50%}
+.lim tr:last-child td{border-bottom:0}
+.lim td+td,.lim th+th{border-left:1px solid var(--line)}
+.lim .g{display:inline-block;width:1.2em;font:700 15px var(--mono);color:var(--text)}
+.lim td code{font-size:13px;color:var(--text)}
+@media(max-width:760px){
+  .lim table,.lim tbody,.lim tr,.lim td{display:block;width:auto}.lim thead{display:none}
+  .lim td+td{border-left:0;border-top:1px dashed var(--line);background:var(--bg2)}
+  .lim td:first-child::before{content:'Does';display:block;font:700 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin-bottom:4px}
+  .lim td+td::before{content:'Does not';display:block;font:700 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin-bottom:4px}
+}
+.faq{display:grid;gap:10px;max-width:860px}
+.faq details{border:1px solid var(--line);border-radius:var(--r);background:var(--panel)}
+.faq summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;justify-content:space-between;padding:14px 18px;min-height:48px;font:600 16.5px var(--sans);color:var(--text)}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:'';flex:none;width:9px;height:9px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);transition:transform var(--dur-med) var(--ease-out)}
+.faq details[open] summary::after{transform:rotate(225deg)}
+.faq .ans{padding:0 18px 16px;color:var(--muted);font-size:16px}.faq .ans p{margin:0;max-width:68ch}
+.faq summary code{font-size:14px}
+#cta{padding-top:24px}
+.ctapanel{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:28px;align-items:center;border:1px solid var(--line2);border-radius:18px;background:var(--surface);padding:34px}
+@media(max-width:820px){.ctapanel{grid-template-columns:minmax(0,1fr);padding:22px}}
+.ctapanel h2{margin:0 0 10px}.ctapanel p{margin:0 0 18px;color:var(--muted)}
+.ctapanel .row2{display:flex;gap:10px;flex-wrap:wrap}
+.ctapanel .cb{display:flex;align-items:center;gap:10px;border:1px solid var(--line2);border-radius:10px;background:var(--bg2);padding:10px 12px}
+.ctapanel .cb pre{margin:0;flex:1;font:600 18px var(--mono)}
+.fbadges{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.fbadges li{border:1px solid var(--line2);border-radius:999px;padding:4px 12px;font-size:13px;color:var(--muted)}
+/* top progress bar */
+.topbar{position:fixed;top:0;left:0;right:0;height:2px;background:var(--mint);transform-origin:0 50%;transform:scaleX(0);z-index:30;pointer-events:none}
+@keyframes growbar{to{transform:scaleX(1)}}
+@supports (animation-timeline:scroll()){.topbar.native{animation:growbar linear both;animation-timeline:scroll(root block)}}
+/* scroll-driven reveals replace the observer-driven ones where the browser supports them */
+@supports (animation-timeline:view()){
+  .js .reveal{opacity:1;transform:none;transition:none;animation:rvin 1ms linear both;animation-timeline:view();animation-range:entry 0% entry 30%}
+  @keyframes rvin{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
+}
+@media (prefers-reduced-motion:reduce){.js .reveal{animation:none!important;opacity:1;transform:none}}
+/* circular theme reveal */
+@supports (view-transition-name:x){
+  html.vt-theme::view-transition-old(root),html.vt-theme::view-transition-new(root){animation:none;mix-blend-mode:normal}
+  html.vt-theme::view-transition-old(root){z-index:1}
+  html.vt-theme::view-transition-new(root){z-index:2;animation:themereveal 620ms var(--ease-out) both}
+  @keyframes themereveal{from{clip-path:circle(0 at var(--tx) var(--ty))}to{clip-path:circle(var(--tr) at var(--tx) var(--ty))}}
+}
+/* mobile menu sheet */
+.menubtn{display:none}
+.menubtn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+@media(max-width:820px){.menubtn{display:inline-flex}}
+@supports not (selector(:popover-open)){.menubtn{display:none!important}}
+.menu{position:fixed;inset:60px 12px auto 12px;margin:0;width:auto;max-width:420px;margin-left:auto;padding:8px;border:1px solid var(--line2);border-radius:14px;background:var(--surface);color:var(--text);box-shadow:0 24px 60px -20px rgb(0 0 0 / .5)}
+.menu a{display:flex;align-items:center;min-height:48px;padding:0 14px;border-radius:9px;color:var(--text);font-size:16px}
+.menu a:hover{background:var(--panel2);text-decoration:none}
+@supports (selector(:popover-open)){
+  .menu{transition:opacity var(--dur-med) var(--ease-out),transform var(--dur-med) var(--ease-out),overlay var(--dur-med) allow-discrete,display var(--dur-med) allow-discrete}
+  .menu:not(:popover-open){opacity:0;transform:translateY(-8px)}
+  @starting-style{.menu:popover-open{opacity:0;transform:translateY(-8px)}}
+}
+/* sticky install bar, mobile only */
+.stick{display:none}
+@media(max-width:700px){
+  .js .stick{display:flex;position:fixed;left:10px;right:10px;bottom:10px;z-index:25;align-items:center;gap:10px;justify-content:space-between;padding:8px 8px 8px 16px;border:1px solid var(--line2);border-radius:12px;background:var(--surface);box-shadow:0 14px 40px -16px rgb(0 0 0 / .6);transform:translateY(calc(100% + 24px));transition:transform var(--dur-med) var(--ease-out),visibility 0s linear var(--dur-med);visibility:hidden}
+  .js .stick.show{transform:none;visibility:visible;transition:transform var(--dur-med) var(--ease-out)}
+  .stick code{font:600 15px var(--mono);color:var(--text)}
+  .stick .copy{min-height:44px}
+}
+
 /* theme switch: fade colours instead of snapping (class is added for a moment while toggling) */
 html.theming *,html.theming *::before,html.theming *::after{transition:background-color .4s var(--ease),color .4s var(--ease),border-color .4s var(--ease),box-shadow .4s var(--ease)!important}
 @media (prefers-reduced-motion:reduce){.js .reveal{opacity:1;transform:none}}
@@ -653,6 +729,7 @@ html.theming *,html.theming *::before,html.theming *::after{transition:backgroun
 </head>
 <body>
 
+<div class="topbar" id="topProg" aria-hidden="true"></div>
 <nav class="top" aria-label="Main">
   <div class="wrap">
     <a class="brand" href="#top"><span id="logo" aria-hidden="true"></span>Cephalo</a>
@@ -660,9 +737,11 @@ html.theming *,html.theming *::before,html.theming *::after{transition:backgroun
       <a href="#how">How it works</a><a href="#playground">Playground</a><a href="#rules">Rules</a><a href="#pricing">Pricing</a><a href="https://github.com/nomajorconcerns/cephalo#readme" rel="noopener">Docs</a><!-- TODO: verify: URL comes from package.json "homepage"; this checkout has no git remote, so confirm the repository is public -->
       <a class="cta" href="#install">Install</a>
       <button class="iconbtn" id="themeBtn" type="button" aria-label="Switch colour theme" aria-pressed="false"><svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg><svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
+      <button class="iconbtn menubtn" id="menuBtn" type="button" popovertarget="menu" aria-label="Open menu" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
     </div>
   </div>
 </nav>
+<div class="menu" id="menu" popover aria-label="Menu"><a href="#how">How it works</a><a href="#playground">Playground</a><a href="#rules">Rules</a><a href="#commands">Commands</a><a href="#platforms">Platforms</a><a href="#pricing">Pricing</a><a href="#limits">Limits</a><a href="#faq">FAQ</a><a href="https://github.com/nomajorconcerns/cephalo#readme" rel="noopener">Docs</a></div>
 
 <div id="live" class="sr" role="status" aria-live="polite"></div>
 
@@ -1162,6 +1241,7 @@ rules:
         <a class="btn primary" href="#install">Install</a>
       </div>
       <div class="tier hl">
+        <span class="reco">Recommended</span>
         <h3>Pro</h3>
         <p class="who">For developers who give agents real credentials and real MCP servers.</p>
         <div class="price">$15<small> / dev / month</small></div>
@@ -1279,21 +1359,89 @@ cephalo watch</pre><button class="copy" data-copy='cephalo doctor&#10;cephalo te
     <div class="sec-head">
       <p class="eyebrow">Honest limits</p>
       <h2>A seatbelt, not a sandbox.</h2>
+      <p>What Cephalo does, and the matching thing it does not do. Everything here comes from how the code behaves today.</p>
     </div>
-    <div class="limits">
-      <div><h3>It matches patterns.</h3><p>Cephalo sees command text, not what a script does once it runs. A command assembled at runtime, or hidden inside a script file, can slip past. Cleaning catches common tricks like <code>r''m</code>, not all of them.</p></div>
-      <div><h3>It fails open.</h3><p>If the hook crashes or its input is not valid JSON, the call is allowed and the error is logged. A block is never weakened by a logging failure.</p></div>
-      <div><h3>Windows is the proven one.</h3><p>The Windows adapter has run on a real machine. macOS and Linux are covered by unit tests only, and the Keychain and Secret Service vault backends have never run on a real Mac or Linux box.</p></div>
-      <div><h3>Its own files are guarded by rules.</h3><p>Rules stop agents from writing Cephalo's audit log, rules file, vault files and MCP and tripwire state. They are still rules: you, or anything running outside the hooks, can edit those files, so the audit log is a record and not a signed proof.</p></div>
-      <div><h3>The newer features are young.</h3><p>The MCP firewall, tripwire, vault, incident-to-rule and replay were tested with simulated hook payloads and real child processes. They have not yet run through a long live agent session. Rerun <code>cephalo install claude</code> and <code>cephalo install hermes</code> so the hooks pick up the new matchers.</p></div>
-      <div><h3>The tripwire and vault have edges.</h3><p>The tripwire is a heuristic that limits damage; it is not a guarantee. The vault is hook-based, not a sandbox: an agent running as you could still find a way around it.</p></div>
+    <div class="lim">
+      <table>
+        <caption class="sr">What Cephalo does and does not do</caption>
+        <thead><tr><th scope="col">Cephalo does</th><th scope="col">Cephalo does not</th></tr></thead>
+        <tbody>
+          <tr><td><span class="g" aria-hidden="true">+</span>Check every shell command and file path an agent asks to use, before it runs, against your rules. First match wins.</td>
+              <td><span class="g" aria-hidden="true">&minus;</span>Understand what a script does once it runs. It matches text patterns, so a command assembled at runtime, or hidden inside a script file, can slip past.</td></tr>
+          <tr><td><span class="g" aria-hidden="true">+</span>Clean up common disguises such as <code>r''m</code>, carets, backticks and <code>..</code> in paths, and check both the raw and the cleaned text.</td>
+              <td><span class="g" aria-hidden="true">&minus;</span>Catch every trick. Cleaning removes the common ones, not all of them.</td></tr>
+          <tr><td><span class="g" aria-hidden="true">+</span>Add one line per decision to a local audit log, and block agents from writing that log or your rules file.</td>
+              <td><span class="g" aria-hidden="true">&minus;</span>Make that log tamper-proof. Those protections are rules: you, or anything running outside the hooks, can still edit the files, so the log is a record and not a signed proof.</td></tr>
+          <tr><td><span class="g" aria-hidden="true">+</span>Allow the call and log the error if the hook crashes or gets invalid JSON, so a broken guard never freezes your agent.</td>
+              <td><span class="g" aria-hidden="true">&minus;</span>Fail closed on its own errors. A block is never weakened by a logging failure, but a crashed hook lets the call through.</td></tr>
+          <tr><td><span class="g" aria-hidden="true">+</span>Block unknown or changed MCP servers and tools in enforce mode, lock a session after suspected prompt injection, and keep secrets in a vault.</td>
+              <td><span class="g" aria-hidden="true">&minus;</span>Guarantee any of that. The tripwire is a heuristic that limits damage, and the vault is hook-based, not a sandbox: an agent running as you could still find a way around it.</td></tr>
+          <tr><td><span class="g" aria-hidden="true">+</span>Run its Windows adapter on a real machine. The newer features were tested with simulated hook payloads and real child processes.</td>
+              <td><span class="g" aria-hidden="true">&minus;</span>Prove macOS and Linux, the Keychain and Secret Service vault backends, or the Codex and Cursor adapters on real machines or in the real apps. Those are covered by unit tests only. The newer features have not yet run through a long live agent session.</td></tr>
+          <tr><td><span class="g" aria-hidden="true">+</span>Work entirely on your machine, with a local dashboard and a shared-folder sync.</td>
+              <td><span class="g" aria-hidden="true">&minus;</span>Offer a hosted service. There is no Cephalo server; the hosted dashboard is <span class="badge planned">Planned</span>.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Questions</p>
+      <h2>Short answers.</h2>
+    </div>
+    <div class="faq">
+      <details><summary>Does anything leave my machine?</summary>
+        <div class="ans"><p>Cephalo does not report usage anywhere: the code has no telemetry or analytics. It makes network calls in only these cases: to MCP servers you have configured, when it scans their tools; to the Ollama address in your config, if you turn a model role on (they are all off by default); and the cost report runs GitHub's <code>gh</code> tool to look up pull-request status. Everything else, including the audit log, stays in <code>~/.cephalo</code>.</p></div></details>
+      <details><summary>Does a block hold under <code>--dangerously-skip-permissions</code>?</summary>
+        <div class="ans"><p>For Claude Code, yes. Its documentation says a <code>PreToolUse</code> hook that returns a deny blocks the call even in <code>bypassPermissions</code> mode or with <code>--dangerously-skip-permissions</code>, and Cephalo's hook uses exactly that. See the <a href="https://code.claude.com/docs/en/hooks-guide" rel="noopener">hooks guide</a>. I have not confirmed the same for Hermes, so treat it as unconfirmed there.<!-- TODO: verify for Hermes --></p></div></details>
+      <details><summary>How do I write a rule?</summary>
+        <div class="ans"><p>Add a block to <code>~/.cephalo/rules.yml</code> with an <code>id</code>, a <code>description</code>, a <code>type</code> (<code>command</code> or <code>path</code>), a <code>pattern</code> (a case-insensitive JavaScript regular expression) and <code>action: block</code>. Rules are checked in file order and the first match wins. Draft one in <a href="#rules">the builder</a>, then check it with <code>cephalo test "your command"</code>.</p></div></details>
+      <details><summary>What happens when no rule matches?</summary>
+        <div class="ans"><p>The call goes ahead, and one line is still written to the audit log. Cephalo only stops what a rule says to stop.</p></div></details>
+      <details><summary>How do I see what was blocked?</summary>
+        <div class="ans"><p><code>cephalo log --blocked</code> lists recent blocks, <code>cephalo watch</code> follows decisions live, <code>cephalo replay</code> summarises a branch for a pull request, and <code>cephalo dashboard</code> writes a local HTML overview.</p></div></details>
+      <details><summary>Can the agent turn it off?</summary>
+        <div class="ans"><p>Built-in rules stop agents from writing the Claude Code or Hermes config (where the hook lives), Cephalo's rules file, audit log and vault files, and its MCP and tripwire state. They are rules, not a sandbox: you, or anything running outside the hooks, can still edit those files, and a crashed hook lets the call through. See <a href="#limits">the limits</a>.</p></div></details>
+      <details><summary>Does it work on Windows?</summary>
+        <div class="ans"><p>Yes. Windows is the platform it has been run on for real. macOS and Linux have adapters that are covered by unit tests only.</p></div></details>
+    </div>
+  </div>
+</section>
+
+<!-- FINAL CALL TO ACTION -->
+<section id="cta">
+  <div class="wrap">
+    <div class="ctapanel">
+      <div>
+        <h2>Put a seatbelt on your agents.</h2>
+        <p>Install it from its project folder, then one command sets up your rules and hooks. It asks before changing anything and backs up each file it edits.</p>
+        <div class="row2"><a class="btn primary" href="#install">Install steps</a><a class="btn" href="#playground">Try a command first</a></div>
+      </div>
+      <div class="cb"><pre aria-label="Command">$ cephalo init</pre><button class="copy" data-copy="cephalo init" type="button">Copy</button></div>
     </div>
   </div>
 </section>
 </main>
 
+<div class="stick" id="stick" role="region" aria-label="Install Cephalo" inert><code>$ cephalo init</code><button class="copy" data-copy="cephalo init" type="button">Copy</button></div>
+
 <footer>
-  <div class="wrap"><span class="brand" style="font-size:17px"><span id="logo2" aria-hidden="true"></span>Cephalo</span><span>v0.1.0</span><span class="sp"></span><nav aria-label="Footer"><a href="#commands">Commands</a><a href="#features">Beyond rules</a><a href="#platforms">Platforms</a><a href="#limits">Limits</a><a href="#install">Install</a></nav></div>
+  <div class="wrap"><span class="brand" style="font-size:17px"><span id="logo2" aria-hidden="true"></span>Cephalo</span><span>v0.1.0</span><span class="sp"></span>
+    <nav aria-label="Footer">
+      <a href="https://github.com/nomajorconcerns/cephalo#readme" rel="noopener">Docs</a><a href="https://github.com/nomajorconcerns/cephalo" rel="noopener">GitHub</a><a href="https://github.com/nomajorconcerns/cephalo/issues" rel="noopener">Issues</a><a href="#limits">Limits</a><a href="#faq">FAQ</a><a href="#install">Install</a>
+    </nav>
+    <!-- TODO: verify: the GitHub links come from package.json (homepage, bugs). This checkout has no git remote, so confirm the repository is public before launch. -->
+    <!-- TODO: add Changelog and Security links once CHANGELOG.md and SECURITY.md exist in the repository. -->
+  </div>
+  <div class="wrap" style="margin-top:14px">
+    <ul class="fbadges" aria-label="What is true of this project">
+      <li>MIT licence</li><li>Runs on your machine</li><li>No telemetry in the code</li><li>Audit log kept locally</li>
+    </ul>
+  </div>
   <div class="wrap" style="margin-top:14px"><span>Everything on this page runs locally in your browser.</span></div>
 </footer>
 
@@ -1414,7 +1562,7 @@ function retrigger(node,cls){node.classList.remove(cls);void node.offsetWidth;no
 
 /* ---------- scroll reveal + nav highlight ---------- */
 (function(){
-  var targets=$$('.sec-head,.split,.tile,.rb>.rbcol>.card,.hubwrap,.lab,.plug,.explorer,.more>div,.plat,.normer>.card,.inst,.limits>div,.feat>.fcard,.subhead,.tiers>.tier,.calc,.pricenote');
+  var targets=$$('.sec-head,.split,.tile,.rb>.rbcol>.card,.hubwrap,.lab,.plug,.explorer,.more>div,.plat,.normer>.card,.inst,.lim,.faq>details,.ctapanel,.feat>.fcard,.subhead,.tiers>.tier,.calc,.pricenote');
   targets.forEach(function(t,i){t.classList.add('reveal');});
   // stagger siblings inside the same grid
   [['.more','div'],['.limits','div'],['.normer','.card'],['#feat','.fcard'],['#planned','.fcard'],['.tiers','.tier']].forEach(function(g){
@@ -1441,11 +1589,45 @@ function retrigger(node,cls){node.classList.remove(cls);void node.offsetWidth;no
 function paintTheme(){var light=document.documentElement.getAttribute('data-theme')==='light';var b=$('#themeBtn');b.setAttribute('aria-label',light?'Switch to dark theme':'Switch to light theme');b.setAttribute('aria-pressed',String(light));}
 function live(msg){var n=$('#live');if(!n)return;n.textContent='';setTimeout(function(){n.textContent=msg;},30);}
 $('#themeBtn').addEventListener('click',function(){
-  var next=document.documentElement.getAttribute('data-theme')==='light'?'dark':'light';
-  var root=document.documentElement;root.classList.add('theming');clearTimeout(window.__themingT);window.__themingT=setTimeout(function(){root.classList.remove('theming');},520);
-  document.documentElement.setAttribute('data-theme',next);try{localStorage.setItem('cephalo-site-theme',next);}catch(e){}paintTheme();
+  var root=document.documentElement,next=root.getAttribute('data-theme')==='light'?'dark':'light';
+  function set(){root.setAttribute('data-theme',next);try{localStorage.setItem('cephalo-site-theme',next);}catch(e){}paintTheme();}
+  if(reduce||!document.startViewTransition||document.hidden){ /* instant, with the short colour fade */
+    root.classList.add('theming');clearTimeout(window.__themingT);window.__themingT=setTimeout(function(){root.classList.remove('theming');},520);set();return;
+  }
+  var r=this.getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2;
+  root.style.setProperty('--tx',x+'px');root.style.setProperty('--ty',y+'px');
+  root.style.setProperty('--tr',Math.ceil(Math.hypot(Math.max(x,innerWidth-x),Math.max(y,innerHeight-y)))+'px');
+  var ran=false,once=function(){if(ran)return;ran=true;set();},clean=function(){root.classList.remove('vt-theme');};
+  root.classList.add('vt-theme');
+  var vt=document.startViewTransition(once);vt.finished.then(clean,clean);
+  setTimeout(once,400);
 });
 paintTheme();
+
+/* ---------- top progress bar, mobile menu, sticky install bar ---------- */
+(function(){
+  var bar=$('#topProg');
+  if(bar){
+    if(!reduce&&window.CSS&&CSS.supports&&CSS.supports('animation-timeline: scroll()'))bar.classList.add('native');
+    else{
+      var tick=false,upd=function(){tick=false;var h=document.documentElement.scrollHeight-innerHeight;bar.style.transform='scaleX('+(h>0?Math.min(1,scrollY/h):0)+')';};
+      addEventListener('scroll',function(){if(!tick){tick=true;requestAnimationFrame(upd);}},{passive:true});upd();
+    }
+  }
+  var menu=$('#menu'),mb=$('#menuBtn');
+  if(menu&&mb&&menu.showPopover){
+    menu.addEventListener('toggle',function(e){var open=e.newState==='open';mb.setAttribute('aria-expanded',String(open));mb.setAttribute('aria-label',open?'Close menu':'Open menu');});
+    menu.addEventListener('click',function(e){if(e.target.closest('a'))menu.hidePopover();});
+  }
+  var st=$('#stick'),hero=$('.hero'),inst=$('#install'),cta=$('#cta');
+  if(st&&hero&&'IntersectionObserver' in window){
+    var vis={hero:true,inst:false,cta:false};
+    function sync(){var show=!vis.hero&&!vis.inst&&!vis.cta;st.classList.toggle('show',show);st.inert=!show;}
+    [['hero',hero],['inst',inst],['cta',cta]].forEach(function(x){
+      if(!x[1])return;new IntersectionObserver(function(es){vis[x[0]]=es[es.length-1].isIntersecting;sync();}).observe(x[1]);
+    });
+  }
+})();
 
 /* ---------- logo (pixel octopus from banner.ts) ---------- */
 var PAL={P:'#f472b6',L:'#f9a8d4',W:'#ffffff',K:'#1a1a2e'};
