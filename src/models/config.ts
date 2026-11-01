@@ -23,6 +23,12 @@ export interface ModelsConfig {
   mode: JudgeMode;
   host: string;
   timeoutMs: number;
+  /** The reviewer reads suspicious text with a bigger model, so it gets its own, longer budget. */
+  reviewerTimeoutMs: number;
+  /** Cosine similarity at which a piece of tool output counts as resembling a known injection phrasing. */
+  similarityThreshold: number;
+  /** Use the embedding and reviewer models on what tools return (adds to the prompt-injection tripwire). */
+  tripwireAssist: boolean;
   roles: Record<Role, string[]>;
 }
 
@@ -31,6 +37,9 @@ export const DEFAULT_MODELS_CONFIG: ModelsConfig = {
   mode: "warn",
   host: "http://127.0.0.1:11434",
   timeoutMs: 8000,
+  reviewerTimeoutMs: 15000,
+  similarityThreshold: 0.75,
+  tripwireAssist: true,
   roles: {
     decider: ["d3:2b", "qwen3.5:4b"],
     reviewer: ["qwen3.5:9b"],
@@ -91,6 +100,20 @@ export function parseModelsConfig(text: string): { config: ModelsConfig; problem
     if (Number.isInteger(n) && n >= 200 && n <= 120000) config.timeoutMs = n;
     else problems.push(`timeout_ms must be a whole number from 200 to 120000 (got ${JSON.stringify(n)}); using ${config.timeoutMs}`);
   }
+  if (doc.reviewer_timeout_ms !== undefined) {
+    const n = doc.reviewer_timeout_ms;
+    if (Number.isInteger(n) && n >= 1000 && n <= 120000) config.reviewerTimeoutMs = n;
+    else problems.push(`reviewer_timeout_ms must be a whole number from 1000 to 120000 (got ${JSON.stringify(n)}); using ${config.reviewerTimeoutMs}`);
+  }
+  if (doc.similarity_threshold !== undefined) {
+    const n = doc.similarity_threshold;
+    if (typeof n === "number" && n >= 0.5 && n <= 0.99) config.similarityThreshold = n;
+    else problems.push(`similarity_threshold must be a number from 0.5 to 0.99 (got ${JSON.stringify(n)}); using ${config.similarityThreshold}`);
+  }
+  if (doc.tripwire_assist !== undefined) {
+    if (typeof doc.tripwire_assist === "boolean") config.tripwireAssist = doc.tripwire_assist;
+    else problems.push(`tripwire_assist must be true or false (got ${JSON.stringify(doc.tripwire_assist)}); using ${config.tripwireAssist}`);
+  }
   if (doc.roles !== undefined) {
     if (typeof doc.roles !== "object" || doc.roles === null || Array.isArray(doc.roles)) {
       problems.push("roles must be a mapping of role -> list of model tags; using defaults");
@@ -134,6 +157,11 @@ export function serializeModelsConfig(c: ModelsConfig): string {
     `mode: ${c.mode}\n` +
     `host: ${c.host}\n` +
     `timeout_ms: ${c.timeoutMs}\n` +
+    "# The tripwire assist uses the embedding model (does tool output resemble a known injection phrasing?) and the reviewer model\n" +
+    "# (is it really one?). They can raise the tripwire's level, never lower it.\n" +
+    `tripwire_assist: ${c.tripwireAssist}\n` +
+    `similarity_threshold: ${c.similarityThreshold}\n` +
+    `reviewer_timeout_ms: ${c.reviewerTimeoutMs}\n` +
     "roles:\n" +
     ROLES.map((r) => `  ${r}:\n${list(r)}`).join("\n") +
     "\n"

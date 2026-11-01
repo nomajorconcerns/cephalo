@@ -30,7 +30,7 @@ import { runInit } from "./init.js";
 import { listRules, resetRules, showRule } from "./rulescmd.js";
 import { defaultRulesPath } from "./rules.js";
 import { getVersion } from "./version.js";
-import { applyModelsEnabled, applyModelsMode, judgeReport, modelsPullPlan, modelsStatus, planModelsEnabled, planModelsMode } from "./modelscmd.js";
+import { applyModelsEnabled, applyModelsMode, judgeReport, modelsPullPlan, modelsScan, modelsStatus, planModelsEnabled, planModelsMode } from "./modelscmd.js";
 import { modelsConfigPath } from "./models/config.js";
 
 const USAGE = `Usage:
@@ -50,7 +50,7 @@ const USAGE = `Usage:
   cephalo run --env NAME -- <command> Run a command with vault secrets injected; output is scrubbed
   cephalo tripwire [status|scan|clear|mode|path]
                                       Prompt-injection tripwire: scan what the agent reads, lock down risky actions
-  cephalo models [status|pull|enable|disable|mode|judge|path]
+  cephalo models [status|pull|enable|disable|mode|judge|scan|path]
                                       Local-model judge (Ollama on this machine): roles, installed models
   cephalo mcp proxy -- <command...>   Run an MCP server behind Cephalo's runtime proxy (used in agent configs)
   cephalo install claude|hermes       Add Cephalo's hook to the agent's config
@@ -505,6 +505,23 @@ async function main(): Promise<number> {
       for (const line of r.lines) console.log(line);
       return r.exitCode;
     }
+    if (sub === "scan") {
+      const target = rest.slice(1).find((a) => a === "-" || !a.startsWith("-"));
+      if (!target) {
+        process.stderr.write("Usage: cephalo models scan <file | ->   (- reads stdin)\n");
+        return 1;
+      }
+      let text = "";
+      try {
+        text = target === "-" ? await readStdin() : fs.readFileSync(target, "utf8");
+      } catch (e) {
+        process.stderr.write(`cephalo: could not read ${target}: ${(e as Error).message}\n`);
+        return 1;
+      }
+      const r = await modelsScan(text, target === "-" ? "stdin" : target);
+      for (const line of r.lines) console.log(line);
+      return r.exitCode;
+    }
     if (sub === "judge") {
       const command = rest.slice(1).filter((a) => a !== "--yes" && a !== "-y").join(" ");
       if (!command) {
@@ -536,7 +553,7 @@ async function main(): Promise<number> {
       for (const line of modePlan ? applyModelsMode(modePlan.mode!) : applyModelsEnabled(sub as "enable" | "disable")) console.log(line);
       return 0;
     }
-    process.stderr.write("Usage: cephalo models [status | pull | enable | disable | mode warn|enforce | judge \"<command>\" | path]\n");
+    process.stderr.write("Usage: cephalo models [status | pull | enable | disable | mode warn|enforce | judge \"<command>\" | scan <file|-> | path]\n");
     return 1;
   }
 

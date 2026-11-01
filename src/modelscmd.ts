@@ -3,6 +3,8 @@ import path from "node:path";
 import { ROLES, loadModelsConfig, modelsConfigPath, normalizeTag, requiredTags, serializeModelsConfig, type JudgeMode, type ModelsConfig } from "./models/config.js";
 import { judgeCachePath, judgeCommand } from "./judge/decide.js";
 import { SIGNAL_IDS, findSignals } from "./judge/signals.js";
+import { assessText } from "./judge/assess.js";
+import { REFERENCE_PHRASES } from "./judge/semantic.js";
 import { ollamaStatus, type FetchLike } from "./models/ollama.js";
 
 export interface ModelsCmdOptions {
@@ -111,6 +113,37 @@ function writeConfig(change: (c: ModelsConfig) => ModelsConfig, what: string, o:
   fs.writeFileSync(file, serializeModelsConfig(change(c)));
   lines.push(`Saved ${file} with ${what}.`);
   return lines;
+}
+
+/**
+ * `cephalo models scan <file|->`: run the whole after-call pipeline on some text (regex scan, embedding match, reviewer)
+ * and show each step. Read-only: nothing is recorded against any session.
+ */
+export async function modelsScan(text: string, label: string, o: ModelsCmdOptions & { cacheFile?: string; embedCacheFile?: string } = {}): Promise<{ lines: string[]; exitCode: number }> {
+  const c = loadModelsConfig(o.file);
+  const a = await assessText(text, label, { config: c, fetch: o.fetch, cacheFile: o.cacheFile ?? judgeCachePath(), embedCacheFile: o.embedCacheFile });
+  const lines = [`Text: ${label}   (${text.length} characters)`, `Regex tripwire: ${a.regexLevel}`];
+  if (a.regexLevel === "alert") {
+    lines.push("Already at the top level, so the models add nothing.");
+    return { lines, exitCode: 2 };
+  }
+  if (a.regexLevel === "none") {
+    if (!c.tripwireAssist) lines.push("tripwire_assist is false in models.yml, so the embedding model is not used.");
+    else if (!a.semantic) lines.push(`Embedding match: no answer from ${c.roles.embedding.join(" or ")} within ${c.timeoutMs} ms. Check: cephalo models status`);
+    else {
+      lines.push(`Embedding match (${a.semantic.model}): ${a.semantic.chunks} piece(s) compared, best similarity ${a.semantic.top}, threshold ${c.similarityThreshold}`);
+      for (const h of a.semantic.hits) lines.push(`  ${h.score}  "${h.excerpt}"   ~ "${REFERENCE_PHRASES[h.nearest]}"`);
+      if (a.semantic.hits.length === 0) lines.push("  Nothing resembles a known injection phrasing.");
+    }
+  }
+  if (a.review) lines.push(`Reviewer (${a.review.model}${a.review.cached ? ", cached" : `, ${a.review.ms} ms`}): ${a.review.verdict}${a.review.reason ? ` - ${a.review.reason}` : ""}`);
+  else if (a.regexLevel === "watch" || (a.semantic && a.semantic.hits.length > 0)) lines.push(`Reviewer: no answer from ${c.roles.reviewer.join(" or ")} within ${c.reviewerTimeoutMs} ms.`);
+  lines.push(
+    a.assessment
+      ? `The tripwire would record: ${a.assessment.level.toUpperCase()}${a.assessment.level === "alert" ? " (the session would be locked down as for any alert)" : " (logged only; nothing is blocked)"}.`
+      : "The models would add nothing to the tripwire.",
+  );
+  return { lines, exitCode: a.assessment?.level === "alert" ? 2 : a.assessment ? 1 : 0 };
 }
 
 /** `cephalo models judge "<command>"`: ask the decider about one command, whatever the on/off setting, and show the answer. */

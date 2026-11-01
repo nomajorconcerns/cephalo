@@ -1,5 +1,5 @@
 import { currentUser } from "./user.js";
-import { isOwnWrite, toolResponseText, tripwireGate, tripwireObserve, type TripHookOptions } from "./tripwire/hook.js";
+import { isOwnWrite, toolResponseText, tripwireAddAssessment, tripwireGate, tripwireObserve, type Assessment, type TripHookOptions } from "./tripwire/hook.js";
 import { findLeaks } from "./vault/patterns.js";
 import { appendAudit, type AuditEntry } from "./audit.js";
 import { checkMcpCall, type McpCheckOptions } from "./mcp/check.js";
@@ -82,6 +82,8 @@ export function judgeTarget(agent: Agent, raw: string): { command: string; cwd?:
 export interface HookOptions {
   /** What the local-model judge said about this call's command (computed before the hook runs; see judge/hook.ts). */
   judge?: { command: string; judgement: Judgement; mode: JudgeMode };
+  /** What the local models found in a tool's output (after-call events; see judge/hook.ts). */
+  assessment?: Assessment;
   rules?: Rule[];
   auditFile?: string;
   /** Overrides for MCP checks (tests): policy, home dir, cwd, Hermes config path, or a fixed server list. */
@@ -118,15 +120,19 @@ export function runHook(agent: Agent, raw: string, opts: HookOptions = {}): stri
         ...(str(input.file_path ?? input.path) !== undefined ? { path: str(input.file_path ?? input.path) } : {}),
       };
       const warnings: string[] = [];
-      if (obs.event) {
+      // What the local models added (embedding match, reviewer verdict) is recorded as one more event; it can only raise the level.
+      const add = opts.assessment ? tripwireAddAssessment(agent, payload, opts.assessment, opts.tripwire) : undefined;
+      const event = add?.event ?? obs.event;
+      const warning = add?.warning ?? obs.warning;
+      if (event) {
         log({
           tool: obs.tool,
           ...what,
           decision: "allow",
-          rule: `tripwire-${obs.event.level}`,
-          note: `possible prompt injection in the output of ${obs.tool}: ${obs.event.findings.map((f) => `${f.id} "${f.excerpt}"`).join("; ")}`.slice(0, 600),
+          rule: `tripwire-${event.level}`,
+          note: `possible prompt injection in the output of ${obs.tool}: ${event.findings.map((f) => `${f.id} "${f.excerpt}"`).join("; ")}`.slice(0, 600),
         });
-        if (obs.warning) warnings.push(obs.warning);
+        if (warning) warnings.push(warning);
       }
       // A credential in the output is now in the agent's context; log it (type and first characters only) and say so.
       const ownVault = /(^|[\s;&|])((cephalo(\.cmd|\.ps1)?)|(node\s+\S*cephalo\S*[\\/]dist[\\/]cli\.js))\s+vault\s/i.test(`${str(input.command) ?? ""} `);

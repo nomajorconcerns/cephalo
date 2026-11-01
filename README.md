@@ -224,8 +224,8 @@ Settings are in `~/.cephalo/models.yml`; defaults:
 | Role | Models (first, then fallbacks) |
 |---|---|
 | `decider` | `d3:2b`, `qwen3.5:4b` |
-| `reviewer` | `qwen3.5:9b` (not used yet) |
-| `embedding` | `nomic-embed-text` (not used yet) |
+| `reviewer` | `qwen3.5:9b` (reads suspicious tool output; see the tripwire assist below) |
+| `embedding` | `nomic-embed-text` (spots paraphrased injections in tool output) |
 
 - **It can only tighten.** Rules decide first. The model is not asked about a call a rule already blocks, and
   its answer can never lift a block. In `warn` mode (the default) a `block` verdict is only written to the
@@ -238,9 +238,30 @@ Settings are in `~/.cephalo/models.yml`; defaults:
   would be with no judge at all.
 - Answers are cached for 24 hours in `~/.cephalo/judge-cache.json`. Agents cannot write `models.yml` or the cache.
 
+### Tripwire assist
+
+With the judge on (and `tripwire_assist: true`, the default), the [tripwire](#prompt-injection-tripwire)
+gets help from the other two models on what tools return. It is the same after-call hook; the results are
+recorded as ordinary tripwire events, so `cephalo tripwire status` and `cephalo tripwire clear` work as before.
+
+| The regex scan found | What the models do | Result |
+|---|---|---|
+| an alert | nothing, it is already the top level | alert |
+| a watch | the reviewer reads the flagged text | `injection` raises it to an alert; anything else changes nothing |
+| nothing | the embedding model compares the output, piece by piece, with 28 known injection phrasings; a close match goes to the reviewer | `injection`: alert. `unsure` or no answer: watch (logged, nothing blocked). `benign`: nothing recorded |
+
+- **They can only raise the level.** A `benign` verdict never lowers or removes a finding the regex scan made.
+- **The reference phrasings** are embedded once and kept in `~/.cephalo/embed-cache.json`; after that only the
+  tool output itself is embedded. The reviewer's budget is `reviewer_timeout_ms` (default 15000).
+- `cephalo models scan <file|->` runs the whole pipeline on some text and shows each step (best similarity,
+  matched phrasing, reviewer verdict). It records nothing. Use it to tune `similarity_threshold` (default 0.75).
+- Cost: with the judge on, every non-empty tool output is embedded once. Only a match reaches the reviewer.
+
 **Limits.** Small models are wrong sometimes, in both directions. Watch `cephalo log` in `warn` mode before
-switching to `enforce`. The judge needs a command with a risk signal, so it does not look at file writes, MCP
-calls or tool output. It has been tested against a simulated Ollama server, not yet against real models.
+switching to `enforce`. The decider needs a command with a risk signal, so it does not look at file writes or MCP
+calls. The default similarity threshold is a guess: it was not tuned on a real embedding model, so expect to
+adjust it with `cephalo models scan`. All of this has been tested against a simulated Ollama server, not yet
+against real models.
 
 ## Secrets vault
 
@@ -346,7 +367,7 @@ tools.
 | `audit.jsonl` | The audit log |
 | `mcp.yml`, `mcp-tools.json` | MCP allowlist and mode; approved tool fingerprints |
 | `tripwire.yml`, `tripwire/` | Tripwire mode; per-session state (`cleared/` holds released records) |
-| `models.yml`, `judge-cache.json` | Local-model judge settings (created only by `cephalo models enable`/`mode`); cached verdicts |
+| `models.yml`, `judge-cache.json`, `embed-cache.json` | Local-model judge settings (created only by `cephalo models enable`/`mode`); cached verdicts; embeddings of the known injection phrasings |
 | `vault.json`, `vault.key` | Encrypted secrets, and the master key file: wrapped by DPAPI on Windows; on macOS and Linux the key lives in the OS keystore instead; with the fallback `file` backend it is a plain key file readable only by you (mode 0600) |
 | `*.cephalo-backup-<timestamp>` | Backups made before any change to a file |
 

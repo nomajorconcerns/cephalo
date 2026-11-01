@@ -13,7 +13,7 @@ export const SYSTEM_RULES: Rule[] = [
     description: "Writing Cephalo's MCP allowlist, tool approvals, tripwire state or local-model settings",
     type: "path",
     on: "write",
-    pattern: "[\\/\\\\]\\.cephalo[\\/\\\\](mcp[^\\/\\\\]*$|models\\.yml[^\\/\\\\]*$|judge-cache\\.json$|tripwire([\\/\\\\.]|$))",
+    pattern: "[\\/\\\\]\\.cephalo[\\/\\\\](mcp[^\\/\\\\]*$|models\\.yml[^\\/\\\\]*$|(judge|embed)-cache\\.json$|tripwire([\\/\\\\.]|$))",
     action: "block",
   },
   {

@@ -3,12 +3,24 @@ import { judgeTarget, runHook, type Agent, type HookOptions } from "../hooks.js"
 import { loadEffectiveRules } from "../rules.js";
 import { loadModelsConfig, type ModelsConfig } from "../models/config.js";
 import type { FetchLike } from "../models/ollama.js";
+import { scannableText } from "../tripwire/hook.js";
+import { assessText } from "./assess.js";
 import { judgeCommand } from "./decide.js";
 
 export interface JudgedHookOptions extends HookOptions {
   models?: ModelsConfig;
   fetch?: FetchLike;
   cacheFile?: string;
+  embedCacheFile?: string;
+}
+
+function isAfterCall(raw: string): boolean {
+  try {
+    const ev = JSON.parse(raw)?.hook_event_name;
+    return ev === "PostToolUse" || ev === "post_tool_call";
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -17,9 +29,19 @@ export interface JudgedHookOptions extends HookOptions {
  * The model is never asked about a call the rules already block. Any failure means no opinion.
  */
 export async function runHookJudged(agent: Agent, raw: string, opts: JudgedHookOptions = {}): Promise<string> {
-  const { models, fetch, cacheFile, ...hookOpts } = opts;
+  const { models, fetch, cacheFile, embedCacheFile, ...hookOpts } = opts;
   try {
     const config = models ?? loadModelsConfig(undefined, () => {});
+    if (config.enabled && config.tripwireAssist && isAfterCall(raw)) {
+      // After the tool ran: let the embedding and reviewer models look at what came back. They can only raise the tripwire's level.
+      const payload = JSON.parse(raw);
+      const text = scannableText(agent, payload, hookOpts.tripwire);
+      if (text !== null) {
+        const a = await assessText(text, String(payload?.tool_name ?? "tool"), { config, fetch, cacheFile, embedCacheFile });
+        if (a.assessment) return runHook(agent, raw, { ...hookOpts, assessment: a.assessment });
+      }
+      return runHook(agent, raw, hookOpts);
+    }
     const target = config.enabled ? judgeTarget(agent, raw) : null;
     if (target) {
       const rules = hookOpts.rules ?? loadEffectiveRules();
