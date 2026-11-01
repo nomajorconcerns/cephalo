@@ -1,6 +1,6 @@
 import { isLoopbackHost } from "./config.js";
 
-export type FetchLike = (url: string, init?: { method?: string; signal?: AbortSignal }) => Promise<{ ok: boolean; status: number; json(): Promise<any> }>;
+export type FetchLike = (url: string, init?: { method?: string; signal?: AbortSignal; body?: string; headers?: Record<string, string> }) => Promise<{ ok: boolean; status: number; json(): Promise<any> }>;
 
 export interface OllamaOptions {
   host: string;

@@ -7,6 +7,7 @@ import { runHook } from "./hooks.js";
 import { getPlatform } from "./platform.js";
 import { mcpSummary, type McpCmdOptions } from "./mcpcmd.js";
 import { tripSummary, type TripCmdOptions } from "./tripwirecmd.js";
+import { loadModelsConfig } from "./models/config.js";
 import { vaultSummary, type VaultCmdOptions } from "./vaultcmd.js";
 import { claudeSettingsPath, hermesConfigPath, projectRoot, HERMES_CMD_RE } from "./install.js";
 import { DEFAULT_RULES, activePlatformRules, defaultRulesPath, parseRules, type Rule } from "./rules.js";
@@ -33,6 +34,8 @@ export interface DoctorOptions {
   mcp?: McpCmdOptions;
   /** Tripwire lookups (tests): policy file, state directory. */
   trip?: TripCmdOptions;
+  /** Local-model judge config file (tests). */
+  modelsFile?: string;
   /** Vault lookups (tests): directory and backend. */
   vault?: VaultCmdOptions;
 }
@@ -137,6 +140,12 @@ export function runDoctor(o: DoctorOptions = {}): { checks: Check[]; exitCode: n
   }
 
   {
+    const models = loadModelsConfig(o.modelsFile, () => {});
+    checks.push(
+      models.enabled
+        ? { level: "ok", name: "Local-model judge", detail: `on, ${models.mode} mode; decider ${models.roles.decider.join(" then ")}`, fix: "cephalo models status   (checks that Ollama is running and the models are installed)" }
+        : { level: "info", name: "Local-model judge", detail: "off (no model is ever called)", fix: "cephalo models enable" },
+    );
     const trip = tripSummary(o.trip ?? {});
     if (trip.alert > 0) {
       checks.push({ level: "warn", name: "Prompt-injection tripwire", detail: `${trip.alert} session(s) read text that looks like a prompt injection; risky actions are ${trip.mode === "enforce" ? "blocked" : "only logged"} in them`, fix: "Review with: cephalo tripwire status   then release with: cephalo tripwire clear" });

@@ -15,8 +15,12 @@ import { cephaloDir } from "../rules.js";
 export const ROLES = ["decider", "reviewer", "embedding"] as const;
 export type Role = (typeof ROLES)[number];
 
+/** warn: the judge's "block" is logged and the call goes ahead. enforce: the call is blocked. */
+export type JudgeMode = "warn" | "enforce";
+
 export interface ModelsConfig {
   enabled: boolean;
+  mode: JudgeMode;
   host: string;
   timeoutMs: number;
   roles: Record<Role, string[]>;
@@ -24,6 +28,7 @@ export interface ModelsConfig {
 
 export const DEFAULT_MODELS_CONFIG: ModelsConfig = {
   enabled: false,
+  mode: "warn",
   host: "http://127.0.0.1:11434",
   timeoutMs: 8000,
   roles: {
@@ -73,6 +78,10 @@ export function parseModelsConfig(text: string): { config: ModelsConfig; problem
     if (typeof doc.enabled === "boolean") config.enabled = doc.enabled;
     else problems.push(`enabled must be true or false (got ${JSON.stringify(doc.enabled)}); using ${config.enabled}`);
   }
+  if (doc.mode !== undefined) {
+    if (doc.mode === "warn" || doc.mode === "enforce") config.mode = doc.mode;
+    else problems.push(`mode must be warn or enforce (got ${JSON.stringify(doc.mode)}); using ${config.mode}`);
+  }
   if (doc.host !== undefined) {
     if (typeof doc.host === "string" && isLoopbackHost(doc.host)) config.host = doc.host.replace(/\/+$/, "");
     else problems.push(`host must be a local Ollama address such as ${config.host} (got ${JSON.stringify(doc.host)}); using ${config.host}`);
@@ -120,7 +129,9 @@ export function serializeModelsConfig(c: ModelsConfig): string {
     "# Cephalo local-model judge (Ollama, on this machine only).\n" +
     "# enabled: when false, Cephalo never calls a model.\n" +
     "# roles: ordered Ollama tags per role; the first installed one is used, the rest are fallbacks.\n" +
+    "# mode: warn logs what the judge would block and lets the call run; enforce blocks it. The judge can only add blocks, never lift a rule's block.\n" +
     `enabled: ${c.enabled}\n` +
+    `mode: ${c.mode}\n` +
     `host: ${c.host}\n` +
     `timeout_ms: ${c.timeoutMs}\n` +
     "roles:\n" +

@@ -7,6 +7,8 @@ import { isMcpToolName } from "./mcp/servers.js";
 import { redactParams } from "./redact.js";
 import { evaluate, type EvalInput } from "./engine.js";
 import { loadEffectiveRules, type Rule } from "./rules.js";
+import type { Judgement } from "./judge/decide.js";
+import type { JudgeMode } from "./models/config.js";
 
 export type Agent = "claude" | "hermes";
 
@@ -63,7 +65,23 @@ function extractHermes(p: any): Extracted | null {
   }
 }
 
+/** The shell command (or script text) of a before-call hook payload, for the local-model judge. Null for anything else. */
+export function judgeTarget(agent: Agent, raw: string): { command: string; cwd?: string } | null {
+  try {
+    const payload = JSON.parse(raw);
+    const ev = str(payload?.hook_event_name);
+    if (ev === "PostToolUse" || ev === "post_tool_call") return null;
+    const ex = agent === "claude" ? extractClaude(payload) : extractHermes(payload);
+    if (!ex || ex.mcp || ex.command === undefined) return null;
+    return { command: ex.command, cwd: str(payload?.cwd) };
+  } catch {
+    return null;
+  }
+}
+
 export interface HookOptions {
+  /** What the local-model judge said about this call's command (computed before the hook runs; see judge/hook.ts). */
+  judge?: { command: string; judgement: Judgement; mode: JudgeMode };
   rules?: Rule[];
   auditFile?: string;
   /** Overrides for MCP checks (tests): policy, home dir, cwd, Hermes config path, or a fixed server list. */
@@ -151,6 +169,20 @@ export function runHook(agent: Agent, raw: string, opts: HookOptions = {}): stri
       } else if (gate.note) {
         mcpLog = { ...mcpLog, note: [mcpLog.note, gate.note].filter(Boolean).join("; ") };
       }
+    }
+    // The local-model judge can only add a block (and only in enforce mode); it never lifts one.
+    const j = opts.judge;
+    if (res.decision === "allow" && j && ex.command === j.command && j.judgement.verdict !== "allow") {
+      const jj = j.judgement;
+      const note = `local model ${jj.model}${jj.cached ? " (cached)" : ""}: ${jj.verdict}${jj.reason ? ` - ${jj.reason}` : ""} [${jj.signals.join(", ")}]`;
+      if (jj.verdict === "block" && j.mode === "enforce") {
+        res = { decision: "block", rule: { id: "judge-decider", description: `a local model judged this harmful: ${jj.reason || "no reason given"}`, type: "command", pattern: "", action: "block" } };
+        mcpLog = { ...mcpLog, note };
+      } else {
+        mcpLog = { ...mcpLog, note: [mcpLog.note, jj.verdict === "block" ? `would block in enforce mode - ${note}` : note].filter(Boolean).join("; ") };
+      }
+    } else if (res.decision === "allow" && j && ex.command === j.command) {
+      mcpLog = { ...mcpLog, note: [mcpLog.note, `local model ${j.judgement.model}${j.judgement.cached ? " (cached)" : ""}: allow [${j.judgement.signals.join(", ")}]`].filter(Boolean).join("; ") };
     }
     log({
       tool,

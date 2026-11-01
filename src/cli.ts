@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { appendAudit, formatAudit, readAudit } from "./audit.js";
 import { evaluate } from "./engine.js";
-import { runHook } from "./hooks.js";
+import { runHookJudged } from "./judge/hook.js";
 import {
   installClaude,
   installHermes,
@@ -30,7 +30,7 @@ import { runInit } from "./init.js";
 import { listRules, resetRules, showRule } from "./rulescmd.js";
 import { defaultRulesPath } from "./rules.js";
 import { getVersion } from "./version.js";
-import { applyModelsEnabled, modelsPullPlan, modelsStatus, planModelsEnabled } from "./modelscmd.js";
+import { applyModelsEnabled, applyModelsMode, judgeReport, modelsPullPlan, modelsStatus, planModelsEnabled, planModelsMode } from "./modelscmd.js";
 import { modelsConfigPath } from "./models/config.js";
 
 const USAGE = `Usage:
@@ -50,7 +50,7 @@ const USAGE = `Usage:
   cephalo run --env NAME -- <command> Run a command with vault secrets injected; output is scrubbed
   cephalo tripwire [status|scan|clear|mode|path]
                                       Prompt-injection tripwire: scan what the agent reads, lock down risky actions
-  cephalo models [status|pull|enable|disable|path]
+  cephalo models [status|pull|enable|disable|mode|judge|path]
                                       Local-model judge (Ollama on this machine): roles, installed models
   cephalo mcp proxy -- <command...>   Run an MCP server behind Cephalo's runtime proxy (used in agent configs)
   cephalo install claude|hermes       Add Cephalo's hook to the agent's config
@@ -139,7 +139,7 @@ async function main(): Promise<number> {
     } catch (e) {
       process.stderr.write(`cephalo: could not read stdin (allowing call): ${(e as Error).message}\n`);
     }
-    const out = runHook(agent, raw);
+    const out = await runHookJudged(agent, raw);
     if (out) process.stdout.write(out + "\n");
     return 0;
   }
@@ -505,10 +505,22 @@ async function main(): Promise<number> {
       for (const line of r.lines) console.log(line);
       return r.exitCode;
     }
-    if (sub === "enable" || sub === "disable") {
-      const plan = planModelsEnabled(sub);
+    if (sub === "judge") {
+      const command = rest.slice(1).filter((a) => a !== "--yes" && a !== "-y").join(" ");
+      if (!command) {
+        process.stderr.write('Usage: cephalo models judge "<command>"\n');
+        return 1;
+      }
+      const r = await judgeReport(command);
+      for (const line of r.lines) console.log(line);
+      return r.exitCode;
+    }
+    if (sub === "enable" || sub === "disable" || sub === "mode") {
+      const modePlan = sub === "mode" ? planModelsMode(rest[1] ?? "") : undefined;
+      const plan = modePlan ?? planModelsEnabled(sub as "enable" | "disable");
       for (const line of plan.lines) console.log(line);
-      if (!plan.changed) return 0;
+      if (modePlan && !modePlan.ok) return modePlan.lines[0].startsWith("Usage") ? 1 : 0;
+      if (!modePlan && !(plan as { changed: boolean }).changed) return 0;
       let ok = yes;
       if (!ok) {
         if (!process.stdin.isTTY) {
@@ -521,10 +533,10 @@ async function main(): Promise<number> {
         ok = /^y(es)?$/i.test(answer.trim());
       }
       if (!ok) return 1;
-      for (const line of applyModelsEnabled(sub)) console.log(line);
+      for (const line of modePlan ? applyModelsMode(modePlan.mode!) : applyModelsEnabled(sub as "enable" | "disable")) console.log(line);
       return 0;
     }
-    process.stderr.write("Usage: cephalo models [status | pull | enable | disable | path]\n");
+    process.stderr.write("Usage: cephalo models [status | pull | enable | disable | mode warn|enforce | judge \"<command>\" | path]\n");
     return 1;
   }
 

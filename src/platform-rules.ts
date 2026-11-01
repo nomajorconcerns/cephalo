@@ -10,10 +10,10 @@ const cmd = (id: string, description: string, pattern: string): Rule => ({ id, d
 export const SYSTEM_RULES: Rule[] = [
   {
     id: "protect-cephalo-policy",
-    description: "Writing Cephalo's MCP allowlist, tool approvals or tripwire state",
+    description: "Writing Cephalo's MCP allowlist, tool approvals, tripwire state or local-model settings",
     type: "path",
     on: "write",
-    pattern: "[\\/\\\\]\\.cephalo[\\/\\\\](mcp[^\\/\\\\]*$|tripwire([\\/\\\\.]|$))",
+    pattern: "[\\/\\\\]\\.cephalo[\\/\\\\](mcp[^\\/\\\\]*$|models\\.yml[^\\/\\\\]*$|judge-cache\\.json$|tripwire([\\/\\\\.]|$))",
     action: "block",
   },
   {

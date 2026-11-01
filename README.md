@@ -19,7 +19,7 @@ no account and no telemetry.
 - [Install](#install) · [Quick start](#quick-start) · [Commands](#commands)
 - [Rules](#rules) · [What each hook covers](#what-each-hook-covers)
 - [MCP firewall](#mcp-firewall) · [Prompt-injection tripwire](#prompt-injection-tripwire)
-- [Secrets vault](#secrets-vault) · [Incident to rule](#incident-to-rule) · [PR replay](#pr-replay)
+- [Local-model judge](#local-model-judge) · [Secrets vault](#secrets-vault) · [Incident to rule](#incident-to-rule) · [PR replay](#pr-replay)
 - [Audit log](#audit-log) · [Files Cephalo keeps](#files-cephalo-keeps)
 - [Safety model and limits](#safety-model-and-limits) · [Troubleshooting](#troubleshooting)
 - [Development](#development) · [Releases and verification](#releases-and-verification) · [Licence](#licence)
@@ -73,6 +73,7 @@ and keep a backup. `cephalo doctor` warns when the installed hooks are out of da
 | `cephalo install` / `uninstall claude\|hermes` | Add or remove Cephalo's hooks (idempotent; backs up first; uninstall removes only Cephalo's entries) |
 | `cephalo mcp ...` | MCP firewall: allowlist, fingerprints, scan, proxy. See [MCP firewall](#mcp-firewall) |
 | `cephalo tripwire ...` | Prompt-injection tripwire. See [below](#prompt-injection-tripwire) |
+| `cephalo models ...` | Local-model judge (Ollama). See [below](#local-model-judge) |
 | `cephalo vault ...`, `cephalo run ...` | Secrets vault. See [below](#secrets-vault) |
 | `cephalo incident ...` | Turn an incident into a rule. See [below](#incident-to-rule) |
 | `cephalo replay ...` | Replay of what the agents did. See [below](#pr-replay) |
@@ -202,6 +203,45 @@ cannot run them (`no-self-approve`).
 **Limits.** This is a heuristic that limits the damage of a successful injection; it is not a guarantee.
 It misses some attacks and flags some harmless text (for example a document about prompt injection).
 
+## Local-model judge
+
+An optional second opinion from a small model running in [Ollama](https://ollama.com) **on this machine**.
+It is off by default. When on, a shell command that shows a risk signal (pipe to a shell, network tools,
+encoded payloads, persistence, privilege, publishing or pushing, credential files, disk-destructive
+commands) is shown to the `decider` model, which answers `allow`, `block` or `unsure` as JSON. Everyday
+commands (`npm test`, `git status`) never reach a model.
+
+```powershell
+cephalo models status          # config, whether Ollama is reachable, which models are installed
+cephalo models pull            # prints the `ollama pull` commands you still need (it downloads nothing)
+cephalo models judge "<cmd>"   # try the judge on one command and see the verdict
+cephalo models enable          # turn it on (mode warn)
+cephalo models mode enforce    # let a confident "block" actually block
+```
+
+Settings are in `~/.cephalo/models.yml`; defaults:
+
+| Role | Models (first, then fallbacks) |
+|---|---|
+| `decider` | `d3:2b`, `qwen3.5:4b` |
+| `reviewer` | `qwen3.5:9b` (not used yet) |
+| `embedding` | `nomic-embed-text` (not used yet) |
+
+- **It can only tighten.** Rules decide first. The model is not asked about a call a rule already blocks, and
+  its answer can never lift a block. In `warn` mode (the default) a `block` verdict is only written to the
+  audit note; in `enforce` mode it denies the call as rule `judge-decider`.
+- **It fails open.** A model that is down, slow, missing or answers in the wrong format means "no opinion".
+  One time budget (`timeout_ms`, default 8000) covers all models tried.
+- **It stays local.** Cephalo refuses any `host` that is not localhost, so commands are never sent elsewhere.
+- **The command is data.** It is fenced in the prompt and the model is told not to follow it, and a
+  model's `allow` changes nothing, so a command that talks the model into "allow" ends up exactly where it
+  would be with no judge at all.
+- Answers are cached for 24 hours in `~/.cephalo/judge-cache.json`. Agents cannot write `models.yml` or the cache.
+
+**Limits.** Small models are wrong sometimes, in both directions. Watch `cephalo log` in `warn` mode before
+switching to `enforce`. The judge needs a command with a risk signal, so it does not look at file writes, MCP
+calls or tool output. It has been tested against a simulated Ollama server, not yet against real models.
+
 ## Secrets vault
 
 Lets an agent *use* a token without ever *seeing* it. You store the value once; the agent runs commands
@@ -306,6 +346,7 @@ tools.
 | `audit.jsonl` | The audit log |
 | `mcp.yml`, `mcp-tools.json` | MCP allowlist and mode; approved tool fingerprints |
 | `tripwire.yml`, `tripwire/` | Tripwire mode; per-session state (`cleared/` holds released records) |
+| `models.yml`, `judge-cache.json` | Local-model judge settings (created only by `cephalo models enable`/`mode`); cached verdicts |
 | `vault.json`, `vault.key` | Encrypted secrets, and the master key file: wrapped by DPAPI on Windows; on macOS and Linux the key lives in the OS keystore instead; with the fallback `file` backend it is a plain key file readable only by you (mode 0600) |
 | `*.cephalo-backup-<timestamp>` | Backups made before any change to a file |
 
