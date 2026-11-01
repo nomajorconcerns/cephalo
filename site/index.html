@@ -510,7 +510,7 @@ html.theming *,html.theming *::before,html.theming *::after{transition:backgroun
       <div><code>cephalo rules show &lt;id&gt;</code> prints one rule in full, including its pattern, and the default it was changed from.</div>
       <div><code>cephalo rules reset [--yes]</code> backs up <code>rules.yml</code>, then rewrites it from the built-in defaults. Nothing is deleted.</div>
       <div><code>cephalo install</code> / <code>uninstall claude|hermes</code> are idempotent, parse configs strictly, refuse invalid ones, and back up before writing. Uninstall removes only Cephalo's own entries.</div>
-      <div><code>cephalo hook claude|hermes</code> is the entry point the agents call. It prints pure JSON only, and fails open if anything breaks.</div>
+      <div><code>cephalo hook claude|hermes|codex|cursor</code> is the entry point the agents call. It prints pure JSON only, and fails open if anything breaks. The Codex and Cursor adapters are unit-tested against the vendors’ documented formats but have not run inside the real apps, and <code>init</code> does not install them.</div>
     </div>
   </div>
 </section>
@@ -544,6 +544,12 @@ html.theming *,html.theming *::before,html.theming *::after{transition:backgroun
         <p>Reads what web pages, files and tools send back. If it looks like instructions aimed at the model, that session loses network, credential, persistence and write-type MCP actions until you release it.</p>
         <p class="lim"><b>Limit:</b> a heuristic. It misses some attacks and flags some harmless text. In Hermes the after-call hook only observes, so blocking starts with the next call.</p>
         <button class="try" type="button" data-ex="tripwire">See a scan →</button>
+      </div>
+      <div class="fcard">
+        <div class="fmeta"><span class="badge built">Built</span><span class="badge">Pro</span></div>
+        <h3>Local-model judge</h3>
+        <p>Optional and off by default. A small model running in your own Ollama looks only at commands that show a risk signal and that the rules allow. It can block or ask you; it can never lift a rule’s block. If the model is down, slow or confused, Claude Code asks you instead of letting the command through. Nothing leaves the laptop. <code>cephalo models eval</code> scores it on 128 labelled cases.</p>
+        <p class="lim"><b>Limit:</b> on our own set it caught 37 of 38 risky commands but also stopped or asked about 17 of 73 safe ones, and a model call takes about 3 seconds on a CPU. Hermes, Codex and Cursor cannot be asked, so there an unsure answer is logged and allowed. It is a second opinion, not a guarantee.</p>
       </div>
       <div class="fcard">
         <div class="fmeta"><span class="badge built">Built</span><span class="badge">Pro</span></div>
@@ -627,9 +633,10 @@ html.theming *,html.theming *::before,html.theming *::after{transition:backgroun
       <div class="tier hl">
         <h3>Pro</h3>
         <p class="who">For developers who give agents real credentials and real MCP servers.</p>
-        <div class="price">$12<small> / dev / month</small></div>
+        <div class="price">$15<small> / dev / month</small></div>
         <ul>
           <li class="base">Everything in Free</li>
+          <li>Local-model judge (Ollama, off by default)</li>
           <li>Secrets vault</li>
           <li>MCP tool fingerprinting and re-approval</li>
           <li>Incident to rule</li>
@@ -639,7 +646,7 @@ html.theming *,html.theming *::before,html.theming *::after{transition:backgroun
       <div class="tier">
         <h3>Team</h3>
         <p class="who">For teams that review what agents did before merging.</p>
-        <div class="price">$24<small> / dev / month</small></div>
+        <div class="price">$25<small> / dev / month</small></div>
         <ul>
           <li class="base">Everything in Pro</li>
           <li>PR replay</li>
@@ -667,7 +674,7 @@ html.theming *,html.theming *::before,html.theming *::after{transition:backgroun
       <input type="number" id="seats" min="1" max="1000" value="5" inputmode="numeric">
       <output id="seatOut" for="seats" aria-live="polite"></output>
     </div>
-    <p class="pricenote">Nothing checks a licence. Every feature marked Built runs locally today whichever plan it is listed under, and there is no checkout. Prices are the intended list prices per developer per month and may change before anything goes on sale. Team and Enterprise lines marked Planned are not built.</p>
+    <p class="pricenote">Nothing checks a licence. Every feature marked Built runs locally today whichever plan it is listed under, and there is no checkout. Prices ($15 Pro, $25 Team, per developer per month) are the intended list prices per developer per month and may change before anything goes on sale. Team and Enterprise lines marked Planned are not built.</p>
   </div>
 </section>
 
@@ -1403,7 +1410,7 @@ function renderSeats(){
   if(!(n>=1))n=1;if(n>1000)n=1000;
   var o=$('#seatOut');o.textContent='';
   function money(x){return '$'+x.toLocaleString('en-US');}
-  [['Free','$0'],['Pro',money(12*n)],['Team',money(24*n)]].forEach(function(r,i){
+  [['Free','$0'],['Pro',money(15*n)],['Team',money(25*n)]].forEach(function(r,i){
     if(i)o.appendChild(document.createTextNode('   ·   '));
     o.appendChild(document.createTextNode(r[0]+' '));o.appendChild(el('b',null,r[1]+(r[0]==='Free'?'':' / month')));
   });
