@@ -278,7 +278,7 @@ test("real pack of this repository: reproducible, small, no source or tests, tam
     const r = await pack(REAL_ROOT, { allowDirty: true, skipTests: true, sign: "off", out });
     assert.equal(r.ok, true, r.lines.join("\n"));
     const tgz = fs.readdirSync(out).find((n) => n.endsWith(".tgz"));
-    assert.match(tgz, /^cephalo-\d+\.\d+\.\d+.*\.tgz$/);
+    assert.match(tgz, /^nomajorconcerns-cephalo-\d+\.\d+\.\d+.*\.tgz$/);
     const list = run("tar", ["-tzf", path.join(out, tgz)]);
     if (list.status === 0) {
       const names = list.stdout.split(/\r?\n/).filter(Boolean).map((n) => n.replace(/^package\//, ""));
