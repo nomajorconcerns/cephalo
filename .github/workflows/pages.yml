@@ -1,7 +1,7 @@
 name: pages
 
-# Publishes the static website (site/index.html and site/commands.js) to GitHub Pages.
-# It copies only those two files, so the backup folder and the rest of the repository are never uploaded.
+# Publishes the static website (site/index.html, site/commands.js and site/og.png) to GitHub Pages.
+# It copies only those three files, so the backup folder and the rest of the repository are never uploaded.
 
 on:
   push:
@@ -9,6 +9,7 @@ on:
     paths:
       - "site/index.html"
       - "site/commands.js"
+      - "site/og.png"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -36,7 +37,7 @@ jobs:
       - name: Collect the site files
         run: |
           mkdir _site
-          cp site/index.html site/commands.js _site/
+          cp site/index.html site/commands.js site/og.png _site/
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
