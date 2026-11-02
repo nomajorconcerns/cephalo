@@ -37,10 +37,18 @@ export const SYSTEM_RULES: Rule[] = [
     pattern: "[\\/\\\\]\\.cephalo[\\/\\\\]vault[^\\/\\\\]*$",
     action: "block",
   },
+  {
+    id: "protect-policy-key",
+    description: "Reading or writing the key that signs shared policy (cephalo sync keygen)",
+    type: "path",
+    on: "any",
+    pattern: "[\\/\\\\]\\.cephalo[\\/\\\\]policy-(signing\\.key|trusted\\.pub)[^\\/\\\\]*$",
+    action: "block",
+  },
   cmd(
     "no-vault-extract",
     "Changing or reading the secrets vault outside `cephalo run` (vault set/allow/remove/reveal, OS key APIs, the vault files)",
-    "(\\bcephalo(\\.cmd|\\.ps1)?|cli\\.js[\"']?)\\s+vault\\s+(set|allow|remove|rm|reveal)\\b|\\.cephalo[\\/\\\\]vault|\\b(ProtectedData|Unprotect)\\b|\\bsecret-tool\\s+(lookup|search|clear)\\b",
+    "(\\bcephalo(\\.cmd|\\.ps1)?|cli\\.js[\"']?)\\s+vault\\s+(set|allow|remove|rm|reveal)\\b|\\.cephalo[\\/\\\\]vault|\\.cephalo[\\/\\\\]policy-signing\\.key|\\b(ProtectedData|Unprotect)\\b|\\bsecret-tool\\s+(lookup|search|clear)\\b",
   ),
   cmd(
     "secret-in-command",
@@ -56,6 +64,8 @@ export const POSIX_RULES: Rule[] = [
   cmd("rm-long-flags", "rm with separate or long recursive+force flags", "\\brm\\b(?=[^;&|\\n]*(\\s-[a-z]*r[a-z]*\\b|--recursive))(?=[^;&|\\n]*(\\s-[a-z]*f[a-z]*\\b|--force))"),
   cmd("no-preserve-root", "rm --no-preserve-root", "--no-preserve-root"),
   cmd("pipe-to-shell", "Piping a download straight into a shell", "\\b(curl|wget)\\b[^|\\n]*\\|\\s*(sudo\\s+)?(ba|z|da|k)?sh\\b"),
+  cmd("find-delete", "find -delete (recursive delete without rm)", "\\bfind\\b[^;&|\\n]*\\s-delete\\b"),
+  cmd("find-exec-rm", "find -exec/-execdir rm (recursive delete without rm -rf)", "\\bfind\\b[^;&|\\n]*\\s-(exec|execdir|ok|okdir)\\s+(\\S*\\/)?rm\\b"),
   cmd("chmod-chown-system", "Recursive chmod/chown on / or a system directory", "\\b(chmod|chown)\\s+(-[a-z]*R[a-z]*|--recursive)\\b[^;&|\\n]*\\s(/|/etc|/usr|/var|/bin|/sbin|/boot|/lib|/opt|/home|~)/?(\\s|$|[;&|])"),
 ];
 

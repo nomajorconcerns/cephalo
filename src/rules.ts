@@ -22,6 +22,8 @@ export const DEFAULT_RULES: Rule[] = [
   { id: "no-rm-rf", description: "Recursive forced rm", type: "command", pattern: "\\brm\\s+-(?=[a-z]*r)(?=[a-z]*f)[a-z]+", action: "block" },
   { id: "no-win-recursive-delete", description: "Recursive delete on Windows", type: "command", pattern: "(Remove-Item\\b(?=.*-Recurse)(?=.*-Force))|(\\b(rd|rmdir)\\s+\\/s\\b)|(\\bdel\\s+.*\\/s\\b)", action: "block" },
   { id: "no-force-push", description: "Force pushing to git remotes", type: "command", pattern: "\\bgit\\s+push\\b(?=.*(\\s--force(?!-with-lease)\\b|\\s-f\\b))", action: "block" },
+  { id: "no-force-push-refspec", description: "Force pushing with a + refspec (git push origin +main)", type: "command", pattern: "\\bgit(\\s+-[cC]\\s+\\S+)*\\s+push\\b[^;&|\\n]*\\s[\"']?\\+[^\\s;&|]", action: "block" },
+  { id: "no-pipe-to-shell", description: "Piping output into a shell, eval of a substitution, or running a substitution as a script (ask the user to run installers)", type: "command", pattern: "\\|&?\\s*(sudo\\s+(-\\S+\\s+)*)?(env\\s+)?(\\/(usr\\/)?bin\\/)?(ba|z|da|k)?sh(?=[\\s;&|)]|$)|\\beval\\s+[\"']?(\\$\\(|`)|\\b(ba|z|da|k)?sh\\s+(-\\S+\\s+)*<\\(|\\b(ba|z|da|k)?sh\\s+-c\\s+[\"']?\\$\\(|\\bsource\\s+<\\(", action: "block" },
   { id: "no-hard-reset", description: "git reset --hard", type: "command", pattern: "\\bgit\\s+reset\\s+--hard\\b", action: "block" },
   { id: "no-secret-read", description: "Reading .env secret files via shell", type: "command", pattern: "\\b(cat|type|Get-Content|gc|more|less|head|tail)\\b.*\\.env\\b(?!\\.example)", action: "block" },
   { id: "no-secret-file", description: "Accessing .env secret files", type: "path", on: "any", pattern: "(^|[\\/\\\\])\\.env(\\.(?!example$)[\\w.-]+)?$", action: "block" },

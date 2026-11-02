@@ -40,7 +40,7 @@
   "scripts": {
     "build": "tsc",
     "test": "npm run build && node --test dist/tests/*.test.js",
-    "test:release": "node --test scripts/release.test.mjs scripts/workflow.test.mjs scripts/stats.test.mjs scripts/checkout.test.mjs",
+    "test:release": "node --test scripts/release.test.mjs scripts/workflow.test.mjs scripts/stats.test.mjs scripts/site-rules.test.mjs scripts/checkout.test.mjs",
     "release:check": "node scripts/release.mjs check",
     "release:pack": "node scripts/release.mjs pack",
     "prepublishOnly": "npm run build && node scripts/release.mjs check --quick"

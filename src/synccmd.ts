@@ -6,6 +6,7 @@ import { renderDashboard } from "./dashboard/html.js";
 import { costReport } from "./costcmd.js";
 import { defaultRulesPath } from "./rules.js";
 import { applyPull, loadSyncDir, planPull, publishAudit, pushPolicy, readManifest, readTeamAudit, saveSyncDir, syncConfigPath } from "./sync/policy.js";
+import { SIGNING_KEY_FILE, TRUST_FILE, addTrusted, generateKeypair, keyId, loadTrusted } from "./sync/sign.js";
 
 export interface SyncOptions {
   /** Ask the user to confirm a change. Called only when a file is about to be written. */
@@ -16,7 +17,7 @@ export interface SyncOptions {
   auditFile?: string;
 }
 
-export const SYNC_USAGE = `Usage: cephalo sync [status | set <folder> | push | pull | audit]
+export const SYNC_USAGE = `Usage: cephalo sync [status | set <folder> | push | pull | audit | keygen | trust <public-key-file>]
 
 Share policy and the audit log through a folder you already have: a synced drive, a network share, or a clone of a git repo.
 Cephalo only reads and writes files in that folder; it sends nothing anywhere itself.
@@ -24,6 +25,8 @@ Cephalo only reads and writes files in that folder; it sends nothing anywhere it
   push           publish your rules.yml to <folder>/policy (asks first)
   pull           show what the shared rules would change, then apply them (asks first, backs up first)
   audit          publish your audit log to <folder>/audit/<user>@<machine>.jsonl (asks first)
+  keygen         (admin) create a signing key pair next to sync.yml; push then signs the policy
+  trust <file>   (developer) trust an admin's public key; pull then refuses unsigned or wrongly signed policy
 Add --yes to skip the question.`;
 
 async function confirmed(o: SyncOptions, question: string): Promise<boolean> {
@@ -34,6 +37,31 @@ export async function runSync(sub: string, arg: string | undefined, o: SyncOptio
   const cfg = o.configFile ?? syncConfigPath();
   const rulesFile = o.rulesFile ?? defaultRulesPath();
   const auditFile = o.auditFile ?? auditPath();
+  const keyFile = path.join(path.dirname(cfg), SIGNING_KEY_FILE);
+  const trustFile = path.join(path.dirname(cfg), TRUST_FILE);
+  if (sub === "keygen") {
+    if (!(await confirmed(o, `Create a signing key pair at ${keyFile}?`))) return { lines: ["No changes made."], exitCode: 1 };
+    const r = generateKeypair(keyFile);
+    return { lines: r.lines, exitCode: r.ok ? 0 : 1 };
+  }
+  if (sub === "trust") {
+    if (!arg) return { lines: ["Usage: cephalo sync trust <public-key-file>"], exitCode: 1 };
+    let pem: string;
+    try {
+      pem = fs.readFileSync(path.resolve(arg), "utf8");
+    } catch {
+      return { lines: [`Cannot read ${arg}.`], exitCode: 1 };
+    }
+    let id: string;
+    try {
+      id = keyId(pem);
+    } catch {
+      return { lines: ["That is not a public key in PEM form (it should start with -----BEGIN PUBLIC KEY-----)."], exitCode: 1 };
+    }
+    if (!(await confirmed(o, `Trust signing key ${id}? Verify this id with the admin first. Policy not signed by it will be refused.`))) return { lines: ["No changes made."], exitCode: 1 };
+    const r = addTrusted(trustFile, pem);
+    return { lines: r.lines, exitCode: r.ok ? 0 : 1 };
+  }
   if (sub === "set") {
     if (!arg) return { lines: ["Usage: cephalo sync set <folder>"], exitCode: 1 };
     const dir = path.resolve(arg);
@@ -48,9 +76,12 @@ export async function runSync(sub: string, arg: string | undefined, o: SyncOptio
     const m = readManifest(dir);
     const lines = [`Shared folder: ${dir}${fs.existsSync(dir) ? "" : "  (missing!)"}`, m ? `Shared policy: ${m.rules} rules, published ${m.at}${m.by ? ` by ${m.by}` : ""}` : "Shared policy: none published yet"];
     if (m) {
-      const plan = planPull(dir, rulesFile);
+      const plan = planPull(dir, rulesFile, { trustFile });
       lines.push(plan.ok ? (plan.unchanged ? "Your rules match the shared policy." : "Your rules differ from the shared policy. See: cephalo sync pull") : `Shared policy problem: ${plan.lines[0]}`);
     }
+    const nTrusted = loadTrusted(trustFile).length;
+    lines.push(nTrusted ? `Signature check: on (${nTrusted} trusted key${nTrusted === 1 ? "" : "s"}); unsigned policy is refused.` : "Signature check: off (no trusted keys; run: cephalo sync trust <public-key-file>).");
+    if (m) lines.push(m.signature ? `Shared policy is signed (key ${m.keyId ?? "?"}).` : "Shared policy is not signed.");
     const audits = fs.existsSync(path.join(dir, "audit")) ? fs.readdirSync(path.join(dir, "audit")).filter((f) => f.endsWith(".jsonl")) : [];
     lines.push(`Audit logs published: ${audits.length}${audits.length ? ` (${audits.join(", ")})` : ""}`);
     return { lines, exitCode: 0 };
@@ -60,11 +91,11 @@ export async function runSync(sub: string, arg: string | undefined, o: SyncOptio
   if (!fs.existsSync(dir)) return { lines: [`The shared folder ${dir} does not exist (drive not mounted?).`], exitCode: 1 };
   if (sub === "push") {
     if (!(await confirmed(o, `Publish ${rulesFile} to ${path.join(dir, "policy")}, replacing what is there?`))) return { lines: ["No changes made."], exitCode: 1 };
-    const r = pushPolicy(dir, rulesFile);
+    const r = pushPolicy(dir, rulesFile, new Date(), { keyFile });
     return { lines: r.lines, exitCode: r.ok ? 0 : 1 };
   }
   if (sub === "pull") {
-    const plan = planPull(dir, rulesFile);
+    const plan = planPull(dir, rulesFile, { trustFile });
     if (!plan.ok || plan.unchanged) return { lines: plan.lines, exitCode: plan.ok ? 0 : 1 };
     for (const l of plan.lines) console.log(l);
     if (!(await confirmed(o, `Replace ${rulesFile} with the shared policy (a backup is made first)?`))) return { lines: ["No changes made."], exitCode: 1 };

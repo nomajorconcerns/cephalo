@@ -44,7 +44,7 @@ const USAGE = `Usage:
                                       Follow the audit log live (Ctrl+C to stop)
   cephalo mcp [list|allow|pin|scan|wrap|mode|path]
                                       MCP firewall: allowlist by command/URL, fingerprint tools, audit or enforce
-  cephalo sync [status|set|push|pull|audit]
+  cephalo sync [status|set|push|pull|audit|keygen|trust]
                                       Share policy and audit logs through a folder you already have (no cloud)
   cephalo dashboard [--team] [--out file]
                                       One self-contained HTML page: overview, sessions and cost, seatbelt

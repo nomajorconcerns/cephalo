@@ -7,6 +7,7 @@ import { cephaloDir, parseRules, type Rule } from "../rules.js";
 import { currentUser } from "../user.js";
 import { redactTokens } from "../vault/patterns.js";
 import type { AuditEntry } from "../audit.js";
+import { loadTrusted, signManifest, verifyManifest } from "./sign.js";
 
 export function syncConfigPath(): string {
   return path.join(cephaloDir(), "sync.yml");
@@ -35,6 +36,9 @@ export interface Manifest {
   by?: string;
   at: string;
   rules: number;
+  /** Present only when the policy was signed (see sign.ts). */
+  signature?: string;
+  keyId?: string;
 }
 
 export function readManifest(dir: string): Manifest | null {
@@ -70,17 +74,28 @@ export interface PushResult {
 }
 
 /** Publish the local rules file to the shared folder, with a manifest holding its SHA-256. Refuses an invalid rules file. */
-export function pushPolicy(dir: string, rulesFile: string, now = new Date()): PushResult {
+export function pushPolicy(dir: string, rulesFile: string, now = new Date(), opts: { keyFile?: string } = {}): PushResult {
   if (!fs.existsSync(rulesFile)) return { ok: false, lines: [`${rulesFile} does not exist, nothing to publish.`] };
   const text = fs.readFileSync(rulesFile, "utf8");
   const parsed = parseRules(text);
   if (parsed.problems.length) return { ok: false, lines: [`Not publishing: ${rulesFile} has problems: ${parsed.problems.join("; ")}`] };
+  const manifest: Manifest = { sha256: sha(text), by: currentUser(), at: now.toISOString(), rules: parsed.rules.length };
+  let signedLine: string | undefined;
+  if (opts.keyFile && fs.existsSync(opts.keyFile)) {
+    try {
+      const s = signManifest(opts.keyFile, manifest);
+      manifest.signature = s.signature;
+      manifest.keyId = s.keyId;
+      signedLine = `Signed with key ${s.keyId}.`;
+    } catch (e) {
+      return { ok: false, lines: [`Not publishing: could not sign with ${opts.keyFile} (${(e as Error).message}).`] };
+    }
+  }
   const target = policyDir(dir);
   fs.mkdirSync(target, { recursive: true });
   fs.writeFileSync(path.join(target, "rules.yml"), text, "utf8");
-  const manifest: Manifest = { sha256: sha(text), by: currentUser(), at: now.toISOString(), rules: parsed.rules.length };
   fs.writeFileSync(path.join(target, "MANIFEST.json"), JSON.stringify(manifest, null, 2) + "\n", "utf8");
-  return { ok: true, lines: [`Published ${parsed.rules.length} rules to ${path.join(target, "rules.yml")}`, `SHA-256 ${manifest.sha256.slice(0, 16)}…`, "If this folder is a git repo, review and commit it yourself (Cephalo does not run git here)."] };
+  return { ok: true, lines: [`Published ${parsed.rules.length} rules to ${path.join(target, "rules.yml")}`, `SHA-256 ${manifest.sha256.slice(0, 16)}…`, ...(signedLine ? [signedLine] : []), "If this folder is a git repo, review and commit it yourself (Cephalo does not run git here)."] };
 }
 
 export interface PullPlan {
@@ -93,18 +108,25 @@ export interface PullPlan {
 }
 
 /** What pulling the shared policy would change. Checks the manifest hash and that the rules parse; never writes. */
-export function planPull(dir: string, rulesFile: string): PullPlan {
+export function planPull(dir: string, rulesFile: string, opts: { trustFile?: string } = {}): PullPlan {
   const shared = path.join(policyDir(dir), "rules.yml");
   if (!fs.existsSync(shared)) return { ok: false, lines: [`No shared policy at ${shared}. Someone has to run: cephalo sync push`] };
   const text = fs.readFileSync(shared, "utf8");
   const m = readManifest(dir);
   if (!m) return { ok: false, lines: [`${shared} has no MANIFEST.json next to it, so it cannot be checked. Refusing.`] };
   if (m.sha256 !== sha(text)) return { ok: false, lines: [`${shared} does not match its manifest (hash differs). It was edited or only partly synced. Refusing.`] };
+  const trusted = opts.trustFile ? loadTrusted(opts.trustFile) : [];
+  let trustLine = "(The hash only shows the file arrived intact. It does not prove who wrote it; anyone with write access to the folder can publish.)";
+  if (trusted.length) {
+    const v = verifyManifest(m, trusted);
+    if (!v.ok) return { ok: false, lines: [`${shared}: ${v.reason}. You trust ${trusted.length} signing key(s) (${opts.trustFile}), so this policy was refused.`] };
+    trustLine = `Signature OK: signed with trusted key ${v.keyId}.`;
+  }
   const parsed = parseRules(text);
   if (parsed.problems.length) return { ok: false, lines: [`The shared rules file has problems: ${parsed.problems.join("; ")}. Refusing.`] };
   const local = fs.existsSync(rulesFile) ? parseRules(fs.readFileSync(rulesFile, "utf8")).rules : [];
   const diff = diffRules(local, parsed.rules);
-  const lines = [`Shared policy: ${parsed.rules.length} rules, published ${m.at}${m.by ? ` by ${m.by}` : ""}.`, "(The hash only shows the file arrived intact. It does not prove who wrote it; anyone with write access to the folder can publish.)"];
+  const lines = [`Shared policy: ${parsed.rules.length} rules, published ${m.at}${m.by ? ` by ${m.by}` : ""}.`, trustLine];
   if (!diff.added.length && !diff.removed.length && !diff.changed.length) return { ok: true, unchanged: true, lines: [...lines, "Your rules already match. Nothing to do."], diff, text };
   for (const r of diff.removed) lines.push(`  REMOVES  ${r.id}: ${r.description}   (this makes your rules weaker)`);
   for (const c of diff.changed) lines.push(`  CHANGES  ${c.after.id}: ${c.before.pattern === c.after.pattern ? "description or scope" : "pattern"} differs`);
