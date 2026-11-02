@@ -34,6 +34,7 @@ async function getJson(f, url, headers = {}) {
     const e = new Error(`HTTP ${r.status}`);
     e.status = r.status;
     e.body = body;
+    try { e.where = new URL(url).pathname.replace(/^\/api\/v0/, ""); } catch { /* ignore */ }
     throw e;
   }
   return r.json();
@@ -133,7 +134,10 @@ export async function goatcounter(f, site, token, now) {
     } catch { /* countries are optional */ }
     return out;
   } catch (e) {
-    return fail(e, e.status === 401 || e.status === 403 ? "the analytics token was rejected" : undefined);
+    if (e.status === 401 || e.status === 403) return fail(e, "the analytics token was rejected");
+    // the response body is GoatCounter's own error text; it never contains our token
+    const text = String(e.body ?? "").replace(/\s+/g, " ").slice(0, 100);
+    return fail(e, `GoatCounter answered HTTP ${e.status}${e.where ? ` for ${e.where}` : ""}${text ? `: ${text}` : ""}`);
   }
 }
 

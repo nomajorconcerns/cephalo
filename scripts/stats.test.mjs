@@ -117,3 +117,11 @@ test("milestones: dates come from the data, and the next target is the next step
   assert.deepEqual(m.next.find((n) => /downloads/.test(n.label)), { label: "500 npm downloads", have: 115, need: 500 });
   assert.deepEqual(m.next.find((n) => /stars/.test(n.label)), { label: "5 GitHub stars", have: 3, need: 5 });
 });
+
+test("an unexpected analytics answer names the endpoint and GoatCounter's message, without the token", async () => {
+  const f = async (url) => (url.includes("goatcounter.com") ? { ok: false, status: 404, text: async () => "no such thing", json: async () => ({}) } : res(url.includes("registry") ? REGISTRY : url.includes("api.npmjs") ? DOWNLOADS : GH(url)));
+  const d = await collect({ fetch: f, now: NOW, env: { GOATCOUNTER_SITE: "demo", GOATCOUNTER_TOKEN: "SECRET-TOKEN-123" } });
+  assert.equal(d.visitors.ok, false);
+  assert.match(d.visitors.error, /HTTP 404 for \/stats\/total: no such thing/);
+  assert.ok(!JSON.stringify(d).includes("SECRET-TOKEN-123"));
+});
