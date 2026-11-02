@@ -71,7 +71,7 @@ export async function npmDownloads(f, since, now) {
       note: "npm download counts include mirrors, bots and CI installs, and show up about a day after a release.",
     };
   } catch (e) {
-    return fail(e, e.status === 404 ? "npm has not published download counts for this package yet (they appear about a day after the first release)" : undefined);
+    return fail(e, e.status === 404 ? "Download counts aren't available from npm yet. They usually appear 1–2 days after a release." : undefined);
   }
 }
 

@@ -75,7 +75,7 @@ test("a failing or missing source is reported, never invented", async () => {
   assert.equal(d.registry.ok, false);
   assert.match(d.registry.error, /not on npm yet/);
   assert.equal(d.downloads.ok, false);
-  assert.match(d.downloads.error, /download counts/);
+  assert.equal(d.downloads.error, "Download counts aren't available from npm yet. They usually appear 1–2 days after a release.");
   assert.equal(d.github.ok, false);
   assert.equal(d.visitors.ok, false);
   assert.equal(d.visitors.configured, false);
