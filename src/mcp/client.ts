@@ -16,7 +16,7 @@ export interface ListToolsOptions {
 }
 
 const PROTOCOL = "2025-06-18";
-const CLIENT = { name: "cephalo", version: "0.1.0" };
+const CLIENT = { name: "cephalo", version: "0.1.1" };
 const MAX_PAGES = 50;
 
 /** `${VAR}` and `${VAR:-default}` expansion, as agent configs commonly use. */

@@ -9,7 +9,7 @@ It works through each agent's hook: the agent hands Cephalo the tool call as JSO
 against your rules and answers allow or block. Everything runs on your machine. There is no server,
 no account and no telemetry.
 
-> **Status.** Version 0.1.0, not yet published to npm. It has been exercised on Windows. The macOS and
+> **Status.** Version 0.1.1 (0.1.0 is on npm). It has been exercised on Windows. The macOS and
 > Linux adapters are covered by unit tests only. The newer features (MCP firewall, tripwire, vault,
 > replay, incident-to-rule) were tested with simulated hook payloads and real child processes, not yet
 > in a long live agent session. See [Safety model and limits](#safety-model-and-limits).
