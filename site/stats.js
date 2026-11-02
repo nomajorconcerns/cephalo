@@ -125,9 +125,9 @@
 
     var geo = el('div', 'stgrid');
     var c1 = card('Countries', 'visitors, last 30 days');
-    c1.body.appendChild(bars(v.ok ? v.countries : null, function (x) { return x.name; }, v, 'No visitor data yet.'));
+    c1.body.appendChild(bars(v.ok ? v.countries : null, function (x) { return x.name; }, v, v.ok ? 'No visits recorded in the last 30 days.' : 'No visitor data yet.'));
     var c2 = card('Regions', 'within the top countries');
-    c2.body.appendChild(bars(v.ok ? v.regions : null, function (x) { return x.name + ', ' + x.country; }, v, 'No visitor data yet.'));
+    c2.body.appendChild(bars(v.ok ? v.regions : null, function (x) { return x.name + ', ' + x.country; }, v, v.ok ? 'GoatCounter has not reported regions for these visits. It may only give countries.' : 'No visitor data yet.'));
     geo.appendChild(c1.card); geo.appendChild(c2.card); body.appendChild(geo);
 
     var two = el('div', 'stgrid');

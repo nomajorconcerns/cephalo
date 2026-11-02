@@ -117,7 +117,10 @@ export async function goatcounter(f, site, token, now) {
     const all = await getJson(f, `${base}/stats/total?${range(365)}`, h);
     const w = await getJson(f, `${base}/stats/total?${range(7)}`, h);
     const m = await getJson(f, `${base}/stats/total?${range(30)}`, h);
-    const daily = (all.stats ?? []).map((s) => ({ day: s.day, count: s.daily ?? 0 })).filter((s) => s.day);
+    let daily = (all.stats ?? []).map((s) => ({ day: s.day, count: s.daily ?? 0 })).filter((s) => s.day);
+    // drop the long run of empty days before the first visit; the page fills gaps itself
+    const firstSeen = daily.findIndex((s) => s.count > 0);
+    daily = firstSeen < 0 ? daily.slice(-30) : daily.slice(firstSeen);
     const out = { ok: true, configured: true, week: w.total ?? 0, month: m.total ?? 0, total: all.total ?? 0, daily, countries: [], regions: [] };
     try {
       const loc = await getJson(f, `${base}/stats/locations?${range(30)}&limit=15`, h);
