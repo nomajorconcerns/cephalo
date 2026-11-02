@@ -18,7 +18,8 @@ import { DEFAULT_RULES, activePlatformRules } from "../rules.js";
 import { parseMcpPolicy } from "../mcp/policy.js";
 import { emptyStore } from "../mcp/store.js";
 
-const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), "cephalo-replay-"));
+// realpath: git reports the resolved path (macOS /private/var, Windows long names instead of RUNNER~1), so compare against that
+const tmp = () => fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), "cephalo-replay-")));
 const rm = (d: string) => fs.rmSync(d, { recursive: true, force: true });
 const GH = "ghp_" + "A1b2C3d4E5".repeat(4).slice(0, 36);
 const base = { agent: "claude", user: "zuri", decision: "allow" as const };
