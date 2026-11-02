@@ -4,11 +4,11 @@ Nothing in this repository publishes by itself. This document covers how a relea
 
 ## What a release contains
 
-`node scripts/release.mjs pack` builds a folder `release/cephalo-<version>/`:
+`node scripts/release.mjs pack` builds a folder `release/nomajorconcerns-cephalo-<version>/`:
 
 | File | What it is |
 | --- | --- |
-| `cephalo-<version>.tgz` | The exact tarball `npm publish` uploads. Built from the `files` whitelist in `package.json`: the compiled `dist/` (without tests), `README.md`, `LICENSE`, `package.json`. No source, website or tests. |
+| `nomajorconcerns-cephalo-<version>.tgz` | The exact tarball `npm publish` uploads. Built from the `files` whitelist in `package.json`: the compiled `dist/` (without tests), `README.md`, `LICENSE`, `package.json`. No source, website or tests. |
 | `SHA256SUMS` | One line per file: `<sha256>  <name>`. Readable by `sha256sum -c`. |
 | `SHA256SUMS.sigstore.json` | A keyless [Sigstore](https://www.sigstore.dev/) signature of `SHA256SUMS` (made with `cosign sign-blob`). Because `SHA256SUMS` contains the tarball's hash, this signs the tarball too. |
 
@@ -17,7 +17,7 @@ Before building anything, the script refuses to continue unless: the tree is com
 ## One-time setup
 
 1. **Repository.** `package.json` points to `github.com/nomajorconcerns/cephalo`. npm provenance only works from a **public** repository whose URL matches that field exactly (case-sensitive). Nothing has been created or pushed yet.
-2. **npm account** with two-factor authentication on, and the package name `cephalo` (it returned "not found" on the registry when checked; npm can still refuse a name it considers too similar to an existing one).
+2. **npm account** with two-factor authentication on, and the package name `@nomajorconcerns/cephalo`. The unscoped name `cephalo` was refused by npm, so the package is published under the account scope; the installed command is still `cephalo`.
 3. **For the GitHub workflow:**
    - Settings > Environments > create `npm-publish` and add yourself as a required reviewer. The publish job cannot start until you approve it.
    - Add a repository secret `NPM_TOKEN`: a granular access token limited to this one package, with publish rights. (Alternative: configure npm *trusted publishing* for this repository and workflow on npmjs.com, then delete the secret; npm then needs no token. Requires npm 11.5.1 or newer, which Node 24 ships.)
@@ -41,8 +41,8 @@ npm provenance can only be created by a supported CI provider, so a local publis
 npm ci
 npm test
 node scripts/release.mjs pack --sign required       # builds, checks, checksums, signs (opens a browser login)
-node scripts/release.mjs verify release\cephalo-<version> --identity you@example.com --issuer https://accounts.google.com
-npm publish "release\cephalo-<version>\cephalo-<version>.tgz" --access public
+node scripts/release.mjs verify release\nomajorconcerns-cephalo-<version> --identity you@example.com --issuer https://accounts.google.com
+npm publish "release\nomajorconcerns-cephalo-<version>\nomajorconcerns-cephalo-<version>.tgz" --access public
 ```
 
 `--sign required` fails instead of producing an unsigned folder. The script prints the `npm publish` command at the end; it does not run it. The identity and issuer in the signature are whatever account you log in with, so the verify command must name that same account.
@@ -67,9 +67,9 @@ cosign verify-blob --bundle SHA256SUMS.sigstore.json \
   SHA256SUMS
 ```
 
-(PowerShell: `Get-FileHash -Algorithm SHA256 .\cephalo-<version>.tgz` and compare with the line in `SHA256SUMS`.) Or use the repository's script: `node scripts/release.mjs verify <folder> --identity '<regexp>' --issuer <url>`.
+(PowerShell: `Get-FileHash -Algorithm SHA256 .\nomajorconcerns-cephalo-<version>.tgz` and compare with the line in `SHA256SUMS`.) Or use the repository's script: `node scripts/release.mjs verify <folder> --identity '<regexp>' --issuer <url>`.
 
-**3. The tarball against npm's copy.** `npm pack cephalo@<version>` downloads the published tarball; its SHA-256 should equal the signed one.
+**3. The tarball against npm's copy.** `npm pack @nomajorconcerns/cephalo@<version>` downloads the published tarball; its SHA-256 should equal the signed one.
 
 ## What this does and does not prove
 
@@ -81,12 +81,12 @@ cosign verify-blob --bundle SHA256SUMS.sigstore.json \
 ## If something goes wrong
 
 - **Bad release not yet published:** delete the draft release and the tag. Nothing has left your control.
-- **Bad version already on npm:** npm only allows unpublishing within a short window and under conditions. The normal route is `npm deprecate cephalo@<version> "<reason>"` and a fixed patch release.
+- **Bad version already on npm:** npm only allows unpublishing within a short window and under conditions. The normal route is `npm deprecate @nomajorconcerns/cephalo@<version> "<reason>"` and a fixed patch release.
 - **Leaked token:** revoke it on npmjs.com first, then rotate the `NPM_TOKEN` secret.
 
 ## Known gaps in what was prepared
 
-- The workflow file has **never run on GitHub**. Its structure is checked by `npm run test:release` (pinned action SHAs, least-privilege permissions, publish gated by a manual run and an approved environment), but the first real run will probably need small fixes. In particular the artifact folder layout between jobs (`release/cephalo-<version>`) is assumed, not observed; a wrong guess makes the publish job fail loudly, not publish something wrong.
+- The workflow file has **never run on GitHub**. Its structure is checked by `npm run test:release` (pinned action SHAs, least-privilege permissions, publish gated by a manual run and an approved environment), but the first real run will probably need small fixes. In particular the artifact folder layout between jobs (`release/nomajorconcerns-cephalo-<version>`) is assumed, not observed; a wrong guess makes the publish job fail loudly, not publish something wrong.
 - `engines.node` says `>=20`, but the code has only been run on Node 24. The test matrix will find out.
 - The test suite has only been run on Windows. macOS and Linux runs in CI are the first real test of those adapters.
 - `cosign sign-blob` and `verify-blob` are invoked with the flags in the Sigstore documentation, and a stand-in for cosign confirms the arguments. Real signing has not been done.
