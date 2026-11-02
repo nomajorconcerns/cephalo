@@ -713,6 +713,7 @@ html:not(.js) .handle,html:not(.js) .splitrange{display:none}
   @keyframes themereveal{from{clip-path:circle(0 at var(--tx) var(--ty))}to{clip-path:circle(var(--tr) at var(--tx) var(--ty))}}
 }
 /* mobile menu sheet */
+#segHeroOs[hidden]{display:none}
 .menubtn{display:none}
 .menubtn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
 @media(max-width:820px){.menubtn{display:inline-flex}}
@@ -768,7 +769,7 @@ html.theming *,html.theming *::before,html.theming *::after{transition:backgroun
       <h1>Stop the tool call<br><em>before</em> it runs.</h1>
       <p class="lede">Cephalo checks every shell command, file access and MCP tool call from your coding agent against rules you own, and refuses the dangerous ones before they run.</p>
       <div class="install">
-        <div class="seg slide ostab" role="group" aria-label="Your system" id="segHeroOs">
+        <div class="seg slide ostab" role="group" aria-label="Your system" id="segHeroOs" hidden>
           <button type="button" data-v="ps" aria-pressed="false">Windows</button>
           <button type="button" data-v="sh" data-os="darwin" aria-pressed="false">macOS</button>
           <button type="button" data-v="sh" data-os="linux" aria-pressed="false">Linux</button>
@@ -777,11 +778,8 @@ html.theming *,html.theming *::before,html.theming *::after{transition:backgroun
           <code id="heroCmd"><i>$ </i>cephalo init</code>
           <button class="copy" data-copy="cephalo init" type="button">Copy</button>
         </div>
-        <p class="setup">First time? From the Cephalo project folder:</p>
-        <div class="cb"><pre id="heroSetup">cd /path/to/cephalo
-npm install
-npm run build
-npm link</pre><button class="copy" data-copy-from="heroSetup" type="button">Copy</button></div>
+        <p class="setup">First time? Install it once from npm:</p>
+        <div class="cb"><pre id="heroSetup">npm install -g @nomajorconcerns/cephalo</pre><button class="copy" data-copy-from="heroSetup" type="button">Copy</button></div>
       </div>
       <div class="hero-actions">
         <a class="btn primary" href="#playground" id="ctaDanger">Try a dangerous command</a>
@@ -1310,7 +1308,7 @@ rules:
     <div class="sec-head">
       <p class="eyebrow">Install</p>
       <h2>Six steps, about five minutes.</h2>
-      <p>Cephalo is installed from its project folder. Your progress is saved in this browser, so you can tick steps off as you go.</p>
+      <p>Cephalo is installed from npm. Your progress is saved in this browser, so you can tick steps off as you go.</p>
     </div>
     <div class="inst">
       <ol class="isteps" id="isteps">
@@ -1320,8 +1318,8 @@ rules:
           <div class="cb"><pre>node --version</pre><button class="copy" data-copy="node --version" type="button">Copy</button></div>
         </div></li>
         <li class="istep" data-step="1"><button class="chk" type="button" aria-label="Mark step done">✓</button><div>
-          <h3>Build it and put <code>cephalo</code> on your PATH</h3>
-          <p>From the Cephalo project folder:</p>
+          <h3>Install it and put <code>cephalo</code> on your PATH</h3>
+          <p>One command, the same on every system:</p>
           <div class="cb"><pre id="buildCmds"></pre><button class="copy" data-copy-from="buildCmds" type="button">Copy</button></div>
           <p>Then <code>cephalo --help</code> should show the banner and command list.</p>
         </div></li>
@@ -1430,7 +1428,7 @@ cephalo watch</pre><button class="copy" data-copy='cephalo doctor&#10;cephalo te
     <div class="ctapanel">
       <div>
         <h2>Put a seatbelt on your agents.</h2>
-        <p>Install it from its project folder, then one command sets up your rules and hooks. It asks before changing anything and backs up each file it edits.</p>
+        <p>Install it from npm, then one command sets up your rules and hooks. It asks before changing anything and backs up each file it edits.</p>
         <div class="row2"><a class="btn primary" href="#install">Install steps</a><a class="btn" href="#playground">Try a command first</a></div>
       </div>
       <div class="cb"><pre aria-label="Command">$ cephalo init</pre><button class="copy" data-copy="cephalo init" type="button">Copy</button></div>
@@ -2469,9 +2467,7 @@ $('#isteps').addEventListener('click',function(e){var b=e.target.closest('.chk')
 $('#progReset').addEventListener('click',function(){done={};save();renderInstall();});
 function renderShell(sh,os){
   setSeg($('#segShell'),sh);
-  var cmds=sh==='ps'
-    ?'cd C:\\path\\to\\cephalo\nnpm install\nnpm run build\nnpm link'
-    :'cd /path/to/cephalo\nnpm install\nnpm run build\nnpm link';
+  var cmds='npm install -g @nomajorconcerns/cephalo'; /* the same on every system */
   $('#buildCmds').textContent=cmds;$('#heroSetup').textContent=cmds;
   var hs=$('#segHeroOs'),o=os||(sh==='ps'?'win32':(state.os==='darwin'?'darwin':'linux'));
   $$('button',hs).forEach(function(b){var on=(b.getAttribute('data-os')||'win32')===o;b.setAttribute('aria-pressed',String(on));});

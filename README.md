@@ -26,8 +26,14 @@ no account and no telemetry.
 
 ## Install
 
-Until the first npm release, install from source. Node.js 20 or newer is required by `package.json`; the
+```
+npm install -g @nomajorconcerns/cephalo
+```
+
+That puts the `cephalo` command on your PATH. Node.js 20 or newer is required by `package.json`; the
 code has only been run on Node 24, and the `npm test` script's glob needs Node 21+.
+
+To work on Cephalo itself, or to run it from a clone, install from source instead:
 
 ```powershell
 git clone https://github.com/nomajorconcerns/cephalo.git   # or use your existing folder
