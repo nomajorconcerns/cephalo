@@ -35,7 +35,7 @@ var EX={
    {k:'out',t:'no-secret-read           command  -      default   Reading .env secret files via shell',d:50},
    {k:'out',t:'no-secret-file           path     any    default   Accessing .env secret files',d:50},
    {k:'out',t:'protect-config           path     write  default   Writing Claude Code or Hermes config',d:50},
-   {k:'out',t:'protect-cephalo-policy   path     write  <acc>platform</acc>  Writing Cephalo\'s MCP allowlist, tool approvals or tripwire state',d:50},
+   {k:'out',t:'protect-cephalo-policy   path     write  <acc>platform</acc>  Writing Cephalo\'s MCP allowlist, tool approvals, tripwire state or local-model settings',d:50},
    {k:'out',t:'protect-audit-log        path     write  <acc>platform</acc>  Writing Cephalo\'s audit log or rules file',d:50},
    {k:'out',t:'no-audit-tamper          command  -      <acc>platform</acc>  Changing or deleting the audit log or rules file from a shell',d:50},
    {k:'out',t:'protect-vault-files      path     any    <acc>platform</acc>  Reading or writing Cephalo\'s secrets vault files',d:50},
