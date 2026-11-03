@@ -817,10 +817,23 @@ async function main(): Promise<number> {
   return 1;
 }
 
+/** Exit only after stdout and stderr have flushed: on pipes (macOS, Windows) a bare process.exit() can cut output short, including a hook's JSON. */
+function exitAfterFlush(code: number): void {
+  process.exitCode = code;
+  const flush = (s: NodeJS.WriteStream) =>
+    new Promise<void>((resolve) => {
+      s.write("", () => resolve()); // the callback runs after everything queued before it has been written
+    });
+  void Promise.all([flush(process.stdout), flush(process.stderr)]).then(
+    () => process.exit(code),
+    () => process.exit(code),
+  );
+}
+
 main().then(
-  (code) => process.exit(code),
+  (code) => exitAfterFlush(code),
   (e) => {
     process.stderr.write(`cephalo: ${(e as Error).message}\n`);
-    process.exit(1);
+    exitAfterFlush(1);
   },
 );
