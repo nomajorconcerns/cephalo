@@ -443,7 +443,7 @@ to the config files; nothing is deleted.
 
 ```powershell
 npm run build         # tsc -> dist/
-npm test              # build, then node --test dist/tests/*.test.js
+npm test              # build, then run every dist/tests/*.test.js with node --test (scripts/run-tests.mjs)
 npm run test:release  # tests for the release script and workflow
 ```
 
