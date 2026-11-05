@@ -379,7 +379,7 @@ nav.top .links a:not(.cta){padding:4px 0}
 .tier li.pl::before{content:"◌";color:var(--warn)}
 .tier li.base{color:var(--muted)}
 .tier li.base::before{content:"+";color:var(--muted)}
-.tier .badge{font-size:9.5px;padding:3px 6px;margin-left:4px;vertical-align:1px}
+.tier .badge{font-size:9.5px;padding:3px 6px;margin-left:4px;vertical-align:1px;white-space:nowrap}
 .tier .soon{margin-top:auto;justify-content:center;opacity:.65;cursor:default;border-style:dashed}
 .tier .btn.primary{margin-top:auto;justify-content:center}
 .calc{margin-top:26px;border:1px solid var(--line);border-radius:var(--r);background:var(--panel);padding:16px 20px;display:flex;gap:22px;align-items:center;flex-wrap:wrap}
@@ -795,6 +795,60 @@ html:not(.js) .handle,html:not(.js) .splitrange{display:none}
 /* theme switch: fade colours instead of snapping (class is added for a moment while toggling) */
 html.theming *,html.theming *::before,html.theming *::after{transition:background-color .4s var(--ease),color .4s var(--ease),border-color .4s var(--ease),box-shadow .4s var(--ease)!important}
 @media (prefers-reduced-motion:reduce){.js .reveal{opacity:1;transform:none}}
+/* ---- 0.2.0 announcement, countdown, what's new, theme preview ---- */
+.announce{background:var(--bg2);border-bottom:1px solid var(--line);padding:26px 0}
+.ann-grid{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:34px;align-items:center}
+.cd-label{font:600 12px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin:0 0 12px}
+.cd{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;max-width:420px;margin:0}
+.cd>div{border:1px solid var(--line2);background:var(--panel);border-radius:var(--r);padding:12px 4px 10px;text-align:center}
+.cd b{display:block;font:700 34px/1 var(--serif);font-variant-numeric:tabular-nums;color:var(--text)}
+.cd span{display:block;margin-top:7px;font:600 10.5px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.cd-when{margin:12px 0 0;color:var(--muted);font-size:14px}
+.cd-out{font:600 28px/1.2 var(--serif);margin:0 0 12px}
+.ann-copy h2{font-size:24px;margin:0 0 10px}
+.ann-copy p{margin:0 0 10px;color:var(--muted);font-size:16px}
+.ann-copy p.keep{color:var(--text)}
+.chip{font:600 13px var(--mono);letter-spacing:.06em;color:var(--mint-ink);background:var(--mint);border-radius:5px;padding:2px 7px}
+.badge.soon{color:var(--mint);border-style:dashed;border-color:currentColor}
+.badge.free{color:var(--text)}
+.fcard.soon{border-style:dashed;border-color:color-mix(in srgb,var(--mint) 45%,transparent)}
+.subhead+.feat,.feat+.subhead{margin-top:10px}
+.bigcard{grid-column:1/-1}
+.subgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 22px;margin-top:16px}
+.sub{border-top:1px solid var(--line);padding-top:12px}
+.sub h4{margin:0 0 6px;font:600 16px/1.3 var(--serif)}
+.sub p{margin:0 0 8px}
+@media(max-width:820px){.subgrid{grid-template-columns:1fr}}
+.themes{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin:8px 0 6px}
+.theme{margin:0;border:1px solid var(--hairline-2);border-radius:var(--r);background:#070d1a;color:var(--fg);padding:14px 14px 12px;display:flex;flex-direction:column;gap:6px;font-family:var(--mono)}
+.theme .octo-anim{width:64px;height:48px;align-self:flex-start}
+.theme figcaption{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.theme .wm{font:700 15px/1 var(--mono);letter-spacing:.12em;background:linear-gradient(90deg,var(--t1),var(--t2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.theme .tn{font:600 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:#9fb0c8}
+.theme .tb{margin:0;font:12px/1.35 var(--sans);color:#9fb0c8;min-height:32px}
+.theme .tl{font-size:11.5px;line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.theme .a{color:var(--allow);font-weight:700}.theme .b{color:var(--block);font-weight:700}.theme .k{color:var(--ask);font-weight:700}
+.th-ink .b{background:#e5e7eb;color:#111827;padding:0 4px;border-radius:2px}.th-ink .k{text-decoration:underline}
+.octo-anim .ob{fill:var(--ob)}.octo-anim .ol{fill:var(--ol)}.octo-anim .ow{fill:var(--ow)}.octo-anim .ok{fill:var(--ok)}
+.octo-anim .of{opacity:0}.octo-anim .of1{opacity:1}
+@media (prefers-reduced-motion:no-preference){
+  .octo-anim .of{animation:ofr 640ms steps(1,end) infinite}
+  .octo-anim .of1{animation-name:of1k}.octo-anim .of2{animation-name:of2k}.octo-anim .of3{animation-name:of3k}.octo-anim .of4{animation-name:of4k}
+}
+@keyframes of1k{0%{opacity:1}25%,100%{opacity:0}}
+@keyframes of2k{0%{opacity:0}25%{opacity:1}50%,100%{opacity:0}}
+@keyframes of3k{0%,50%{opacity:0}50%{opacity:1}75%,100%{opacity:0}}
+@keyframes of4k{0%,75%{opacity:0}75%{opacity:1}100%{opacity:1}}
+html:not(.js) .cd{display:none}
+.feat>.fcard{min-width:0}.fcard code{overflow-wrap:anywhere}.eg{min-width:0;max-width:100%}
+.hiw{margin:0 0 10px}.hiw b{color:var(--text)}
+.eg{margin:2px 0 12px;border:1px solid var(--line);border-radius:8px;background:var(--code-bg)}.eg figcaption{padding:6px 10px;border-bottom:1px solid var(--line);font:600 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}.eg figcaption code{text-transform:none;letter-spacing:0}.eg pre{margin:0;padding:10px 12px;font-size:12px;line-height:1.55;overflow-x:auto;white-space:pre}
+.preview-note{color:var(--faint);font-size:14px;margin:6px 0 0}
+.promo{margin:0;padding:8px 10px;border:1px dashed var(--line2);border-radius:8px;font-size:13.5px;color:var(--muted)}
+.promo code{font-size:12.5px;color:var(--text)}
+@media(max-width:1040px){.themes{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:820px){.ann-grid{grid-template-columns:1fr;gap:22px}.cd{max-width:none}.cd b{font-size:28px}}
+@media(max-width:560px){.themes{grid-template-columns:repeat(2,minmax(0,1fr))}.announce{padding:20px 0}}
 </style>
 </head>
 <body>
@@ -816,6 +870,33 @@ html.theming *,html.theming *::before,html.theming *::after{transition:backgroun
 <div id="live" class="sr" role="status" aria-live="polite"></div>
 
 <main id="top">
+
+<!-- 0.2.0 ANNOUNCEMENT -->
+<section class="announce" id="announce" aria-labelledby="annTitle">
+  <div class="wrap ann-grid">
+    <div>
+      <div id="cdBox" data-launch="2026-11-10T13:00:00-05:00">
+        <p class="cd-label" id="cdLabel">Cephalo 0.2.0 launches</p>
+        <div class="cd" id="cd" role="timer" aria-label="Time left until Cephalo 0.2.0 launches" aria-live="off">
+          <div><b id="cdD" aria-hidden="true">--</b><span aria-hidden="true">days</span></div>
+          <div><b id="cdH" aria-hidden="true">--</b><span aria-hidden="true">hours</span></div>
+          <div><b id="cdM" aria-hidden="true">--</b><span aria-hidden="true">minutes</span></div>
+          <div><b id="cdS" aria-hidden="true">--</b><span aria-hidden="true">seconds</span></div>
+        </div>
+        <p class="cd-when" id="cdWhen">November 10, 2026 at 1:00 PM Eastern Time.</p>
+      </div>
+      <div id="cdOut" hidden>
+        <p class="cd-out">Cephalo 0.2.0 is out</p>
+        <a class="btn primary" href="#install">Install steps</a>
+      </div>
+    </div>
+    <div class="ann-copy">
+      <h2 id="annTitle">Cephalo 0.2.0 launches Nov 10, 2026 at 1:00 PM ET.</h2>
+      <p class="keep">Version 0.1.1 keeps working. It is MIT licensed and stays free and open source forever.</p>
+      <p>Early users get 20% off Pro or Team for the first year with code <span class="chip">CEPHALOG</span>. The code works from launch day. <a href="#whatsnew">What is coming in 0.2.0</a>.</p>
+    </div>
+  </div>
+</section>
 
 <!-- HERO -->
 <section class="hero">
@@ -880,6 +961,127 @@ html.theming *,html.theming *::before,html.theming *::after{transition:backgroun
       </div>
       <p class="sr">Example output of cephalo watch. 12:04:11: allowed claude/Bash: git status. 12:04:14: allowed claude/Read: src/app.ts. 12:04:19: blocked claude/Bash by rule no-drop: psql -c "DROP TABLE users;". 12:04:25: blocked hermes/read_file by rule no-secret-file: ./config/.env.</p>
     </figure>
+  </div>
+</section>
+
+<!-- WHAT'S NEW IN 0.2.0 -->
+<section id="whatsnew">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Coming November 10</p>
+      <h2>What&rsquo;s new in 0.2.0 (Nov 10).</h2>
+      <p>None of this is released yet. What you can install today is version 0.1.1. Every card here is marked <span class="badge soon">Coming Nov 10 in 0.2.0</span>, says how it works, and says what it cannot do. The examples show how 0.2.0 is meant to look. Everything in 0.1.1 stays free.</p>
+    </div>
+    <p class="subhead">Free in 0.2.0</p>
+    <div class="feat" id="newfree">
+      <div class="fcard soon">
+        <div class="fmeta"><span class="badge soon">Coming Nov 10 in 0.2.0</span><span class="badge free">Free</span></div>
+        <h3>Command parsing, not just text matching</h3>
+        <p>Rules also see the parts of a command, not only its text.</p>
+        <p class="hiw"><b>How it works:</b> The command is split at pipes, <code>&amp;&amp;</code>, <code>||</code>, <code>;</code>, subshells and <code>$(...)</code>. Inline code such as <code>bash -c</code>, <code>python -c</code>, <code>node -e</code>, <code>powershell -Command</code> and <code>cmd /c</code> is opened up. Each part is checked, and so is the original text, so parsing can only add blocks.</p>
+        <figure class="eg"><figcaption>Output of <code>cephalo test</code> in a 0.2.0 build</figcaption><pre>$ cephalo test &quot;echo ok; bash -c \&quot;psql -c 'DROP TABLE users'\&quot;&quot;
+🛑 BLOCKED (no-drop: Dropping tables or databases)</pre></figure>
+        <p class="lim"><b>Limit:</b> it reads the command as written. A script file, or a command assembled at run time, is still out of sight.</p>
+      </div>
+      <div class="fcard soon">
+        <div class="fmeta"><span class="badge soon">Coming Nov 10 in 0.2.0</span><span class="badge free">Free</span></div>
+        <h3>Bypass fixes</h3>
+        <p>Closes the gaps found in 0.1.1.</p>
+        <p class="hiw"><b>How it works:</b> <code>Grep</code>, <code>Glob</code>, <code>WebFetch</code> and <code>WebSearch</code> calls now go through the hook. Relative paths and symlinks are resolved before a path rule is checked. Shell writes to the Claude Code and Hermes config, and to Cephalo&rsquo;s own install folder, are blocked.</p>
+        <p class="lim"><b>Limit:</b> these are still rules. Anything running as you outside the hooks can edit those files.</p>
+      </div>
+      <div class="fcard soon">
+        <div class="fmeta"><span class="badge soon">Coming Nov 10 in 0.2.0</span><span class="badge free">Free</span></div>
+        <h3>Self-integrity check</h3>
+        <p>Warns if Cephalo has been switched off or edited.</p>
+        <p class="hiw"><b>How it works:</b> The build records a SHA-256 hash of every installed file. At the first call of a session, and in <code>cephalo doctor</code>, Cephalo checks that its hook is still in the agent&rsquo;s config and that the files match, and warns loudly if not.</p>
+        <figure class="eg"><figcaption>From <code>cephalo doctor</code> in a 0.2.0 build</figcaption><pre>✓ Install integrity: 129 installed files match the list from the build</pre></figure>
+        <p class="lim"><b>Limit:</b> it detects a change; it cannot stop one. Someone who edits both the files and the recorded hashes as the same user can hide it.</p>
+      </div>
+      <div class="fcard soon">
+        <div class="fmeta"><span class="badge soon">Coming Nov 10 in 0.2.0</span><span class="badge free">Free</span></div>
+        <h3>Optional fail-closed mode</h3>
+        <p>Off by default. When on, a broken hook blocks instead of letting the call through.</p>
+        <p class="hiw"><b>How it works:</b> <code>cephalo config set fail-closed on</code>. If the hook crashes, runs past <code>hook-timeout</code> (8 seconds by default), or gets input it cannot read, the call is blocked and the reason is logged.</p>
+        <figure class="eg"><figcaption>Setting, from <code>cephalo config list</code></figcaption><pre>fail-closed   off    Block (instead of allow) when the hook crashes, times out
+              or gets input it cannot read.</pre></figure>
+        <p class="lim"><b>Limit:</b> a broken hook then stops your agent&rsquo;s tool calls until you fix it. That is the trade-off, and why it is off by default.</p>
+      </div>
+      <div class="fcard soon">
+        <div class="fmeta"><span class="badge soon">Coming Nov 10 in 0.2.0</span><span class="badge free">Free</span></div>
+        <h3>Allow and ask rules</h3>
+        <p>A rule can be an exception, or put the call to you.</p>
+        <p class="hiw"><b>How it works:</b> Add <code>action: allow</code> to make an exception (the first matching rule still wins), or <code>action: ask</code> to have you approve or deny. An allow rule cannot lift Cephalo&rsquo;s own protections. Where the agent cannot ask, the <code>ask-default</code> setting decides, and the log says so.</p>
+        <figure class="eg"><figcaption>In <code>rules.yml</code></figcaption><pre>  - id: ask-before-publish
+    description: Publishing to npm
+    type: command
+    pattern: '\bnpm\s+publish\b'
+    action: ask</pre></figure>
+        <p class="lim"><b>Limit:</b> only Claude Code can show an approval prompt. For Hermes, Codex and Cursor, ask falls back to your default.</p>
+      </div>
+      <div class="fcard soon">
+        <div class="fmeta"><span class="badge soon">Coming Nov 10 in 0.2.0</span><span class="badge free">Free</span></div>
+        <h3>Shadow mode</h3>
+        <p>Try a rule on real traffic before you trust it.</p>
+        <p class="hiw"><b>How it works:</b> Add <code>shadow: true</code> to a rule, or run <code>cephalo config set shadow on</code> for all of them. A shadow rule logs what it <em>would</em> have done and lets the call through. <code>cephalo log --shadow</code> lists those calls. Cephalo&rsquo;s own protections stay on.</p>
+        <figure class="eg"><figcaption>A <code>cephalo watch</code> line (illustration)</figcaption><pre>14:02:11  ALLOW  claude/Bash {would block: no-npm-publish}  npm publish</pre></figure>
+        <p class="lim"><b>Limit:</b> nothing is stopped while a rule is in shadow mode. It is for testing a rule, not for protection.</p>
+      </div>
+      <div class="fcard soon">
+        <div class="fmeta"><span class="badge soon">Coming Nov 10 in 0.2.0</span><span class="badge free">Free</span></div>
+        <h3>Themed CLI</h3>
+        <p>Five colour schemes: reef, abyss, coral, glow and ink.</p>
+        <p class="hiw"><b>How it works:</b> <code>cephalo theme list</code> shows them, <code>cephalo theme set glow</code> saves one, <code>CEPHALO_THEME=glow</code> is for one run. Each has a dark and a light palette. ALLOW, BLOCK and ASK always keep their words, so meaning never depends on colour alone.</p>
+        <figure class="eg"><figcaption>From <code>cephalo theme list</code></figcaption><pre>* reef    Teal to violet, with the pink octopus. The default.
+    ALLOW  BLOCK  ASK
+  ink     Monochrome. Weight, underline and reverse video carry the meaning.</pre></figure>
+        <p class="lim"><b>Limit:</b> colour is cosmetic. It falls back to 256, 16 or no colour, and is off for pipes and <code>NO_COLOR</code>. Hook output is never coloured.</p>
+      </div>
+      <div class="fcard soon">
+        <div class="fmeta"><span class="badge soon">Coming Nov 10 in 0.2.0</span><span class="badge free">Free</span></div>
+        <h3>Animated octopus</h3>
+        <p>The octopus waves its tentacles while slow commands run.</p>
+        <p class="hiw"><b>How it works:</b> While <code>doctor</code>, <code>mcp scan</code>, <code>models eval</code>, <code>replay</code>, <code>cost</code> and similar commands work, a six-line octopus waves beside a status message, in your theme&rsquo;s colours. It clears itself before the results print.</p>
+        <p class="lim"><b>Limit:</b> only on an interactive terminal. Never in hook output, in CI, with <code>NO_COLOR</code>, with <code>CEPHALO_NO_ANIMATION=1</code> or when reduced motion is requested. Then you get a plain &ldquo;Working...&rdquo; line.</p>
+      </div>
+    </div>
+    <p class="subhead">Pro and Team in 0.2.0 <span class="badge soon">Launching Nov 10</span></p>
+    <div class="feat" id="newpaid">
+      <div class="fcard soon">
+        <div class="fmeta"><span class="badge soon">Coming Nov 10 in 0.2.0</span><span class="badge">Pro and Team</span></div>
+        <h3>Network egress allowlist</h3>
+        <p>Agents can only reach the domains you list.</p>
+        <p class="hiw"><b>How it works:</b> You keep a list in <code>~/.cephalo/egress.yml</code>. Shell commands (<code>curl</code>, <code>wget</code>, <code>Invoke-WebRequest</code>, <code>ssh</code> and the like), <code>WebFetch</code> and MCP calls are checked against it. Others are blocked, or put to you in <code>ask</code> mode. Your own machine (loopback) is always allowed.</p>
+        <figure class="eg"><figcaption><code>egress.yml</code></figcaption><pre>mode: block
+allow:
+  - github.com
+  - &quot;*.npmjs.org&quot;</pre></figure>
+        <p class="lim"><b>Limit:</b> it matches the destinations it can see in the call. A program that opens its own connections inside a script is not seen.</p>
+      </div>
+      <div class="fcard soon">
+        <div class="fmeta"><span class="badge soon">Coming Nov 10 in 0.2.0</span><span class="badge">Pro and Team</span></div>
+        <h3>Tamper-evident audit log</h3>
+        <p>Shows whether the audit log was edited.</p>
+        <p class="hiw"><b>How it works:</b> Each line carries a sequence number, the hash of the line before it, and its own hash. <code>cephalo audit verify</code> reports lines that were edited, removed, reordered, inserted or cut off the end. <code>cephalo audit head</code> prints a value to keep somewhere else.</p>
+        <p class="lim"><b>Limit:</b> it shows tampering; it does not prevent it. Someone who rewrites the whole chain can produce a log that verifies, unless you keep a copy of the latest hash elsewhere.</p>
+      </div>
+      <div class="fcard soon">
+        <div class="fmeta"><span class="badge soon">Coming Nov 10 in 0.2.0</span><span class="badge">Pro and Team</span></div>
+        <h3>Bypass benchmark</h3>
+        <p>Measures how many known bypasses your rules stop.</p>
+        <p class="hiw"><b>How it works:</b> <code>cephalo bench</code> runs about 100 known bypass attempts and ordinary commands through your rules, without running any of them. It reports the block rate, what got through, and any ordinary command blocked by mistake. A CI job runs it on Windows, macOS and Linux.</p>
+        <p class="lim"><b>Limit:</b> it measures only the bypasses it contains. A high score is not a guarantee against the next one.</p>
+      </div>
+    </div>
+    <p class="subhead">Themes and the animated octopus</p>
+    <div class="themes" id="themes">
+<figure class="theme th-reef" style="--t1:#2dd4bf;--t2:#8b5cf6;--ob:#ff5c8a;--ol:#ffaac8;--ow:#ffffff;--ok:#1a1a2e;--allow:#4ade80;--block:#ff6b6b;--ask:#f5c46b;--fg:#e6edf7"><svg class="octo-anim" viewBox="0 0 16 12" shape-rendering="crispEdges" role="img" aria-label="The Cephalo octopus in the reef theme"><g class="of of1"><path class="ob" d="M6 0h4v1h-4zM3 1h10v1h-10zM2 2h2v1h-2zM6 2h8v1h-8zM1 3h2v1h-2zM4 3h11v1h-11zM1 4h3v1h-3zM6 4h4v1h-4zM12 4h3v1h-3zM1 5h3v1h-3zM6 5h4v1h-4zM12 5h3v1h-3zM1 6h14v1h-14zM2 7h12v1h-12zM1 8h2v1h-2zM4 8h2v1h-2zM7 8h2v1h-2zM10 8h2v1h-2zM13 8h2v1h-2zM2 9h2v1h-2zM5 9h2v1h-2zM8 9h2v1h-2zM11 9h2v1h-2zM14 9h2v1h-2zM1 10h2v1h-2zM4 10h2v1h-2zM7 10h2v1h-2zM10 10h2v1h-2zM13 10h2v1h-2zM0 11h2v1h-2zM3 11h2v1h-2zM6 11h2v1h-2zM9 11h2v1h-2zM12 11h2v1h-2z"/><path class="ol" d="M4 2h2v1h-2zM3 3h1v1h-1z"/><path class="ow" d="M4 4h2v1h-2zM10 4h2v1h-2zM4 5h1v1h-1zM10 5h1v1h-1z"/><path class="ok" d="M5 5h1v1h-1zM11 5h1v1h-1z"/></g><g class="of of2"><path class="ob" d="M6 0h4v1h-4zM3 1h10v1h-10zM2 2h2v1h-2zM6 2h8v1h-8zM1 3h2v1h-2zM4 3h11v1h-11zM1 4h3v1h-3zM6 4h4v1h-4zM12 4h3v1h-3zM1 5h3v1h-3zM6 5h4v1h-4zM12 5h3v1h-3zM1 6h14v1h-14zM2 7h12v1h-12zM1 8h2v1h-2zM4 8h2v1h-2zM7 8h2v1h-2zM10 8h2v1h-2zM13 8h2v1h-2zM1 9h2v1h-2zM4 9h2v1h-2zM7 9h2v1h-2zM10 9h2v1h-2zM13 9h2v1h-2zM0 10h2v1h-2zM3 10h2v1h-2zM6 10h2v1h-2zM9 10h2v1h-2zM12 10h2v1h-2zM1 11h2v1h-2zM4 11h2v1h-2zM7 11h2v1h-2zM10 11h2v1h-2zM13 11h2v1h-2z"/><path class="ol" d="M4 2h2v1h-2zM3 3h1v1h-1z"/><path class="ow" d="M4 4h2v1h-2zM10 4h2v1h-2zM4 5h1v1h-1zM10 5h1v1h-1z"/><path class="ok" d="M5 5h1v1h-1zM11 5h1v1h-1z"/></g><g class="of of3"><path class="ob" d="M6 0h4v1h-4zM3 1h10v1h-10zM2 2h2v1h-2zM6 2h8v1h-8zM1 3h2v1h-2zM4 3h11v1h-11zM1 4h3v1h-3zM6 4h4v1h-4zM12 4h3v1h-3zM1 5h3v1h-3zM6 5h4v1h-4zM12 5h3v1h-3zM1 6h14v1h-14zM2 7h12v1h-12zM1 8h2v1h-2zM4 8h2v1h-2zM7 8h2v1h-2zM10 8h2v1h-2zM13 8h2v1h-2zM0 9h2v1h-2zM3 9h2v1h-2zM6 9h2v1h-2zM9 9h2v1h-2zM12 9h2v1h-2zM1 10h2v1h-2zM4 10h2v1h-2zM7 10h2v1h-2zM10 10h2v1h-2zM13 10h2v1h-2zM2 11h2v1h-2zM5 11h2v1h-2zM8 11h2v1h-2zM11 11h2v1h-2zM14 11h2v1h-2z"/><path class="ol" d="M4 2h2v1h-2zM3 3h1v1h-1z"/><path class="ow" d="M4 4h2v1h-2zM10 4h2v1h-2zM4 5h1v1h-1zM10 5h1v1h-1z"/><path class="ok" d="M5 5h1v1h-1zM11 5h1v1h-1z"/></g><g class="of of4"><path class="ob" d="M6 0h4v1h-4zM3 1h10v1h-10zM2 2h2v1h-2zM6 2h8v1h-8zM1 3h2v1h-2zM4 3h11v1h-11zM1 4h3v1h-3zM6 4h4v1h-4zM12 4h3v1h-3zM1 5h3v1h-3zM6 5h4v1h-4zM12 5h3v1h-3zM1 6h14v1h-14zM2 7h12v1h-12zM1 8h2v1h-2zM4 8h2v1h-2zM7 8h2v1h-2zM10 8h2v1h-2zM13 8h2v1h-2zM1 9h2v1h-2zM4 9h2v1h-2zM7 9h2v1h-2zM10 9h2v1h-2zM13 9h2v1h-2zM2 10h2v1h-2zM5 10h2v1h-2zM8 10h2v1h-2zM11 10h2v1h-2zM14 10h2v1h-2zM1 11h2v1h-2zM4 11h2v1h-2zM7 11h2v1h-2zM10 11h2v1h-2zM13 11h2v1h-2z"/><path class="ol" d="M4 2h2v1h-2zM3 3h1v1h-1z"/><path class="ow" d="M4 4h2v1h-2zM10 4h2v1h-2zM4 5h1v1h-1zM10 5h1v1h-1z"/><path class="ok" d="M5 5h1v1h-1zM11 5h1v1h-1z"/></g></svg><figcaption><b class="wm">CEPHALO</b><span class="tn">reef</span></figcaption><p class="tb">Teal to violet, pink octopus. The default.</p><div class="tl" aria-hidden="true"><span class="a">✓ ALLOW</span> git status</div><div class="tl" aria-hidden="true"><span class="b">✕ BLOCK</span> rm -rf /</div><div class="tl" aria-hidden="true"><span class="k">? ASK</span> git push</div><p class="sr">reef theme: ALLOW, BLOCK and ASK each keep their text label and symbol.</p></figure>
+<figure class="theme th-abyss" style="--t1:#7aa2f7;--t2:#475b8a;--ob:#5b7db1;--ol:#9db8e0;--ow:#e6edf7;--ok:#0b1220;--allow:#4ade80;--block:#ff6b6b;--ask:#f5c46b;--fg:#c5d3ea"><svg class="octo-anim" viewBox="0 0 16 12" shape-rendering="crispEdges" role="img" aria-label="The Cephalo octopus in the abyss theme"><g class="of of1"><path class="ob" d="M6 0h4v1h-4zM3 1h10v1h-10zM2 2h2v1h-2zM6 2h8v1h-8zM1 3h2v1h-2zM4 3h11v1h-11zM1 4h3v1h-3zM6 4h4v1h-4zM12 4h3v1h-3zM1 5h3v1h-3zM6 5h4v1h-4zM12 5h3v1h-3zM1 6h14v1h-14zM2 7h12v1h-12zM1 8h2v1h-2zM4 8h2v1h-2zM7 8h2v1h-2zM10 8h2v1h-2zM13 8h2v1h-2zM2 9h2v1h-2zM5 9h2v1h-2zM8 9h2v1h-2zM11 9h2v1h-2zM14 9h2v1h-2zM1 10h2v1h-2zM4 10h2v1h-2zM7 10h2v1h-2zM10 10h2v1h-2zM13 10h2v1h-2zM0 11h2v1h-2zM3 11h2v1h-2zM6 11h2v1h-2zM9 11h2v1h-2zM12 11h2v1h-2z"/><path class="ol" d="M4 2h2v1h-2zM3 3h1v1h-1z"/><path class="ow" d="M4 4h2v1h-2zM10 4h2v1h-2zM4 5h1v1h-1zM10 5h1v1h-1z"/><path class="ok" d="M5 5h1v1h-1zM11 5h1v1h-1z"/></g><g class="of of2"><path class="ob" d="M6 0h4v1h-4zM3 1h10v1h-10zM2 2h2v1h-2zM6 2h8v1h-8zM1 3h2v1h-2zM4 3h11v1h-11zM1 4h3v1h-3zM6 4h4v1h-4zM12 4h3v1h-3zM1 5h3v1h-3zM6 5h4v1h-4zM12 5h3v1h-3zM1 6h14v1h-14zM2 7h12v1h-12zM1 8h2v1h-2zM4 8h2v1h-2zM7 8h2v1h-2zM10 8h2v1h-2zM13 8h2v1h-2zM1 9h2v1h-2zM4 9h2v1h-2zM7 9h2v1h-2zM10 9h2v1h-2zM13 9h2v1h-2zM0 10h2v1h-2zM3 10h2v1h-2zM6 10h2v1h-2zM9 10h2v1h-2zM12 10h2v1h-2zM1 11h2v1h-2zM4 11h2v1h-2zM7 11h2v1h-2zM10 11h2v1h-2zM13 11h2v1h-2z"/><path class="ol" d="M4 2h2v1h-2zM3 3h1v1h-1z"/><path class="ow" d="M4 4h2v1h-2zM10 4h2v1h-2zM4 5h1v1h-1zM10 5h1v1h-1z"/><path class="ok" d="M5 5h1v1h-1zM11 5h1v1h-1z"/></g><g class="of of3"><path class="ob" d="M6 0h4v1h-4zM3 1h10v1h-10zM2 2h2v1h-2zM6 2h8v1h-8zM1 3h2v1h-2zM4 3h11v1h-11zM1 4h3v1h-3zM6 4h4v1h-4zM12 4h3v1h-3zM1 5h3v1h-3zM6 5h4v1h-4zM12 5h3v1h-3zM1 6h14v1h-14zM2 7h12v1h-12zM1 8h2v1h-2zM4 8h2v1h-2zM7 8h2v1h-2zM10 8h2v1h-2zM13 8h2v1h-2zM0 9h2v1h-2zM3 9h2v1h-2zM6 9h2v1h-2zM9 9h2v1h-2zM12 9h2v1h-2zM1 10h2v1h-2zM4 10h2v1h-2zM7 10h2v1h-2zM10 10h2v1h-2zM13 10h2v1h-2zM2 11h2v1h-2zM5 11h2v1h-2zM8 11h2v1h-2zM11 11h2v1h-2zM14 11h2v1h-2z"/><path class="ol" d="M4 2h2v1h-2zM3 3h1v1h-1z"/><path class="ow" d="M4 4h2v1h-2zM10 4h2v1h-2zM4 5h1v1h-1zM10 5h1v1h-1z"/><path class="ok" d="M5 5h1v1h-1zM11 5h1v1h-1z"/></g><g class="of of4"><path class="ob" d="M6 0h4v1h-4zM3 1h10v1h-10zM2 2h2v1h-2zM6 2h8v1h-8zM1 3h2v1h-2zM4 3h11v1h-11zM1 4h3v1h-3zM6 4h4v1h-4zM12 4h3v1h-3zM1 5h3v1h-3zM6 5h4v1h-4zM12 5h3v1h-3zM1 6h14v1h-14zM2 7h12v1h-12zM1 8h2v1h-2zM4 8h2v1h-2zM7 8h2v1h-2zM10 8h2v1h-2zM13 8h2v1h-2zM1 9h2v1h-2zM4 9h2v1h-2zM7 9h2v1h-2zM10 9h2v1h-2zM13 9h2v1h-2zM2 10h2v1h-2zM5 10h2v1h-2zM8 10h2v1h-2zM11 10h2v1h-2zM14 10h2v1h-2zM1 11h2v1h-2zM4 11h2v1h-2zM7 11h2v1h-2zM10 11h2v1h-2zM13 11h2v1h-2z"/><path class="ol" d="M4 2h2v1h-2zM3 3h1v1h-1z"/><path class="ow" d="M4 4h2v1h-2zM10 4h2v1h-2zM4 5h1v1h-1zM10 5h1v1h-1z"/><path class="ok" d="M5 5h1v1h-1zM11 5h1v1h-1z"/></g></svg><figcaption><b class="wm">CEPHALO</b><span class="tn">abyss</span></figcaption><p class="tb">Deep navy and slate blue.</p><div class="tl" aria-hidden="true"><span class="a">✓ ALLOW</span> git status</div><div class="tl" aria-hidden="true"><span class="b">✕ BLOCK</span> rm -rf /</div><div class="tl" aria-hidden="true"><span class="k">? ASK</span> git push</div><p class="sr">abyss theme: ALLOW, BLOCK and ASK each keep their text label and symbol.</p></figure>
+<figure class="theme th-coral" style="--t1:#fb7185;--t2:#fdba74;--ob:#fb7185;--ol:#fecdd3;--ow:#fff7ed;--ok:#7c2d12;--allow:#86efac;--block:#fb7185;--ask:#fcd34d;--fg:#fde7d0"><svg class="octo-anim" viewBox="0 0 16 12" shape-rendering="crispEdges" role="img" aria-label="The Cephalo octopus in the coral theme"><g class="of of1"><path class="ob" d="M6 0h4v1h-4zM3 1h10v1h-10zM2 2h2v1h-2zM6 2h8v1h-8zM1 3h2v1h-2zM4 3h11v1h-11zM1 4h3v1h-3zM6 4h4v1h-4zM12 4h3v1h-3zM1 5h3v1h-3zM6 5h4v1h-4zM12 5h3v1h-3zM1 6h14v1h-14zM2 7h12v1h-12zM1 8h2v1h-2zM4 8h2v1h-2zM7 8h2v1h-2zM10 8h2v1h-2zM13 8h2v1h-2zM2 9h2v1h-2zM5 9h2v1h-2zM8 9h2v1h-2zM11 9h2v1h-2zM14 9h2v1h-2zM1 10h2v1h-2zM4 10h2v1h-2zM7 10h2v1h-2zM10 10h2v1h-2zM13 10h2v1h-2zM0 11h2v1h-2zM3 11h2v1h-2zM6 11h2v1h-2zM9 11h2v1h-2zM12 11h2v1h-2z"/><path class="ol" d="M4 2h2v1h-2zM3 3h1v1h-1z"/><path class="ow" d="M4 4h2v1h-2zM10 4h2v1h-2zM4 5h1v1h-1zM10 5h1v1h-1z"/><path class="ok" d="M5 5h1v1h-1zM11 5h1v1h-1z"/></g><g class="of of2"><path class="ob" d="M6 0h4v1h-4zM3 1h10v1h-10zM2 2h2v1h-2zM6 2h8v1h-8zM1 3h2v1h-2zM4 3h11v1h-11zM1 4h3v1h-3zM6 4h4v1h-4zM12 4h3v1h-3zM1 5h3v1h-3zM6 5h4v1h-4zM12 5h3v1h-3zM1 6h14v1h-14zM2 7h12v1h-12zM1 8h2v1h-2zM4 8h2v1h-2zM7 8h2v1h-2zM10 8h2v1h-2zM13 8h2v1h-2zM1 9h2v1h-2zM4 9h2v1h-2zM7 9h2v1h-2zM10 9h2v1h-2zM13 9h2v1h-2zM0 10h2v1h-2zM3 10h2v1h-2zM6 10h2v1h-2zM9 10h2v1h-2zM12 10h2v1h-2zM1 11h2v1h-2zM4 11h2v1h-2zM7 11h2v1h-2zM10 11h2v1h-2zM13 11h2v1h-2z"/><path class="ol" d="M4 2h2v1h-2zM3 3h1v1h-1z"/><path class="ow" d="M4 4h2v1h-2zM10 4h2v1h-2zM4 5h1v1h-1zM10 5h1v1h-1z"/><path class="ok" d="M5 5h1v1h-1zM11 5h1v1h-1z"/></g><g class="of of3"><path class="ob" d="M6 0h4v1h-4zM3 1h10v1h-10zM2 2h2v1h-2zM6 2h8v1h-8zM1 3h2v1h-2zM4 3h11v1h-11zM1 4h3v1h-3zM6 4h4v1h-4zM12 4h3v1h-3zM1 5h3v1h-3zM6 5h4v1h-4zM12 5h3v1h-3zM1 6h14v1h-14zM2 7h12v1h-12zM1 8h2v1h-2zM4 8h2v1h-2zM7 8h2v1h-2zM10 8h2v1h-2zM13 8h2v1h-2zM0 9h2v1h-2zM3 9h2v1h-2zM6 9h2v1h-2zM9 9h2v1h-2zM12 9h2v1h-2zM1 10h2v1h-2zM4 10h2v1h-2zM7 10h2v1h-2zM10 10h2v1h-2zM13 10h2v1h-2zM2 11h2v1h-2zM5 11h2v1h-2zM8 11h2v1h-2zM11 11h2v1h-2zM14 11h2v1h-2z"/><path class="ol" d="M4 2h2v1h-2zM3 3h1v1h-1z"/><path class="ow" d="M4 4h2v1h-2zM10 4h2v1h-2zM4 5h1v1h-1zM10 5h1v1h-1z"/><path class="ok" d="M5 5h1v1h-1zM11 5h1v1h-1z"/></g><g class="of of4"><path class="ob" d="M6 0h4v1h-4zM3 1h10v1h-10zM2 2h2v1h-2zM6 2h8v1h-8zM1 3h2v1h-2zM4 3h11v1h-11zM1 4h3v1h-3zM6 4h4v1h-4zM12 4h3v1h-3zM1 5h3v1h-3zM6 5h4v1h-4zM12 5h3v1h-3zM1 6h14v1h-14zM2 7h12v1h-12zM1 8h2v1h-2zM4 8h2v1h-2zM7 8h2v1h-2zM10 8h2v1h-2zM13 8h2v1h-2zM1 9h2v1h-2zM4 9h2v1h-2zM7 9h2v1h-2zM10 9h2v1h-2zM13 9h2v1h-2zM2 10h2v1h-2zM5 10h2v1h-2zM8 10h2v1h-2zM11 10h2v1h-2zM14 10h2v1h-2zM1 11h2v1h-2zM4 11h2v1h-2zM7 11h2v1h-2zM10 11h2v1h-2zM13 11h2v1h-2z"/><path class="ol" d="M4 2h2v1h-2zM3 3h1v1h-1z"/><path class="ow" d="M4 4h2v1h-2zM10 4h2v1h-2zM4 5h1v1h-1zM10 5h1v1h-1z"/><path class="ok" d="M5 5h1v1h-1zM11 5h1v1h-1z"/></g></svg><figcaption><b class="wm">CEPHALO</b><span class="tn">coral</span></figcaption><p class="tb">Warm pink, orange and cream.</p><div class="tl" aria-hidden="true"><span class="a">✓ ALLOW</span> git status</div><div class="tl" aria-hidden="true"><span class="b">✕ BLOCK</span> rm -rf /</div><div class="tl" aria-hidden="true"><span class="k">? ASK</span> git push</div><p class="sr">coral theme: ALLOW, BLOCK and ASK each keep their text label and symbol.</p></figure>
+<figure class="theme th-glow" style="--t1:#22d3ee;--t2:#4ade80;--ob:#22d3ee;--ol:#a5f3fc;--ow:#ecfeff;--ok:#022c22;--allow:#4ade80;--block:#f87171;--ask:#facc15;--fg:#c7f9ee"><svg class="octo-anim" viewBox="0 0 16 12" shape-rendering="crispEdges" role="img" aria-label="The Cephalo octopus in the glow theme"><g class="of of1"><path class="ob" d="M6 0h4v1h-4zM3 1h10v1h-10zM2 2h2v1h-2zM6 2h8v1h-8zM1 3h2v1h-2zM4 3h11v1h-11zM1 4h3v1h-3zM6 4h4v1h-4zM12 4h3v1h-3zM1 5h3v1h-3zM6 5h4v1h-4zM12 5h3v1h-3zM1 6h14v1h-14zM2 7h12v1h-12zM1 8h2v1h-2zM4 8h2v1h-2zM7 8h2v1h-2zM10 8h2v1h-2zM13 8h2v1h-2zM2 9h2v1h-2zM5 9h2v1h-2zM8 9h2v1h-2zM11 9h2v1h-2zM14 9h2v1h-2zM1 10h2v1h-2zM4 10h2v1h-2zM7 10h2v1h-2zM10 10h2v1h-2zM13 10h2v1h-2zM0 11h2v1h-2zM3 11h2v1h-2zM6 11h2v1h-2zM9 11h2v1h-2zM12 11h2v1h-2z"/><path class="ol" d="M4 2h2v1h-2zM3 3h1v1h-1z"/><path class="ow" d="M4 4h2v1h-2zM10 4h2v1h-2zM4 5h1v1h-1zM10 5h1v1h-1z"/><path class="ok" d="M5 5h1v1h-1zM11 5h1v1h-1z"/></g><g class="of of2"><path class="ob" d="M6 0h4v1h-4zM3 1h10v1h-10zM2 2h2v1h-2zM6 2h8v1h-8zM1 3h2v1h-2zM4 3h11v1h-11zM1 4h3v1h-3zM6 4h4v1h-4zM12 4h3v1h-3zM1 5h3v1h-3zM6 5h4v1h-4zM12 5h3v1h-3zM1 6h14v1h-14zM2 7h12v1h-12zM1 8h2v1h-2zM4 8h2v1h-2zM7 8h2v1h-2zM10 8h2v1h-2zM13 8h2v1h-2zM1 9h2v1h-2zM4 9h2v1h-2zM7 9h2v1h-2zM10 9h2v1h-2zM13 9h2v1h-2zM0 10h2v1h-2zM3 10h2v1h-2zM6 10h2v1h-2zM9 10h2v1h-2zM12 10h2v1h-2zM1 11h2v1h-2zM4 11h2v1h-2zM7 11h2v1h-2zM10 11h2v1h-2zM13 11h2v1h-2z"/><path class="ol" d="M4 2h2v1h-2zM3 3h1v1h-1z"/><path class="ow" d="M4 4h2v1h-2zM10 4h2v1h-2zM4 5h1v1h-1zM10 5h1v1h-1z"/><path class="ok" d="M5 5h1v1h-1zM11 5h1v1h-1z"/></g><g class="of of3"><path class="ob" d="M6 0h4v1h-4zM3 1h10v1h-10zM2 2h2v1h-2zM6 2h8v1h-8zM1 3h2v1h-2zM4 3h11v1h-11zM1 4h3v1h-3zM6 4h4v1h-4zM12 4h3v1h-3zM1 5h3v1h-3zM6 5h4v1h-4zM12 5h3v1h-3zM1 6h14v1h-14zM2 7h12v1h-12zM1 8h2v1h-2zM4 8h2v1h-2zM7 8h2v1h-2zM10 8h2v1h-2zM13 8h2v1h-2zM0 9h2v1h-2zM3 9h2v1h-2zM6 9h2v1h-2zM9 9h2v1h-2zM12 9h2v1h-2zM1 10h2v1h-2zM4 10h2v1h-2zM7 10h2v1h-2zM10 10h2v1h-2zM13 10h2v1h-2zM2 11h2v1h-2zM5 11h2v1h-2zM8 11h2v1h-2zM11 11h2v1h-2zM14 11h2v1h-2z"/><path class="ol" d="M4 2h2v1h-2zM3 3h1v1h-1z"/><path class="ow" d="M4 4h2v1h-2zM10 4h2v1h-2zM4 5h1v1h-1zM10 5h1v1h-1z"/><path class="ok" d="M5 5h1v1h-1zM11 5h1v1h-1z"/></g><g class="of of4"><path class="ob" d="M6 0h4v1h-4zM3 1h10v1h-10zM2 2h2v1h-2zM6 2h8v1h-8zM1 3h2v1h-2zM4 3h11v1h-11zM1 4h3v1h-3zM6 4h4v1h-4zM12 4h3v1h-3zM1 5h3v1h-3zM6 5h4v1h-4zM12 5h3v1h-3zM1 6h14v1h-14zM2 7h12v1h-12zM1 8h2v1h-2zM4 8h2v1h-2zM7 8h2v1h-2zM10 8h2v1h-2zM13 8h2v1h-2zM1 9h2v1h-2zM4 9h2v1h-2zM7 9h2v1h-2zM10 9h2v1h-2zM13 9h2v1h-2zM2 10h2v1h-2zM5 10h2v1h-2zM8 10h2v1h-2zM11 10h2v1h-2zM14 10h2v1h-2zM1 11h2v1h-2zM4 11h2v1h-2zM7 11h2v1h-2zM10 11h2v1h-2zM13 11h2v1h-2z"/><path class="ol" d="M4 2h2v1h-2zM3 3h1v1h-1z"/><path class="ow" d="M4 4h2v1h-2zM10 4h2v1h-2zM4 5h1v1h-1zM10 5h1v1h-1z"/><path class="ok" d="M5 5h1v1h-1zM11 5h1v1h-1z"/></g></svg><figcaption><b class="wm">CEPHALO</b><span class="tn">glow</span></figcaption><p class="tb">Bioluminescent cyan and green on black.</p><div class="tl" aria-hidden="true"><span class="a">✓ ALLOW</span> git status</div><div class="tl" aria-hidden="true"><span class="b">✕ BLOCK</span> rm -rf /</div><div class="tl" aria-hidden="true"><span class="k">? ASK</span> git push</div><p class="sr">glow theme: ALLOW, BLOCK and ASK each keep their text label and symbol.</p></figure>
+<figure class="theme th-ink" style="--t1:#f3f4f6;--t2:#9ca3af;--ob:#d1d5db;--ol:#f9fafb;--ow:#ffffff;--ok:#111827;--allow:#f3f4f6;--block:#f3f4f6;--ask:#d1d5db;--fg:#e5e7eb"><svg class="octo-anim" viewBox="0 0 16 12" shape-rendering="crispEdges" role="img" aria-label="The Cephalo octopus in the ink theme"><g class="of of1"><path class="ob" d="M6 0h4v1h-4zM3 1h10v1h-10zM2 2h2v1h-2zM6 2h8v1h-8zM1 3h2v1h-2zM4 3h11v1h-11zM1 4h3v1h-3zM6 4h4v1h-4zM12 4h3v1h-3zM1 5h3v1h-3zM6 5h4v1h-4zM12 5h3v1h-3zM1 6h14v1h-14zM2 7h12v1h-12zM1 8h2v1h-2zM4 8h2v1h-2zM7 8h2v1h-2zM10 8h2v1h-2zM13 8h2v1h-2zM2 9h2v1h-2zM5 9h2v1h-2zM8 9h2v1h-2zM11 9h2v1h-2zM14 9h2v1h-2zM1 10h2v1h-2zM4 10h2v1h-2zM7 10h2v1h-2zM10 10h2v1h-2zM13 10h2v1h-2zM0 11h2v1h-2zM3 11h2v1h-2zM6 11h2v1h-2zM9 11h2v1h-2zM12 11h2v1h-2z"/><path class="ol" d="M4 2h2v1h-2zM3 3h1v1h-1z"/><path class="ow" d="M4 4h2v1h-2zM10 4h2v1h-2zM4 5h1v1h-1zM10 5h1v1h-1z"/><path class="ok" d="M5 5h1v1h-1zM11 5h1v1h-1z"/></g><g class="of of2"><path class="ob" d="M6 0h4v1h-4zM3 1h10v1h-10zM2 2h2v1h-2zM6 2h8v1h-8zM1 3h2v1h-2zM4 3h11v1h-11zM1 4h3v1h-3zM6 4h4v1h-4zM12 4h3v1h-3zM1 5h3v1h-3zM6 5h4v1h-4zM12 5h3v1h-3zM1 6h14v1h-14zM2 7h12v1h-12zM1 8h2v1h-2zM4 8h2v1h-2zM7 8h2v1h-2zM10 8h2v1h-2zM13 8h2v1h-2zM1 9h2v1h-2zM4 9h2v1h-2zM7 9h2v1h-2zM10 9h2v1h-2zM13 9h2v1h-2zM0 10h2v1h-2zM3 10h2v1h-2zM6 10h2v1h-2zM9 10h2v1h-2zM12 10h2v1h-2zM1 11h2v1h-2zM4 11h2v1h-2zM7 11h2v1h-2zM10 11h2v1h-2zM13 11h2v1h-2z"/><path class="ol" d="M4 2h2v1h-2zM3 3h1v1h-1z"/><path class="ow" d="M4 4h2v1h-2zM10 4h2v1h-2zM4 5h1v1h-1zM10 5h1v1h-1z"/><path class="ok" d="M5 5h1v1h-1zM11 5h1v1h-1z"/></g><g class="of of3"><path class="ob" d="M6 0h4v1h-4zM3 1h10v1h-10zM2 2h2v1h-2zM6 2h8v1h-8zM1 3h2v1h-2zM4 3h11v1h-11zM1 4h3v1h-3zM6 4h4v1h-4zM12 4h3v1h-3zM1 5h3v1h-3zM6 5h4v1h-4zM12 5h3v1h-3zM1 6h14v1h-14zM2 7h12v1h-12zM1 8h2v1h-2zM4 8h2v1h-2zM7 8h2v1h-2zM10 8h2v1h-2zM13 8h2v1h-2zM0 9h2v1h-2zM3 9h2v1h-2zM6 9h2v1h-2zM9 9h2v1h-2zM12 9h2v1h-2zM1 10h2v1h-2zM4 10h2v1h-2zM7 10h2v1h-2zM10 10h2v1h-2zM13 10h2v1h-2zM2 11h2v1h-2zM5 11h2v1h-2zM8 11h2v1h-2zM11 11h2v1h-2zM14 11h2v1h-2z"/><path class="ol" d="M4 2h2v1h-2zM3 3h1v1h-1z"/><path class="ow" d="M4 4h2v1h-2zM10 4h2v1h-2zM4 5h1v1h-1zM10 5h1v1h-1z"/><path class="ok" d="M5 5h1v1h-1zM11 5h1v1h-1z"/></g><g class="of of4"><path class="ob" d="M6 0h4v1h-4zM3 1h10v1h-10zM2 2h2v1h-2zM6 2h8v1h-8zM1 3h2v1h-2zM4 3h11v1h-11zM1 4h3v1h-3zM6 4h4v1h-4zM12 4h3v1h-3zM1 5h3v1h-3zM6 5h4v1h-4zM12 5h3v1h-3zM1 6h14v1h-14zM2 7h12v1h-12zM1 8h2v1h-2zM4 8h2v1h-2zM7 8h2v1h-2zM10 8h2v1h-2zM13 8h2v1h-2zM1 9h2v1h-2zM4 9h2v1h-2zM7 9h2v1h-2zM10 9h2v1h-2zM13 9h2v1h-2zM2 10h2v1h-2zM5 10h2v1h-2zM8 10h2v1h-2zM11 10h2v1h-2zM14 10h2v1h-2zM1 11h2v1h-2zM4 11h2v1h-2zM7 11h2v1h-2zM10 11h2v1h-2zM13 11h2v1h-2z"/><path class="ol" d="M4 2h2v1h-2zM3 3h1v1h-1z"/><path class="ow" d="M4 4h2v1h-2zM10 4h2v1h-2zM4 5h1v1h-1zM10 5h1v1h-1z"/><path class="ok" d="M5 5h1v1h-1zM11 5h1v1h-1z"/></g></svg><figcaption><b class="wm">CEPHALO</b><span class="tn">ink</span></figcaption><p class="tb">Monochrome. Meaning stays in the words and symbols.</p><div class="tl" aria-hidden="true"><span class="a">✓ ALLOW</span> git status</div><div class="tl" aria-hidden="true"><span class="b">✕ BLOCK</span> rm -rf /</div><div class="tl" aria-hidden="true"><span class="k">? ASK</span> git push</div><p class="sr">ink theme: ALLOW, BLOCK and ASK each keep their text label and symbol.</p></figure>
+    </div>
+    <p class="preview-note">A preview drawn for this page, not output from the CLI. The themes and the animation are <span class="badge soon">Coming Nov 10 in 0.2.0</span>; the octopus here is the CLI banner&rsquo;s pixel sprite with its tentacles animated. If your system asks for reduced motion, it stays still.</p>
   </div>
 </section>
 
@@ -1172,80 +1374,76 @@ rules:
     <div class="sec-head">
       <p class="eyebrow">Beyond the rules file</p>
       <h2>What is built, and what is only planned.</h2>
-      <p>Everything marked <span class="badge built">Built</span> runs locally on your machine today and has tests. Each card says what it cannot do. Items marked <span class="badge planned">Planned</span> do not exist yet.</p>
+      <p>Everything marked <span class="badge built">Built</span> is in version 0.1.1: it runs locally on your machine, has tests, and is free and open source. Each entry says what it cannot do. Items marked <span class="badge planned">Planned</span> do not exist yet. What is coming in 0.2.0 is <a href="#whatsnew">listed above</a>.</p>
     </div>
     <div class="feat" id="feat">
-      <div class="fcard">
-        <div class="fmeta"><span class="badge built">Built</span><span class="badge">Free</span></div>
-        <h3>MCP firewall</h3>
+      <div class="fcard bigcard">
+        <div class="fmeta"><span class="badge built">Built</span><span class="badge free">Free &middot; since 0.1.1</span></div>
+        <h3>Everything in version 0.1.1</h3>
+        <p>All of this is in the published 0.1.1 release, is MIT licensed, and stays free and open source. Each entry says what it cannot do.</p>
+        <div class="subgrid">
+        <div class="sub">
+        <h4>MCP firewall</h4>
         <p>MCP servers are identified by what they run or where they live, not by the name in a config file. An unknown server is logged (audit mode) or blocked (enforce mode). <code>cephalo mcp allow</code> approves one.</p>
         <p class="lim"><b>Limit:</b> the runtime proxy handles local stdio servers only. Remote URL servers are covered by the allowlist and the hook.</p>
         <button class="try" type="button" data-ex="mcp">See it catch a changed tool →</button>
-      </div>
-      <div class="fcard">
-        <div class="fmeta"><span class="badge built">Built</span><span class="badge">Pro</span></div>
-        <h3>Tool fingerprinting</h3>
+        </div>
+        <div class="sub">
+        <h4>Tool fingerprinting</h4>
         <p>Pins the exact set of tools a server offers. If a description changes or a new tool appears after you approved it, calls are blocked until you review and re-approve. The proxy can also hide changed tools from the agent.</p>
         <p class="lim"><b>Limit:</b> a fingerprint proves the description did not change, not that the server is honest. Scan only starts servers you already allowed.</p>
         <button class="try" type="button" data-ex="mcp">See the rug-pull check →</button>
-      </div>
-      <div class="fcard">
-        <div class="fmeta"><span class="badge built">Built</span><span class="badge">Free</span></div>
-        <h3>Prompt-injection tripwire</h3>
+        </div>
+        <div class="sub">
+        <h4>Prompt-injection tripwire</h4>
         <p>Reads what web pages, files and tools send back. If it looks like instructions aimed at the model, that session loses network, credential, persistence and write-type MCP actions until you release it.</p>
         <p class="lim"><b>Limit:</b> a heuristic. It misses some attacks and flags some harmless text. In Hermes the after-call hook only observes, so blocking starts with the next call.</p>
         <button class="try" type="button" data-ex="tripwire">See a scan →</button>
-      </div>
-      <div class="fcard">
-        <div class="fmeta"><span class="badge built">Built</span><span class="badge">Pro</span></div>
-        <h3>Cost per shipped result</h3>
+        </div>
+        <div class="sub">
+        <h4>Cost per shipped result</h4>
         <p><code>cephalo cost</code> adds up what your Claude Code and Hermes sessions cost and divides it by the pull requests that were merged with passing CI. It also shows how much went on work that did not ship.</p>
         <p class="lim"><b>Limit:</b> Claude Code dollars are an estimate (token counts times Anthropic’s list prices), not what a subscription charged you. A session is linked to a PR by its branch name, and Hermes often records none. Needs a logged-in <code>gh</code>.</p>
-      </div>
-      <div class="fcard">
-        <div class="fmeta"><span class="badge built">Built</span><span class="badge">Team</span></div>
-        <h3>Dashboard</h3>
+        </div>
+        <div class="sub">
+        <h4>Dashboard</h4>
         <p><code>cephalo dashboard</code> writes one HTML file: overview, sessions and cost, and what the seatbelt blocked. <code>--team</code> shows every developer’s published log together. Nothing is hosted and the page makes no network requests.</p>
         <p class="lim"><b>Limit:</b> a file you generate and open yourself, not a hosted service, and only as fresh as the last time you generated it.</p>
-      </div>
-      <div class="fcard">
-        <div class="fmeta"><span class="badge built">Built</span><span class="badge">Team</span></div>
-        <h3>Shared policy and audit sync</h3>
+        </div>
+        <div class="sub">
+        <h4>Shared policy and audit sync</h4>
         <p><code>cephalo sync</code> shares your rules and audit log through a folder you already have: a synced drive, a network share, or a git clone. Pulling shows what would be added, changed or removed, asks, and backs up first. Every developer’s log lands in one folder, with user and time.</p>
         <p class="lim"><b>Limit:</b> a hash shows the file arrived intact, not who wrote it, so anyone who can write to the folder can publish a policy. Nothing syncs by itself; each developer runs <code>pull</code>.</p>
-      </div>
-      <div class="fcard">
-        <div class="fmeta"><span class="badge built">Built</span><span class="badge">Enterprise</span></div>
-        <h3>Signed policy bundles</h3>
+        </div>
+        <div class="sub">
+        <h4>Signed policy bundles</h4>
         <p><code>cephalo sync keygen</code> makes an Ed25519 key pair for whoever publishes policy, and <code>cephalo sync push</code> then signs it. Each developer runs <code>cephalo sync trust</code> on the public key once; after that <code>cephalo sync pull</code> refuses policy that is unsigned, signed by another key, or changed after signing. It uses Node’s own crypto and local files; nothing is sent anywhere.</p>
         <p class="lim"><b>Limit:</b> it proves who published a file, not that the rules are good. The public key has to reach developers by a route other than the shared folder, and there is no key rotation or revocation beyond editing the trust file. Not yet tried on macOS or Linux machines.</p>
-      </div>
-      <div class="fcard">
-        <div class="fmeta"><span class="badge built">Built</span><span class="badge">Pro</span></div>
-        <h3>Local-model judge</h3>
+        </div>
+        <div class="sub">
+        <h4>Local-model judge</h4>
         <p>Optional and off by default. A small model running in your own Ollama looks only at commands that show a risk signal and that the rules allow. It can block or ask you; it can never lift a rule’s block. If the model is down, slow or confused, Claude Code asks you instead of letting the command through. Nothing leaves the laptop. <code>cephalo models eval</code> scores it on 128 labelled cases.</p>
         <p class="lim"><b>Limit:</b> on our own set it caught 37 of 38 risky commands but also stopped or asked about 17 of 73 safe ones, and a model call takes about 3 seconds on a CPU. Hermes, Codex and Cursor cannot be asked, so there an unsure answer is logged and allowed. It is a second opinion, not a guarantee.</p>
-      </div>
-      <div class="fcard">
-        <div class="fmeta"><span class="badge built">Built</span><span class="badge">Pro</span></div>
-        <h3>Secrets vault</h3>
+        </div>
+        <div class="sub">
+        <h4>Secrets vault</h4>
         <p>Store a token once. The agent uses it through <code>cephalo run</code> and never sees the value: output is scrubbed, including base64 and URL-encoded copies. Each secret lists the commands it may be used with.</p>
         <p class="lim"><b>Limit:</b> hooks, not a sandbox. An agent running as you could still go around it; real isolation needs another OS user or a container. Windows DPAPI is tested; the macOS Keychain and Linux Secret Service backends have not run on real machines.</p>
         <button class="try" type="button" data-ex="vault">See it in use →</button>
-      </div>
-      <div class="fcard">
-        <div class="fmeta"><span class="badge built">Built</span><span class="badge">Pro</span></div>
-        <h3>Incident to rule</h3>
+        </div>
+        <div class="sub">
+        <h4>Incident to rule</h4>
         <p>Pick something an agent did. Get narrow, balanced and broad rule options, each tested against your own history and against patterns that could hang the hook. Confirm to add it, with a backup and an undo.</p>
         <p class="lim"><b>Limit:</b> rules match text, so a rephrased command can still get through. “Would have blocked 0” only speaks for your own log.</p>
         <button class="try" type="button" data-ex="incident">See a rule being made →</button>
-      </div>
-      <div class="fcard">
-        <div class="fmeta"><span class="badge built">Built</span><span class="badge">Pro</span></div>
-        <h3>PR replay and replay bundle</h3>
+        </div>
+        <div class="sub">
+        <h4>PR replay and replay bundle</h4>
         <p>A replay of what the agents did on a branch: counts, a needs-attention list, files written. As PR comment text, an interactive HTML file, or JSON. <code>--format bundle</code> makes one shareable file with the replay, what its sessions cost, and whether the branch shipped. Posting to a PR needs <code>--comment</code> and a confirmation, using your own GitHub login.</p>
         <p class="lim"><b>Limit:</b> a record from a local log, not a signed attestation. Agents are blocked from editing the log, but anything running as you could. The posting path has only run against a stand-in for <code>gh</code>. A bundle shows every command in its window, so read it before you send it.</p>
         <button class="try" type="button" data-ex="replay">See a replay →</button>
+        </div>
+        </div>
       </div>
     </div>
     <p class="subhead">Planned, not built</p>
@@ -1295,62 +1493,57 @@ rules:
     <div class="sec-head">
       <p class="eyebrow">Plans</p>
       <h2>Free for one developer. Paid plans for teams.</h2>
-      <p>The plans describe how Cephalo will be packaged. They are not for sale yet. <span class="badge planned">Planned</span> items do not exist.</p>
+      <p>Everything in version 0.1.1 stays free. Pro adds the new features marked <span class="badge soon">Launching Nov 10</span>; Pro and Team are not for sale yet. <span class="badge planned">Planned</span> items do not exist.</p>
     </div>
     <div class="tiers">
       <div class="tier">
         <h3>Free</h3>
-        <p class="who">For one developer protecting their own machine.</p>
+        <p class="who">For one developer protecting their own machine, and for everyone who already uses 0.1.1.</p>
         <div class="price">$0</div>
         <ul>
-          <li>Local firewall for Claude Code and Hermes</li>
-          <li>Your own rules file</li>
-          <li>Windows, macOS and Linux adapters</li>
-          <li>MCP server allowlist</li>
-          <li>Prompt-injection tripwire</li>
-          <li><code>log</code>, <code>watch</code>, <code>doctor</code></li>
+          <li><span>Everything from 0.1.1 (<a href="#feat">the full list</a>)</span></li>
+          <li><span>Every free 0.2.0 feature <span class="badge soon">Launching Nov 10</span> (<a href="#newfree">list</a>)</span></li>
         </ul>
         <a class="btn primary" href="#install">Install</a>
       </div>
       <div class="tier hl">
         <span class="reco">Recommended</span>
         <h3>Pro</h3>
-        <p class="who">For developers who give agents real credentials and real MCP servers.</p>
+        <p class="who">For developers who give agents network access and want proof the log was not edited.</p>
         <div class="price">$15<small> / dev / month</small></div>
         <ul>
-          <li class="base">Everything in Free</li>
-          <li>Local-model judge (Ollama, off by default)</li>
-          <li>Cost per shipped result</li>
-          <li>PR replay and replay bundle</li>
-          <li>Secrets vault</li>
-          <li>MCP tool fingerprinting and re-approval</li>
-          <li>Incident to rule</li>
+          <li class="base"><span>Everything in Free</span></li>
+          <li><span>Network egress allowlist <span class="badge soon">Launching Nov 10</span></span></li>
+          <li><span>Tamper-evident audit log <span class="badge soon">Launching Nov 10</span></span></li>
+          <li><span>Bypass benchmark <span class="badge soon">Launching Nov 10</span></span></li>
         </ul>
-        <span class="btn soon" data-plan="pro">Not on sale yet</span>
+        <p class="promo">20% off your first year with code <code>CEPHALOG</code>. Works from launch day.</p>
+        <span class="btn soon" data-plan="pro">Launching Nov 10</span>
       </div>
       <div class="tier">
         <h3>Team</h3>
         <p class="who">For teams that want one policy and one view across developers.</p>
         <div class="price">$25<small> / dev / month</small></div>
         <ul>
-          <li class="base">Everything in Pro</li>
-          <li>Dashboard (a local HTML file)</li>
-          <li>Shared policy through a shared folder</li>
-          <li>Audit log sync with user and time, through a shared folder</li>
-          <li class="pl">Hosted dashboard <span class="badge planned">Planned</span></li>
+          <li class="base"><span>Everything in Pro</span></li>
+          <li><span>Dashboard (a local HTML file)</span></li>
+          <li><span>Shared policy through a shared folder</span></li>
+          <li><span>Audit log sync with user and time, through a shared folder</span></li>
+          <li class="pl"><span>Hosted dashboard <span class="badge planned">Planned</span></span></li>
         </ul>
-        <span class="btn soon" data-plan="team">Not on sale yet</span>
+        <p class="promo">20% off your first year with code <code>CEPHALOG</code>. Works from launch day.</p>
+        <span class="btn soon" data-plan="team">Launching Nov 10</span>
       </div>
       <div class="tier">
         <h3>Enterprise</h3>
         <p class="who">For organisations with identity, hosting and compliance needs.</p>
         <div class="price alt">Annual contract</div>
         <ul>
-          <li class="base">Everything in Team</li>
-          <li class="pl">Single sign-on <span class="badge planned">Planned</span></li>
-          <li class="pl">On-prem deployment <span class="badge planned">Planned</span></li>
-          <li class="pl">Support SLA <span class="badge planned">Planned</span></li>
-          <li>Signed policy bundles</li>
+          <li class="base"><span>Everything in Team</span></li>
+          <li class="pl"><span>Single sign-on <span class="badge planned">Planned</span></span></li>
+          <li class="pl"><span>On-prem deployment <span class="badge planned">Planned</span></span></li>
+          <li class="pl"><span>Support SLA <span class="badge planned">Planned</span></span></li>
+          <li><span>Signed policy bundles</span></li>
         </ul>
         <span class="btn soon" data-plan="enterprise">Not on sale yet</span>
       </div>
@@ -1360,7 +1553,7 @@ rules:
       <input type="number" id="seats" min="1" max="1000" value="5" inputmode="numeric">
       <output id="seatOut" for="seats" aria-live="polite"></output>
     </div>
-    <p class="pricenote">Nothing checks a licence. Every feature marked Built runs locally today whichever plan it is listed under, and there is no checkout. Prices ($15 Pro, $25 Team, per developer per month) are the intended list prices per developer per month and may change before anything goes on sale. Team and Enterprise lines marked Planned are not built.</p>
+    <p class="pricenote">Nothing checks a licence today, and there is no checkout. Everything marked Built is in version 0.1.1 and is free. Pro adds the new features marked Launching Nov 10, which do not exist until they are built, tested and released; Team is Pro plus the items listed under it. Prices ($15 Pro, $25 Team, per developer per month) are the intended list prices and may change before anything goes on sale. The CEPHALOG code (20% off the first year of Pro or Team) works from launch day. Lines marked Planned are not built.</p>
   </div>
 </section>
 
@@ -1493,6 +1686,12 @@ cephalo watch</pre><button class="copy" data-copy='cephalo doctor&#10;cephalo te
         <div class="ans"><p>Built-in rules stop agents from writing the Claude Code or Hermes config (where the hook lives), Cephalo's rules file, audit log and vault files, and its MCP and tripwire state. They are rules, not a sandbox: you, or anything running outside the hooks, can still edit those files, and a crashed hook lets the call through. See <a href="#limits">the limits</a>.</p></div></details>
       <details><summary>Does it work on Windows?</summary>
         <div class="ans"><p>Yes. Windows is the platform it has been run on for real. macOS and Linux have adapters that are covered by unit tests only.</p></div></details>
+      <details><summary>Will version 0.1.1 stay free?</summary>
+        <div class="ans"><p>Yes. Version 0.1.1 is MIT licensed, stays on npm, and stays free and open source. Nothing that is in it moves to a paid plan.</p></div></details>
+      <details><summary>What is in Pro and Team?</summary>
+        <div class="ans"><p>Pro adds three new features that launch with 0.2.0: a network egress allowlist, a tamper-evident audit log and a bypass benchmark. Team is Pro plus the dashboard, shared policy and audit log sync through a shared folder; the hosted dashboard is Planned. The three Pro features do not exist until they are built, tested and released, and the site marks them as launching Nov 10 until then.</p></div></details>
+      <details><summary>What is the CEPHALOG code?</summary>
+        <div class="ans"><p>Early users get 20% off the first year of Pro or Team with code <code>CEPHALOG</code>. It works from launch day, Nov 10, 2026. There is no checkout yet.</p></div></details>
     </div>
   </div>
 </section>
@@ -1624,6 +1823,7 @@ if(typeof module!=='undefined')module.exports=CephaloEngine;
 <script src="checkout.config.js"></script>
 <script src="checkout.js" defer></script>
 <script src="stats.js" defer></script>
+<script src="countdown.js" defer></script>
 <!-- Visit counts: GoatCounter, no cookies. Opt yourself out on a device with localStorage.skipgc = "t" in the browser console. -->
 <script data-goatcounter="https://cephalo.goatcounter.com/count"
         async src="//gc.zgo.at/count.js"></script>
