@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy — Cephalo</title>
+<meta name="description" content="What Cephalo and this website collect, who handles it, and your choices.">
+<meta name="color-scheme" content="dark light">
+<link rel="canonical" href="https://nomajorconcerns.github.io/cephalo/privacy.html">
+<link rel="stylesheet" href="legal.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to the content</a>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><symbol id="octo" viewBox="0 0 16 12" shape-rendering="crispEdges"><rect x="6" y="0" width="4" height="1" fill="#f472b6"/><rect x="3" y="1" width="10" height="1" fill="#f472b6"/><rect x="2" y="2" width="2" height="1" fill="#f472b6"/><rect x="4" y="2" width="2" height="1" fill="#f9a8d4"/><rect x="6" y="2" width="8" height="1" fill="#f472b6"/><rect x="1" y="3" width="2" height="1" fill="#f472b6"/><rect x="3" y="3" width="1" height="1" fill="#f9a8d4"/><rect x="4" y="3" width="11" height="1" fill="#f472b6"/><rect x="1" y="4" width="3" height="1" fill="#f472b6"/><rect x="4" y="4" width="2" height="1" fill="#ffffff"/><rect x="6" y="4" width="4" height="1" fill="#f472b6"/><rect x="10" y="4" width="2" height="1" fill="#ffffff"/><rect x="12" y="4" width="3" height="1" fill="#f472b6"/><rect x="1" y="5" width="3" height="1" fill="#f472b6"/><rect x="4" y="5" width="1" height="1" fill="#ffffff"/><rect x="5" y="5" width="1" height="1" fill="#1a1a2e"/><rect x="6" y="5" width="4" height="1" fill="#f472b6"/><rect x="10" y="5" width="1" height="1" fill="#ffffff"/><rect x="11" y="5" width="1" height="1" fill="#1a1a2e"/><rect x="12" y="5" width="3" height="1" fill="#f472b6"/><rect x="1" y="6" width="14" height="1" fill="#f472b6"/><rect x="2" y="7" width="12" height="1" fill="#f472b6"/><rect x="1" y="8" width="2" height="1" fill="#f472b6"/><rect x="4" y="8" width="2" height="1" fill="#f472b6"/><rect x="7" y="8" width="2" height="1" fill="#f472b6"/><rect x="10" y="8" width="2" height="1" fill="#f472b6"/><rect x="13" y="8" width="2" height="1" fill="#f472b6"/><rect x="0" y="9" width="2" height="1" fill="#f472b6"/><rect x="4" y="9" width="1" height="1" fill="#f472b6"/><rect x="7" y="9" width="2" height="1" fill="#f472b6"/><rect x="11" y="9" width="1" height="1" fill="#f472b6"/><rect x="14" y="9" width="2" height="1" fill="#f472b6"/><rect x="0" y="10" width="1" height="1" fill="#f472b6"/><rect x="3" y="10" width="2" height="1" fill="#f472b6"/><rect x="7" y="10" width="2" height="1" fill="#f472b6"/><rect x="11" y="10" width="2" height="1" fill="#f472b6"/><rect x="15" y="10" width="1" height="1" fill="#f472b6"/><rect x="1" y="11" width="2" height="1" fill="#f472b6"/><rect x="5" y="11" width="2" height="1" fill="#f472b6"/><rect x="9" y="11" width="2" height="1" fill="#f472b6"/><rect x="13" y="11" width="2" height="1" fill="#f472b6"/></symbol></svg>
+<header class="top"><div class="wrap">
+  <a class="brand" href="./"><svg viewBox="0 0 16 12" shape-rendering="crispEdges" aria-hidden="true"><use href="#octo"/></svg>Cephalo</a>
+  <nav aria-label="Legal pages"><a href="privacy.html" aria-current="page">Privacy</a><a href="terms.html">Terms</a><a href="refunds.html">Refunds</a><a href="contact.html">Contact</a><a href="./">Back to the site</a></nav>
+</div></header>
+<main id="main"><div class="wrap">
+<h1>Privacy</h1>
+<p class="upd">Last updated November 5, 2026</p>
+<p class="lede">Short version: the free Cephalo program runs on your machine and sends nothing about you anywhere. The paid package checks your license key with Lemon Squeezy. This website counts visits without cookies. If you buy a paid plan, Lemon Squeezy handles your payment details and tells us who you are.</p>
+
+<h2>Who is responsible</h2>
+<p>Cephalo is run by Zuri (Cephalo, nomajorconcerns). Questions about this page: <a href="mailto:zuri77290@gmail.com">zuri77290@gmail.com</a>.</p>
+
+<h2>The Cephalo program</h2>
+<ul>
+<li>The free program (version 0.1.1 and the free features of later versions) has no telemetry. The audit log, rules, settings and any stored secrets stay in a folder on your computer (<code>~/.cephalo</code>). We never receive them.</li>
+<li>The program makes network requests only when you ask it to: for example <code>cephalo mcp scan</code> starts MCP servers you already approved, <code>cephalo models</code> talks to an Ollama you run yourself, and <code>cephalo replay --comment</code> uses your own <code>gh</code> login.</li>
+<li><strong>Pro and Team (from version 0.2.0).</strong> When you run <code>cephalo pro activate</code>, <code>renew</code> or <code>deactivate</code>, the program sends your license key and your computer's name to Lemon Squeezy's license service so the key can be checked. The program keeps only the last four characters of the key, the plan, an activation ID and the dates of the checks, in <code>~/.cephalo/license.json</code>. The check is repeated about every 35 days when you run <code>cephalo pro renew</code>. The audit log, rules and commands are never sent.</li>
+</ul>
+
+<h2>This website</h2>
+<ul>
+<li><strong>Hosting.</strong> The site is served by GitHub Pages. GitHub receives the technical data any web server sees (such as your IP address and browser) and handles it under its own privacy statement.</li>
+<li><strong>Visit counts.</strong> The site uses GoatCounter (cephalo.goatcounter.com), which counts page views without cookies and without building a profile of you. It records the page, the referrer, a coarse device and browser type, screen size and a country. It does not store your IP address. You can opt out on a device by running <code>localStorage.skipgc = "t"</code> in the browser console, or by using a blocker that stops GoatCounter.</li>
+<li><strong>Public numbers.</strong> Once an hour the site publishes totals from npm (downloads), GitHub (stars, forks, issues) and GoatCounter (visits). These are totals, not information about individuals.</li>
+<li><strong>On your device.</strong> The site remembers your light or dark choice in your browser's local storage. It never leaves your device. There are no advertising or tracking cookies.</li>
+<li><strong>Links.</strong> Links to GitHub, npm and Lemon Squeezy leave this site. Their privacy practices are their own.</li>
+</ul>
+
+<h2>Buying a paid plan</h2>
+<p>When paid plans are on sale, checkout and billing run on Lemon Squeezy, which is the seller of record. Lemon Squeezy collects what is needed to take payment and handle tax: your name, email, billing address, payment details and country. It sends us your name, email, country, the plan, the order and the license key it issued. We do not see your full card number. We use that information to deliver the plan, answer you, and keep tax and accounting records. Lemon Squeezy's own privacy policy applies to what it holds.</p>
+
+<h2>When you email us</h2>
+<p>If you write to <a href="mailto:zuri77290@gmail.com">zuri77290@gmail.com</a>, we keep your message and our replies so we can help you, and we delete them when they are no longer needed. Please do not send passwords, API keys or the contents of your audit log. If you need to show us a log, remove the secrets first.</p>
+
+<h2>Who we share data with</h2>
+<p>Only the services named on this page: GitHub (hosting), GoatCounter (visit counts) and Lemon Squeezy (payments and license checks). We do not sell personal data.</p>
+
+<h2>How long we keep it</h2>
+<p>Email is kept while we are helping you. Order and license records are kept as long as the license is active and as long as tax and accounting rules require. Visit counts hold no personal data.</p>
+
+<h2>Your choices</h2>
+<p>You can ask us what we hold about you, ask us to correct or delete it, or ask for a copy, by emailing <a href="mailto:zuri77290@gmail.com">zuri77290@gmail.com</a>. Where we have to keep records by law, we will tell you which. Depending on where you live you may have further rights, such as complaining to your data protection authority.</p>
+
+<h2>Changes</h2>
+<p>If we change this page we will change the date at the top. If a change affects what is collected, we will say so on the site.</p>
+
+</div></main>
+<footer><div class="wrap"><span>Cephalo is open source (MIT).</span><span class="sp"></span><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="refunds.html">Refunds</a><a href="contact.html">Contact</a></div></footer>
+</body>
+</html>
