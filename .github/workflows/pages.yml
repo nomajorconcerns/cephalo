@@ -46,7 +46,7 @@ jobs:
       - name: Collect the site files
         run: |
           mkdir _site
-          cp site/index.html site/commands.js site/stats.js site/checkout.config.js site/checkout.js site/og.png _site/
+          cp site/index.html site/commands.js site/stats.js site/checkout.config.js site/checkout.js site/countdown.js site/og.png _site/
       - name: Build the public numbers (stats.json)
         env:
           GITHUB_TOKEN: ${{ github.token }}

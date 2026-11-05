@@ -1,5 +1,8 @@
 #!/usr/bin/env node
-import { appendAudit, formatAudit, readAudit } from "./audit.js";
+import { appendAudit, auditPath, formatAudit, readAudit, setAuditSink } from "./audit.js";
+import { CONFIG_USAGE, configCommand } from "./configcmd.js";
+import { readConfig } from "./config.js";
+import { denyOutput } from "./hooks.js";
 import { evaluate } from "./engine.js";
 import { runHookJudged } from "./judge/hook.js";
 import {
@@ -10,7 +13,16 @@ import {
 } from "./install.js";
 import fs from "node:fs";
 import { createInterface } from "node:readline";
-import { printBanner, supportsColor } from "./banner.js";
+import { printBanner } from "./banner.js";
+import { withSpinner } from "./animate.js";
+import { PAID_COMMANDS, loadPro, notAvailableMessage, type ProContext } from "./pro.js";
+import { PRO_USAGE, proCommand } from "./procmd.js";
+import { DEFAULT_RULES, activePlatformRules } from "./rules.js";
+import { cephaloDir } from "./rules.js";
+import { colorLevel } from "./theme.js";
+import { askQuestion, cliPainter } from "./term.js";
+import { formatAuditColored, formatVerdict } from "./render.js";
+import { THEME_USAGE, themeCommand } from "./themecmd.js";
 import { runWatch } from "./watch.js";
 import { applyAllow, applyMode, listMcp, planAllow, planMode, planPin, planWrap, runScan } from "./mcpcmd.js";
 import { runProxy } from "./mcp/proxy.js";
@@ -39,7 +51,8 @@ import { modelsConfigPath } from "./models/config.js";
 const USAGE = `Usage:
   cephalo test "<command>"            Check a shell command against the rules
   cephalo hook claude|hermes          Hook entry point (reads JSON on stdin)
-  cephalo log [--blocked] [--limit N] Show recent audit entries
+  cephalo log [--blocked|--shadow] [--limit N]
+                                      Show recent audit entries (--shadow: only what shadow-mode rules would have blocked)
   cephalo watch [--blocked] [--last N] [--no-color]
                                       Follow the audit log live (Ctrl+C to stop)
   cephalo mcp [list|allow|pin|scan|wrap|mode|path]
@@ -67,7 +80,12 @@ const USAGE = `Usage:
   cephalo init [--yes]                Set up rules and install hooks for the agents found
   cephalo doctor                      Check rules, hooks, approvals and the audit log
   cephalo rules [list|show <id>|path|reset [--yes]]
-                                      Inspect the rules file, or reset it to the defaults (with backup)
+                                      Inspect the rules file (actions, shadow mode, missing defaults), or reset it (with backup)
+  cephalo config [list|get|set|path]  Settings: fail-closed, shadow mode, what 'ask' does where agents cannot ask
+  cephalo theme [list|preview|set]    Color scheme of the CLI output: reef, abyss, coral, glow, ink
+  cephalo pro [status|activate|renew]  License for the paid plans (Pro, Team) and the Pro package
+  cephalo egress | audit verify | bench
+                                      Pro: network egress allowlist, tamper-evident audit log, bypass benchmark
 `;
 
 const REPLAY_USAGE = `Usage: cephalo replay [options]
@@ -136,6 +154,12 @@ async function readStdin(): Promise<string> {
 async function main(): Promise<number> {
   const [cmd, ...rest] = process.argv.slice(2);
 
+  // The paid package, if this machine has a current license for it. Synchronous and offline: it only reads files.
+  // With no license file this costs one failed read, so the hook stays as fast as before.
+  const loadedPro = loadPro();
+  const pro = loadedPro.ok ? loadedPro.runtime : null;
+  setAuditSink(pro?.audit ? pro.audit.append : undefined);
+
   if (cmd === "hook") {
     // NEVER print the banner (or any non-JSON text) here: Claude Code and
     // Hermes parse hook stdout as JSON, so extra output breaks the decision.
@@ -144,13 +168,41 @@ async function main(): Promise<number> {
       process.stderr.write(USAGE);
       return 1; // non-blocking error for the agent
     }
+    const cfg = readConfig().config;
     let raw = "";
+    // Fail-closed mode: if the hook has not answered in time (this includes waiting for input that never arrives), block the call.
+    // An after-call event cannot be blocked, so for that the hook just ends.
+    let answered = false;
+    let timer: NodeJS.Timeout | undefined;
+    if (cfg.failClosed) {
+      timer = setTimeout(() => {
+        if (answered) return;
+        answered = true;
+        let after = false;
+        try {
+          const ev = JSON.parse(raw)?.hook_event_name;
+          after = ev === "PostToolUse" || ev === "post_tool_call" || ev === "postToolUse";
+        } catch {
+          /* unreadable input: treat as a before-call event */
+        }
+        try {
+          appendAudit({ ts: new Date().toISOString(), agent, tool: "hook", decision: after ? "allow" : "block", rule: "fail-closed", error: `hook did not answer within ${cfg.hookTimeoutSeconds}s` });
+        } catch {
+          /* the answer matters more than the log */
+        }
+        if (!after) process.stdout.write(denyOutput(agent, `🛑 Cephalo did not finish checking this call within ${cfg.hookTimeoutSeconds}s and fail-closed mode is on, so it was blocked. Turn it off with: cephalo config set fail-closed off`) + "\n");
+        exitAfterFlush(0);
+      }, cfg.hookTimeoutSeconds * 1000);
+    }
     try {
       raw = await readStdin();
     } catch (e) {
-      process.stderr.write(`cephalo: could not read stdin (allowing call): ${(e as Error).message}\n`);
+      process.stderr.write(`cephalo: could not read stdin (${cfg.failClosed ? "blocking call, fail-closed" : "allowing call"}): ${(e as Error).message}\n`);
     }
-    const out = await runHookJudged(agent, raw);
+    const out = await runHookJudged(agent, raw, { config: cfg, integrity: {}, pro });
+    if (timer) clearTimeout(timer);
+    if (answered) return 0; // the timer already answered
+    answered = true;
     if (out) process.stdout.write(out + "\n");
     return 0;
   }
@@ -161,7 +213,7 @@ async function main(): Promise<number> {
       process.stderr.write(USAGE);
       return 1;
     }
-    const res = evaluate({ command });
+    const res = evaluate({ command }, undefined, undefined, { shadowAll: readConfig().config.shadow });
     try {
       appendAudit({
         ts: new Date().toISOString(),
@@ -170,21 +222,19 @@ async function main(): Promise<number> {
         command,
         decision: res.decision,
         ...(res.rule ? { rule: res.rule.id } : {}),
+        ...(res.shadow?.length ? { shadow: res.shadow.map((s) => ({ rule: s.rule.id, would: s.would })) } : {}),
       });
     } catch (e) {
       process.stderr.write(`cephalo: audit log failed: ${(e as Error).message}\n`);
     }
-    console.log(
-      res.decision === "block" && res.rule
-        ? `🛑 BLOCKED (${res.rule.id}: ${res.rule.description})`
-        : "✓ ALLOWED",
-    );
+    for (const line of formatVerdict(res, cliPainter(), readConfig().config.askDefault)) console.log(line);
     return 0;
   }
 
   if (cmd === "log") {
     let limit = 20;
     const blocked = rest.includes("--blocked");
+    const shadow = rest.includes("--shadow");
     const i = rest.indexOf("--limit");
     if (i >= 0) {
       limit = Number(rest[i + 1]);
@@ -193,9 +243,10 @@ async function main(): Promise<number> {
         return 1;
       }
     }
-    const entries = readAudit({ blocked, limit });
-    if (entries.length === 0) console.log("No audit entries.");
-    for (const e of entries) console.log(formatAudit(e));
+    const entries = readAudit({ blocked, shadow, limit });
+    if (entries.length === 0) console.log(shadow ? "No shadow-mode hits in the log." : "No audit entries.");
+    const painter = cliPainter();
+    for (const e of entries) console.log(formatAuditColored(e, painter));
     return 0;
   }
 
@@ -209,7 +260,8 @@ async function main(): Promise<number> {
         return 1;
       }
     }
-    const color = rest.includes("--no-color") ? false : supportsColor();
+    const painter = cliPainter();
+    const color = rest.includes("--no-color") ? false : painter.level > 0;
     const ac = new AbortController();
     process.once("SIGINT", () => ac.abort());
     process.once("SIGTERM", () => ac.abort());
@@ -217,6 +269,7 @@ async function main(): Promise<number> {
       blocked: rest.includes("--blocked"),
       last,
       color,
+      painter,
       width: process.stdout.isTTY ? process.stdout.columns : undefined,
       write: (line) => console.log(line),
       signal: ac.signal,
@@ -236,7 +289,7 @@ async function main(): Promise<number> {
         return false;
       }
       const rl = createInterface({ input: process.stdin, output: process.stdout });
-      const answer = await new Promise<string>((resolve) => rl.question(`${q} [y/N] `, resolve));
+      const answer = await new Promise<string>((resolve) => askQuestion(rl, `${q} [y/N] `, resolve));
       rl.close();
       return /^y(es)?$/i.test(answer.trim());
     };
@@ -276,7 +329,7 @@ async function main(): Promise<number> {
       return 1;
     }
     try {
-      const r = await costReport(parsed.args, { cwd: process.cwd() });
+      const r = await (parsed.args.json ? costReport(parsed.args, { cwd: process.cwd() }) : withSpinner("reading sessions and pull requests", () => costReport(parsed.args, { cwd: process.cwd() })));
       if (parsed.args.json) console.log(JSON.stringify(r.report, null, 2));
       else for (const line of r.lines) console.log(line);
       return 0;
@@ -301,7 +354,7 @@ async function main(): Promise<number> {
     const env = { cwd: process.cwd() };
     let replay;
     try {
-      replay = collectReplay(a, env);
+      replay = await withSpinner("collecting what the agents did on this branch", () => collectReplay(a, env));
     } catch (e) {
       process.stderr.write(`cephalo: ${(e as Error).message}\n`);
       return 1;
@@ -317,7 +370,7 @@ async function main(): Promise<number> {
           return 1;
         }
         const rl = createInterface({ input: process.stdin, output: process.stdout });
-        const answer = await new Promise<string>((resolve) => rl.question("Post it? [y/N] ", resolve));
+        const answer = await new Promise<string>((resolve) => askQuestion(rl, "Post it? [y/N] ", resolve));
         rl.close();
         ok = /^y(es)?$/i.test(answer.trim());
       }
@@ -368,7 +421,7 @@ async function main(): Promise<number> {
         return 1;
       }
       const rl = createInterface({ input: process.stdin, output: process.stdout });
-      const answer = await new Promise<string>((resolve) => rl.question("Add this rule? [y/N] ", resolve));
+      const answer = await new Promise<string>((resolve) => askQuestion(rl, "Add this rule? [y/N] ", resolve));
       rl.close();
       ok = /^y(es)?$/i.test(answer.trim());
     }
@@ -475,7 +528,7 @@ async function main(): Promise<number> {
             return 1;
           }
           const rl = createInterface({ input: process.stdin, output: process.stdout });
-          const answer = await new Promise<string>((resolve) => rl.question("Remove it? [y/N] ", resolve));
+          const answer = await new Promise<string>((resolve) => askQuestion(rl, "Remove it? [y/N] ", resolve));
           rl.close();
           ok = /^y(es)?$/i.test(answer.trim());
         }
@@ -513,7 +566,7 @@ async function main(): Promise<number> {
         return false;
       }
       const rl = createInterface({ input: process.stdin, output: process.stdout });
-      const answer = await new Promise<string>((resolve) => rl.question(question, resolve));
+      const answer = await new Promise<string>((resolve) => askQuestion(rl, question, resolve));
       rl.close();
       return /^y(es)?$/i.test(answer.trim());
     };
@@ -593,7 +646,7 @@ async function main(): Promise<number> {
         process.stderr.write(`cephalo: could not read ${target}: ${(e as Error).message}\n`);
         return 1;
       }
-      const r = await modelsScan(text, target === "-" ? "stdin" : target);
+      const r = await withSpinner("asking the local model", () => modelsScan(text, target === "-" ? "stdin" : target));
       for (const line of r.lines) console.log(line);
       return r.exitCode;
     }
@@ -609,7 +662,9 @@ async function main(): Promise<number> {
       }
       const valued = new Set(["--only", "--model", "--limit", "--json"]);
       const file = rest.slice(1).find((a, i, arr) => !a.startsWith("-") && !valued.has(arr[i - 1] ?? ""));
-      const r = await modelsEval({ casesFile: file, only: only as "commands" | "diffs" | undefined, model: flag("--model"), limit: flag("--limit") ? Number(flag("--limit")) : undefined, jsonOut: flag("--json"), onProgress: (l) => process.stderr.write(l + "\n") });
+      const r = await withSpinner("evaluating the local model", (spin) =>
+        modelsEval({ casesFile: file, only: only as "commands" | "diffs" | undefined, model: flag("--model"), limit: flag("--limit") ? Number(flag("--limit")) : undefined, jsonOut: flag("--json"), onProgress: (l) => (spin.animated ? spin.update(l) : process.stderr.write(l + "\n")) }),
+      );
       for (const line of r.lines) console.log(line);
       return r.exitCode;
     }
@@ -636,7 +691,7 @@ async function main(): Promise<number> {
           return 1;
         }
         const rl = createInterface({ input: process.stdin, output: process.stdout });
-        const answer = await new Promise<string>((resolve) => rl.question("Apply? [y/N] ", resolve));
+        const answer = await new Promise<string>((resolve) => askQuestion(rl, "Apply? [y/N] ", resolve));
         rl.close();
         ok = /^y(es)?$/i.test(answer.trim());
       }
@@ -662,7 +717,7 @@ async function main(): Promise<number> {
         return false;
       }
       const rl = createInterface({ input: process.stdin, output: process.stdout });
-      const answer = await new Promise<string>((resolve) => rl.question(question, resolve));
+      const answer = await new Promise<string>((resolve) => askQuestion(rl, question, resolve));
       rl.close();
       return /^y(es)?$/i.test(answer.trim());
     };
@@ -717,7 +772,7 @@ async function main(): Promise<number> {
     }
     if (sub === "scan") {
       const name = rest.slice(1).find((a) => !a.startsWith("-"));
-      const r = await runScan(name);
+      const r = await (rest.includes("--json") ? runScan(name) : withSpinner("scanning MCP servers", () => runScan(name)));
       if (rest.includes("--json")) console.log(JSON.stringify(r.results, null, 2));
       else for (const line of r.lines) console.log(line);
       return r.exitCode;
@@ -775,7 +830,7 @@ async function main(): Promise<number> {
         interactive: Boolean(process.stdin.isTTY),
         confirm: async () => {
           const rl = createInterface({ input: process.stdin, output: process.stdout });
-          const answer = await new Promise<string>((resolve) => rl.question("Back up and reset the rules? [y/N] ", resolve));
+          const answer = await new Promise<string>((resolve) => askQuestion(rl, "Back up and reset the rules? [y/N] ", resolve));
           rl.close();
           return /^y(es)?$/i.test(answer.trim());
         },
@@ -786,25 +841,84 @@ async function main(): Promise<number> {
     return 1;
   }
 
+  if (cmd === "config") {
+    if (rest[0] === "--help" || rest[0] === "-h") {
+      process.stdout.write(CONFIG_USAGE);
+      return 0;
+    }
+    const r = configCommand(rest);
+    for (const line of r.lines) console.log(line);
+    return r.exitCode;
+  }
+
+  if (cmd === "pro") {
+    if (rest[0] === "--help" || rest[0] === "-h") {
+      process.stdout.write(PRO_USAGE);
+      return 0;
+    }
+    const r = await proCommand(rest, {
+      readKey: process.stdin.isTTY ? () => readHidden("License key (typing is hidden): ") : undefined,
+    });
+    for (const line of r.lines) (r.exitCode === 0 ? console.log : console.error)(line);
+    return r.exitCode;
+  }
+
+  if (cmd !== undefined && Object.prototype.hasOwnProperty.call(PAID_COMMANDS, cmd)) {
+    const run = pro?.commands[cmd];
+    if (!run) {
+      for (const line of notAvailableMessage(cmd, loadedPro as Extract<typeof loadedPro, { ok: false }>)) console.error(line);
+      return 1;
+    }
+    const painter = cliPainter();
+    const defaults = [...DEFAULT_RULES, ...activePlatformRules(DEFAULT_RULES)];
+    const ctx: ProContext = {
+      version: getVersion(),
+      tier: pro!.tier,
+      dir: cephaloDir(),
+      auditFile: auditPath(),
+      evaluate: (command, o) => {
+        const r = evaluate({ command }, o?.defaults ? defaults : undefined, undefined, {});
+        return { decision: r.decision, ...(r.rule ? { rule: r.rule.id } : {}) };
+      },
+      painter,
+      out: (l) => console.log(l),
+      err: (l) => console.error(l),
+    };
+    return await run(rest, ctx);
+  }
+
+  if (cmd === "theme") {
+    if (rest[0] === "--help" || rest[0] === "-h") {
+      process.stdout.write(THEME_USAGE);
+      return 0;
+    }
+    const r = themeCommand(rest);
+    for (const line of r.lines) (r.exitCode === 0 ? console.log : console.error)(line);
+    return r.exitCode;
+  }
+
   if (cmd === "doctor") {
-    const { checks, exitCode } = runDoctor();
-    for (const line of formatChecks(checks)) console.log(line);
+    const { checks, exitCode } = await withSpinner("checking rules, hooks and approvals", () => runDoctor());
+    for (const line of formatChecks(checks, cliPainter())) console.log(line);
     return exitCode;
   }
 
   if (cmd === "init") {
     printBanner(getVersion());
-    return runInit({
-      yes: rest.includes("--yes") || rest.includes("-y"),
+    const yesInit = rest.includes("--yes") || rest.includes("-y");
+    const doInit = () => runInit({
+      yes: yesInit,
       interactive: Boolean(process.stdin.isTTY),
       confirm: async () => {
         const rl = createInterface({ input: process.stdin, output: process.stdout });
-        const answer = await new Promise<string>((resolve) => rl.question("Apply these changes? [y/N] ", resolve));
+        const answer = await new Promise<string>((resolve) => askQuestion(rl, "Apply these changes? [y/N] ", resolve));
         rl.close();
         return /^y(es)?$/i.test(answer.trim());
       },
       log: (line) => console.log(line),
     });
+    // With --yes nothing asks a question, so the loading animation can run; otherwise it would sit on top of the prompt.
+    return yesInit ? withSpinner("setting up Cephalo", doInit) : doInit();
   }
 
   if (cmd === undefined || cmd === "help" || cmd === "--help" || cmd === "-h") {

@@ -13,8 +13,8 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 test("formatWatchLine: colors ALLOW green and BLOCK red, plain when color is off", () => {
   const a = formatWatchLine(entry(), { color: true });
   const b = formatWatchLine(entry({ decision: "block", rule: "no-rm-rf", command: "rm -rf x" }), { color: true });
-  assert.match(a, /\x1b\[32mALLOW\x1b\[0m/);
-  assert.match(b, /\x1b\[1;31mBLOCK\x1b\[0m/);
+  assert.match(a, /\x1b\[92mALLOW\x1b\[0m/, "bright green in the default scheme at 16 colors");
+  assert.match(b, /\x1b\[1;91mBLOCK\x1b\[0m/, "bold bright red");
   assert.match(b, /\[no-rm-rf\]/);
   const plain = formatWatchLine(entry({ decision: "block", rule: "r" }), { color: false });
   assert.ok(!plain.includes("\x1b"));

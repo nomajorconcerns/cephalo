@@ -3,6 +3,9 @@ import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { auditPath } from "./audit.js";
+import { readConfig } from "./config.js";
+import type { Painter, Role } from "./theme.js";
+import { verifyFiles } from "./integrity.js";
 import { runHook } from "./hooks.js";
 import { getPlatform } from "./platform.js";
 import { mcpSummary, type McpCmdOptions } from "./mcpcmd.js";
@@ -41,6 +44,10 @@ export interface DoctorOptions {
   modelsCheckFile?: string;
   /** Vault lookups (tests): directory and backend. */
   vault?: VaultCmdOptions;
+  /** Cephalo's settings file (tests). */
+  configFile?: string;
+  /** The installed dist/ folder to verify against its integrity list (tests). */
+  dist?: string;
 }
 
 function defaultHermesList(): string | null {
@@ -127,6 +134,26 @@ export function runDoctor(o: DoctorOptions = {}): { checks: Check[]; exitCode: n
     const plat = getPlatform();
     const active = activePlatformRules(rules, plat);
     checks.push({ level: "info", name: "Platform rules", detail: `${active.length} built-in ${plat.label} rule(s) active on top of the rules file` });
+  }
+
+  // Settings (config.yml): fail-closed, shadow mode, ask default
+  {
+    const cs = readConfig(o.configFile ?? (o.rulesFile ? path.join(path.dirname(o.rulesFile), "config.yml") : undefined));
+    if (cs.problems.length) checks.push({ level: "warn", name: "Settings", detail: cs.problems.join("; "), fix: "Fix the file by hand, or: cephalo config set <key> <value>" });
+    const parts = [`fail-closed ${cs.config.failClosed ? "ON" : "off"}`, `shadow mode ${cs.config.shadow ? "ON" : "off"}`, `ask-default ${cs.config.askDefault}`];
+    checks.push({ level: cs.config.shadow ? "warn" : "info", name: "Settings", detail: `${parts.join(", ")}${cs.exists ? "" : " (defaults; no config.yml yet)"}${cs.config.shadow ? ". Shadow mode is on: rules are logged, not enforced" : ""}`, fix: cs.config.shadow ? "cephalo config set shadow off" : undefined });
+    const shadowRules = rules.filter((r) => r.shadow).map((r) => r.id);
+    if (shadowRules.length) checks.push({ level: "info", name: "Shadow rules", detail: `${shadowRules.join(", ")} only log what they would block` });
+  }
+
+  // Self-integrity: do the installed files still match the list written when this version was built?
+  {
+    const f = verifyFiles(o.dist);
+    if (!f.hasManifest) checks.push({ level: "warn", name: "Install integrity", detail: f.problems[0] ?? "no integrity list", fix: "cd to the cephalo project and run: npm run build" });
+    else if (f.problems.length) {
+      const shown = f.problems.slice(0, 4).join("; ");
+      checks.push({ level: "fail", name: "Install integrity", detail: `${f.problems.length} problem(s) with the installed files: ${shown}${f.problems.length > 4 ? "; ..." : ""}. The guard may have been changed.`, fix: "If you did not change them: cd to the cephalo project, run npm run build, then cephalo install claude (and hermes)" });
+    } else checks.push({ level: "ok", name: "Install integrity", detail: `${f.checked} installed files match the list from the build (a list that someone who can edit dist/ could also edit; it catches accidents and clumsy tampering)` });
   }
 
   {
@@ -253,16 +280,19 @@ export function runDoctor(o: DoctorOptions = {}): { checks: Check[]; exitCode: n
 }
 
 const MARK: Record<Level, string> = { ok: "✓", warn: "!", fail: "✗", info: "-" };
+const MARK_ROLE: Record<Level, Role> = { ok: "ok", warn: "warn", fail: "fail", info: "info" };
 
-export function formatChecks(checks: Check[]): string[] {
+/** The doctor's report as lines. With a painter the marks and the summary take the theme's colors; the symbols and words are always there. */
+export function formatChecks(checks: Check[], p?: Painter): string[] {
   const lines: string[] = [];
+  const paint = (r: Role, s: string) => (p ? p.role(r, s) : s);
   for (const c of checks) {
-    lines.push(`${MARK[c.level]} ${c.name}: ${c.detail}`);
-    if (c.fix) lines.push(`    fix: ${c.fix}`);
+    lines.push(`${paint(MARK_ROLE[c.level], MARK[c.level])} ${c.name}: ${c.detail}`);
+    if (c.fix) lines.push(`    ${paint("dim", "fix:")} ${c.fix}`);
   }
   const fails = checks.filter((c) => c.level === "fail").length;
   const warns = checks.filter((c) => c.level === "warn").length;
   lines.push("");
-  lines.push(fails ? `${fails} problem(s), ${warns} warning(s).` : warns ? `No problems, ${warns} warning(s).` : "All good.");
+  lines.push(fails ? paint("fail", `${fails} problem(s), ${warns} warning(s).`) : warns ? paint("warn", `No problems, ${warns} warning(s).`) : paint("ok", "All good."));
   return lines;
 }

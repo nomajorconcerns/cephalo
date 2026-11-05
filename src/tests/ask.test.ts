@@ -251,7 +251,7 @@ test("log, watch and replay show ASK entries", async () => {
   const entry = e.audit().find((x) => x.decision === "ask")!;
   assert.match(formatAudit(entry), /ASK/);
   assert.match(formatWatchLine(entry, { color: false }), /ASK/);
-  assert.match(formatWatchLine(entry, { color: true }), /\x1b\[1;33mASK/);
+  assert.match(formatWatchLine(entry, { color: true }), /\x1b\[1;93mASK/);
   assert.equal(readAudit({ blocked: true }, e.opts.auditFile).length, 0, "--blocked still means blocked");
   const ev = toEvents([entry])[0];
   assert.deepEqual([ev.decision, ev.asked], ["allow", true]);

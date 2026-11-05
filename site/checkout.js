@@ -53,8 +53,8 @@
     var who = (cfg && cfg.provider) || 'the payment provider';
     if (anyLink) {
       return {
-        head: 'Pro and Team are early-supporter plans. Paying funds development; it does not unlock anything today. Everything marked Built already runs locally for everyone, and items marked Planned do not exist yet.',
-        note: 'Nothing checks a licence. Every feature marked Built runs locally today whichever plan it is listed under, so paying does not unlock anything yet; it supports development. Checkout is run by ' + who + ', which sells the subscription and sends receipts. Prices ($15 Pro, $25 Team, per developer per month) may change. Team and Enterprise lines marked Planned are not built.',
+        head: 'Everything in version 0.1.1 stays free. Pro and Team add the new features marked Launching Nov 10, and exist only once they are built, tested and released.',
+        note: 'Nothing checks a licence today. Everything marked Built is in version 0.1.1 and is free. Pro and Team are for the new features, which do not exist until they are released. Checkout is run by ' + who + ', which sells the subscription and sends receipts. Prices ($15 Pro, $25 Team, per developer per month) may change. The CEPHALOG code (20% off the first year) works from launch day. Lines marked Planned are not built.',
       };
     }
     if (anyTest) return { head: null, note: null, banner: 'Test checkout links are showing because this address contains ?checkout=test. Other visitors still see "Not on sale yet". Test links charge nothing.' };

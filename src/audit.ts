@@ -37,6 +37,8 @@ export interface AuditEntry {
   pin?: string;
   params?: unknown;
   note?: string;
+  /** Shadow mode: rules that matched and would have blocked (or asked) but were only logged. The call was not stopped. */
+  shadow?: Array<{ rule: string; would: "block" | "ask" }>;
   /** The agent's session id and working directory (what lets a replay be scoped to one project/branch). */
   session?: string;
   cwd?: string;
@@ -57,14 +59,31 @@ export function auditPath(): string {
   return path.join(cephaloDir(), "audit.jsonl");
 }
 
-export function appendAudit(entry: AuditEntry, file: string = auditPath()): void {
+/** Writes one finished audit line. The paid package installs one that chains each line to the one before it. */
+export type AuditSink = (file: string, line: string) => void;
+let defaultSink: AuditSink | undefined;
+export function setAuditSink(sink: AuditSink | undefined): void {
+  defaultSink = sink;
+}
+
+export function appendAudit(entry: AuditEntry, file: string = auditPath(), sink: AuditSink | undefined = defaultSink): void {
   fs.mkdirSync(path.dirname(file), { recursive: true });
   // A command that carried a literal token (and was blocked for it) must not leave that token in the log.
-  fs.appendFileSync(file, redactTokens(JSON.stringify(entry)) + "\n", "utf8");
+  const line = redactTokens(JSON.stringify(entry));
+  if (sink) {
+    try {
+      sink(file, line);
+      return;
+    } catch (e) {
+      // Never lose the entry: write it plainly. A chain check will show the line is not part of the chain, which is true.
+      process.stderr.write(`cephalo: chained audit write failed (${(e as Error).message}); wrote the line without a chain\n`);
+    }
+  }
+  fs.appendFileSync(file, line + "\n", "utf8");
 }
 
 export function readAudit(
-  opts: { blocked?: boolean; limit?: number } = {},
+  opts: { blocked?: boolean; shadow?: boolean; limit?: number } = {},
   file: string = auditPath(),
 ): AuditEntry[] {
   if (!fs.existsSync(file)) return [];
@@ -77,15 +96,22 @@ export function readAudit(
       /* skip corrupt line */
     }
   }
-  const filtered = opts.blocked ? entries.filter((e) => e.decision === "block") : entries;
+  const filtered = opts.shadow ? entries.filter((e) => e.shadow?.length) : opts.blocked ? entries.filter((e) => e.decision === "block") : entries;
   const limit = opts.limit ?? 20;
   return limit > 0 ? filtered.slice(-limit) : filtered;
 }
 
+/** "would block: rule-a, rule-b" for an entry whose shadow-mode rules matched; empty otherwise. */
+export function shadowLabel(e: AuditEntry): string {
+  if (!e.shadow?.length) return "";
+  return e.shadow.map((s) => `would ${s.would}: ${s.rule}`).join("; ");
+}
+
 export function formatAudit(e: AuditEntry): string {
   const what = entrySubject(e);
+  const shadow = shadowLabel(e) ? ` {${shadowLabel(e)}}` : "";
   const rule = e.rule ? ` [${e.rule}]` : "";
   const err = e.error ? ` (error: ${e.error})` : "";
   const who = e.user ? `  (${e.user})` : "";
-  return `${e.ts}  ${e.decision.toUpperCase().padEnd(5)}  ${e.agent}/${e.tool}${rule}  ${what}${err}${who}`;
+  return `${e.ts}  ${e.decision.toUpperCase().padEnd(5)}  ${e.agent}/${e.tool}${rule}${shadow}  ${what}${err}${who}`;
 }

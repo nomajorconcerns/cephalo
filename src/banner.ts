@@ -1,22 +1,17 @@
 // src/banner.ts
 // Cephalo terminal logo: a pixel octopus drawn with half-block characters,
-// next to a gradient "CEPHALO" wordmark. Uses 24-bit ANSI color.
+// next to a gradient "CEPHALO" wordmark. The colors come from the active theme
+// (see theme.ts); this file has none of its own.
 //
 // Never call printBanner() from `cephalo hook ...` commands: hook stdout
 // must contain only JSON, or Claude Code and Hermes can't read the decision.
 
-type RGB = [number, number, number];
+import { cliPainter } from "./term.js";
+import { colorLevel, mix, shade, type Painter, type RGB } from "./theme.js";
 
 // Pixel octopus: 16 x 12 pixels. Two pixel rows become one terminal row.
-// "." = transparent. Letters map to the palette below.
-const PALETTE: Record<string, RGB> = {
-  P: [255, 92, 138], // body (coral pink)
-  L: [255, 170, 200], // shine
-  W: [255, 255, 255], // eye white
-  K: [26, 26, 46], // pupil
-};
-
-const OCTOPUS = [
+// "." = transparent. The letters are theme colors: P body, L shine, W eye white, K pupil.
+export const OCTOPUS = [
   "......PPPP......",
   "...PPPPPPPPPP...",
   "..PPLLPPPPPPPP..",
@@ -31,6 +26,29 @@ const OCTOPUS = [
   ".PP..PP..PP..PP.",
 ];
 
+/** Poses for the animation. Tentacles are the bottom four pixel rows; the eyes are rows 4 and 5. Every pose is 16 pixels wide. */
+export const TENTACLES: string[][] = [
+  OCTOPUS.slice(8),
+  [".PP.PP.PP.PP.PP.", ".PP..P.PP.P..PP.", "PP..PP.PP.PP..PP", ".P..PP.PP.PP..P."],
+  [".PP.PP.PP.PP.PP.", "PP.P..PP..P..PP.", "P..PP.PP.PP.P..P", "..PP..PP..PP..P."],
+];
+const EYES_CLOSED = [".PPPPPPPPPPPPPP.", ".PPPKKPPPPKKPPP."];
+
+export interface Pose {
+  /** Which tentacle shape (0 is the resting one). */
+  tentacles?: number;
+  blink?: boolean;
+}
+
+/** The octopus drawing in a pose: OCTOPUS for the default. */
+export function poseRows(pose: Pose = {}): string[] {
+  const rows = OCTOPUS.slice();
+  if (pose.blink) rows.splice(4, 2, ...EYES_CLOSED);
+  const t = TENTACLES[(pose.tentacles ?? 0) % TENTACLES.length]!;
+  rows.splice(8, 4, ...t);
+  return rows;
+}
+
 // "cephalo" in the ANSI Shadow figlet font.
 const WORDMARK = [
   " ██████╗███████╗██████╗ ██╗  ██╗ █████╗ ██╗      ██████╗ ",
@@ -43,104 +61,88 @@ const WORDMARK = [
 
 const TAGLINE = "the seatbelt for AI coding agents";
 
-const TEAL: RGB = [45, 212, 191];
-const VIOLET: RGB = [139, 92, 246];
-const GRAY: RGB = [139, 148, 158];
-
-const ESC = "\x1b[";
-const RESET = `${ESC}0m`;
-const BOLD = `${ESC}1m`;
-const fg = ([r, g, b]: RGB): string => `${ESC}38;2;${r};${g};${b}m`;
-const bg = ([r, g, b]: RGB): string => `${ESC}48;2;${r};${g};${b}m`;
-
-function mix(a: RGB, b: RGB, t: number): RGB {
-  return [0, 1, 2].map((i) => Math.round(a[i] + (b[i] - a[i]) * t)) as RGB;
+/** The octopus colors by letter, for one frame of a drawing. */
+export function octopusColors(p: Painter): Record<string, RGB> {
+  const o = p.palette.octopus;
+  return { P: o.body, L: o.shine, W: o.eye, K: o.pupil };
 }
 
-function shade(c: RGB, factor: number): RGB {
-  return c.map((v) => Math.round(v * factor)) as RGB;
-}
-
-// Converts the pixel octopus into 6 terminal rows of half-block characters.
-function octopusRows(): string[] {
-  const rows: string[] = [];
-  for (let y = 0; y < OCTOPUS.length; y += 2) {
+/** Turns pixel rows into terminal rows of half-block characters. `rows` is OCTOPUS, or another frame of the same size. */
+export function octopusRows(p: Painter, rows: string[] = OCTOPUS): string[] {
+  const colors = octopusColors(p);
+  const out: string[] = [];
+  for (let y = 0; y < rows.length; y += 2) {
     let line = "";
-    for (let x = 0; x < OCTOPUS[y].length; x++) {
-      const top = PALETTE[OCTOPUS[y][x]];
-      const bottom = PALETTE[OCTOPUS[y + 1]?.[x] ?? "."];
+    for (let x = 0; x < rows[y]!.length; x++) {
+      const top = colors[rows[y]![x]!];
+      const bottom = colors[rows[y + 1]?.[x] ?? "."];
       if (!top && !bottom) line += " ";
-      else if (top && !bottom) line += fg(top) + "▀" + RESET;
-      else if (!top && bottom) line += fg(bottom) + "▄" + RESET;
-      else if (top === bottom) line += fg(top!) + "█" + RESET;
-      else line += fg(top!) + bg(bottom!) + "▀" + RESET;
+      else if (top && !bottom) line += p.rgb(top, undefined, "▀");
+      else if (!top && bottom) line += p.rgb(bottom, undefined, "▄");
+      else if (top === bottom) line += p.rgb(top, undefined, "█");
+      else line += p.rgb(top, bottom, "▀");
     }
-    rows.push(line);
+    out.push(line);
   }
-  return rows;
+  return out;
 }
 
-// Colors the wordmark with a teal-to-violet gradient. The solid blocks get
+// Colors the wordmark with the theme's gradient. The solid blocks get
 // the full color and the box-drawing "shadow" characters a darker shade.
-function wordmarkRows(): string[] {
+function wordmarkRows(p: Painter): string[] {
+  const { from, to } = p.palette;
   const width = Math.max(...WORDMARK.map((l) => [...l].length));
-  return WORDMARK.map(
-    (line) =>
-      [...line]
-        .map((ch, i) => {
-          if (ch === " ") return " ";
-          const color = mix(TEAL, VIOLET, i / (width - 1));
-          return fg(ch === "█" ? color : shade(color, 0.45)) + ch;
-        })
-        .join("") + RESET,
+  return WORDMARK.map((line) =>
+    [...line]
+      .map((ch, i) => {
+        if (ch === " ") return " ";
+        const color = mix(from, to, i / (width - 1));
+        return p.rgb(ch === "█" ? color : p.mode === "light" ? mix(color, [255, 255, 255], 0.45) : shade(color, 0.45), undefined, ch);
+      })
+      .join(""),
   );
 }
 
-function gradientText(text: string): string {
+function gradientText(p: Painter, text: string): string {
   const chars = [...text];
-  return (
-    chars
-      .map((ch, i) => fg(mix(TEAL, VIOLET, i / Math.max(chars.length - 1, 1))) + ch)
-      .join("") + RESET
-  );
+  const { from, to } = p.palette;
+  return chars.map((ch, i) => p.rgb(mix(from, to, i / Math.max(chars.length - 1, 1)), undefined, ch)).join("");
 }
 
+/** True when this terminal gets color (kept for callers that only need yes/no). */
 export function supportsColor(): boolean {
-  if (process.env.NO_COLOR) return false;
-  if (process.env.FORCE_COLOR) return true;
-  return Boolean(process.stdout.isTTY) && process.env.TERM !== "dumb";
+  return colorLevel() > 0;
 }
 
-export function banner(version: string): string {
-  if (!supportsColor()) {
+export interface BannerOptions {
+  /** Terminal width to lay out for. */
+  columns?: number;
+}
+
+export function banner(version: string, p: Painter = cliPainter(), o: BannerOptions = {}): string {
+  if (p.level === 0) {
     return `cephalo v${version} - ${TAGLINE}\n`;
   }
 
-  const octo = octopusRows();
+  const octo = octopusRows(p);
   const gap = "   ";
-  const columns = process.stdout.columns ?? 80;
+  const columns = o.columns ?? process.stdout.columns ?? 80;
+  const dim = (s: string) => p.role("dim", s);
 
   // Narrow terminal: octopus with a compact text label beside it.
   if (columns < 78) {
-    const label = [
-      "",
-      "",
-      BOLD + gradientText("cephalo") + RESET + fg(GRAY) + `  v${version}` + RESET,
-      fg(GRAY) + TAGLINE + RESET,
-      "",
-      "",
-    ];
+    const label = ["", "", gradientText(p, "cephalo") + dim(`  v${version}`), dim(TAGLINE), "", ""];
     return "\n" + octo.map((row, i) => row + gap + label[i]).join("\n") + "\n\n";
   }
 
   // Full logo: octopus + wordmark, tagline underneath the wordmark.
-  const word = wordmarkRows();
+  const word = wordmarkRows(p);
   const indent = " ".repeat(16) + gap;
   const lines = octo.map((row, i) => row + gap + word[i]);
-  lines.push(indent + fg(GRAY) + TAGLINE + "  ·  v" + version + RESET);
+  lines.push(indent + dim(TAGLINE + "  ·  v" + version));
   return "\n" + lines.join("\n") + "\n\n";
 }
 
-export function printBanner(version: string): void {
-  process.stdout.write(banner(version));
+export function printBanner(version: string, p: Painter = cliPainter()): void {
+  process.stdout.write(banner(version, p));
 }

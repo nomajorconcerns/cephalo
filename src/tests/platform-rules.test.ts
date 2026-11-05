@@ -82,7 +82,8 @@ test("each OS only gets its own rules, ids are unique, patterns compile", () => 
     for (const d of DEFAULT_RULES) assert.ok(!ids.includes(d.id), `${id} redefines default ${d.id}`);
   }
   const SYSTEM = new Set(SYSTEM_RULES.map((r) => r.id)); // apply on every OS
-  assert.ok(getPlatform("win32").rules().filter((r) => !SYSTEM.has(r.id)).every((r) => r.id.startsWith("win-")));
+  const POSIX_SHELL_ON_WINDOWS = new Set(["rm-long-flags", "no-preserve-root", "find-delete", "find-exec-rm"]); // Git Bash / WSL
+  assert.ok(getPlatform("win32").rules().filter((r) => !SYSTEM.has(r.id) && !POSIX_SHELL_ON_WINDOWS.has(r.id)).every((r) => r.id.startsWith("win-")));
   for (const id of ["win32", "darwin", "linux"]) assert.ok([...SYSTEM].every((s) => getPlatform(id).rules().some((r) => r.id === s)), `${id} has the system rules`);
   assert.ok(!getPlatform("linux").rules().some((r) => r.id.startsWith("win-") || r.id.startsWith("mac-")));
   assert.ok(!getPlatform("darwin").rules().some((r) => r.id.startsWith("linux-")));
@@ -102,7 +103,7 @@ test("rules list and show surface platform rules", () => {
     fs.writeFileSync(file, "rules:\n  - id: no-drop\n    description: d\n    type: command\n    pattern: DROP\n    action: block\n");
     const l = getPlatform("linux");
     const out = listRules(file, l).lines.join("\n");
-    assert.match(out, /linux-mkfs\s+command\s+-\s+platform/);
+    assert.match(out, /linux-mkfs\s+command\s+-\s+block\s+platform/);
     assert.match(out, /built-in Linux rule\(s\) also active/);
     const shown = showRule("linux-mkfs", file, l).lines.join("\n");
     assert.match(shown, /origin:\s+platform \(Linux, built in\)/);

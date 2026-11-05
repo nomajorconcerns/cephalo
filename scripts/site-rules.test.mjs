@@ -58,3 +58,10 @@ test("page engine and CLI engine agree on every vector, for every OS", async () 
   }
   assert.ok(n > 100);
 });
+
+test("the embedded rule data never carries the build machine's install path (those rules are left out of the page)", () => {
+  const { json } = embedded(html);
+  assert.ok(!json.includes(root.replace(/\\/g, "\\\\\\\\")) && !json.includes(root.replace(/\\/g, "/")), "no absolute install path in the page");
+  for (const id of ["protect-cephalo-install", "no-install-tamper", "no-protected-write-code", "no-protected-symlink"]) assert.ok(!json.includes(`"id":"${id}"`), `${id} is install-bound`);
+  assert.ok(json.includes('"id":"no-secret-shell"'), "the other new system rules are in the page");
+});

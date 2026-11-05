@@ -1,7 +1,7 @@
 import { evaluate } from "../engine.js";
 import type { Rule } from "../rules.js";
 import { scanText, MAX_SCAN_CHARS, type Verdict } from "./detect.js";
-import { ESCALATION_RULES, mcpToolLooksMutating } from "./escalation.js";
+import { ESCALATION_RULES, mcpToolLooksMutating, TRIP_WEB_RULE, WEB_TOOLS } from "./escalation.js";
 import { loadState, loadTripPolicy, recordEvent, sessionKey, type TripEvent, type TripPolicy, type TripState } from "./state.js";
 
 export interface TripHookOptions {
@@ -134,6 +134,8 @@ export function tripwireGate(agent: "claude" | "hermes", payload: any, call: Gat
   let hit: Rule | undefined;
   if (call.mcp) {
     if (mcpToolLooksMutating(call.tool)) hit = { id: "trip-mcp-write", description: "Calling an MCP tool that appears to change something outside this machine", type: "command", pattern: "", action: "block" };
+  } else if (WEB_TOOLS.test(call.tool)) {
+    hit = TRIP_WEB_RULE;
   } else {
     const r = evaluate({ command: call.command, path: call.path, access: call.access }, ESCALATION_RULES);
     if (r.decision === "block") hit = r.rule;

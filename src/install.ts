@@ -20,8 +20,8 @@ export function hermesConfigPath(): string {
 }
 
 // `mcp__.*` / `mcp_.*` route every MCP tool call (mcp__<server>__<tool>) to Cephalo's MCP firewall.
-export const HERMES_MATCHER = "terminal|read_file|write_file|patch|search_files|execute_code|mcp_.*";
-export const CLAUDE_MATCHER = "Bash|Read|Write|Edit|MultiEdit|NotebookEdit|mcp__.*";
+export const HERMES_MATCHER = "terminal|read_file|write_file|patch|search_files|execute_code|web_search|web_extract|mcp_.*";
+export const CLAUDE_MATCHER = "Bash|Read|Write|Edit|MultiEdit|NotebookEdit|Grep|Glob|WebFetch|WebSearch|mcp__.*";
 // After-the-call hooks feed the prompt-injection tripwire: they see what came BACK from tools that read outside content.
 export const HERMES_POST_MATCHER = "terminal|read_file|search_files|execute_code|web_search|web_extract|browser_.*|mcp_.*";
 export const CLAUDE_POST_MATCHER = "Bash|Read|Grep|Glob|WebFetch|WebSearch|mcp__.*";

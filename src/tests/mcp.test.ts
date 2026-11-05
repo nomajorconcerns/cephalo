@@ -325,7 +325,8 @@ test("installer matchers route MCP tools to Cephalo", () => {
   assert.ok(new RegExp(`^(${CLAUDE_MATCHER})$`).test("mcp__github__create_issue"));
   assert.ok(new RegExp(`^(${HERMES_MATCHER})$`).test("mcp__github__create_issue"));
   assert.ok(new RegExp(`^(${HERMES_MATCHER})$`).test("mcp_github_create_issue"));
-  assert.ok(!new RegExp(`^(${CLAUDE_MATCHER})$`).test("Glob"));
+  assert.ok(new RegExp(`^(${CLAUDE_MATCHER})$`).test("Glob"), "Glob is guarded since 0.2.0 (it could list .env files)");
+  assert.ok(!new RegExp(`^(${CLAUDE_MATCHER})$`).test("TodoWrite"));
 });
 
 // keep the unused-import checker honest

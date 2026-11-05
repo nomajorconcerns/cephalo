@@ -12,7 +12,13 @@ export interface Rule {
   type: RuleType;
   on?: RuleOn; // path rules only
   pattern: string;
-  action: "block";
+  /**
+   * block (default): stop the call. allow: an exception, the first matching rule still wins, and it cannot lift
+   * Cephalo's own protections. ask: the user approves or denies (Claude Code); agents that cannot ask follow `ask_default` in config.yml.
+   */
+  action: "block" | "allow" | "ask";
+  /** Shadow mode: when this rule matches, log what it would have done and let the call through. */
+  shadow?: boolean;
 }
 
 export const DEFAULT_RULES: Rule[] = [
@@ -40,7 +46,8 @@ export function defaultRulesPath(): string {
 
 const HEADER =
   "# Cephalo rules. Patterns are case-insensitive JavaScript regexes.\n" +
-  "# type: command | path    on (path rules only): read | write | any\n";
+  "# type: command | path    on (path rules only): read | write | any\n" +
+  "# action: block (default) | allow (an exception) | ask (you approve or deny)    shadow: true logs what the rule would do and lets the call through\n";
 
 /** Create the rules file from built-in defaults if it does not exist. */
 export function ensureRulesFile(file: string = defaultRulesPath()): void {
@@ -96,13 +103,18 @@ export function parseRules(text: string): { rules: Rule[]; problems: string[] } 
     } catch (e) {
       problems.push(`rule ${r.id} has an invalid pattern: ${(e as Error).message}`);
     }
+    let action: Rule["action"] = "block";
+    if (r.action === "allow" || r.action === "ask" || r.action === "block") action = r.action;
+    else if (r.action !== undefined) problems.push(`rule ${r.id} has an unknown action ${JSON.stringify(r.action)} (use block, allow or ask); it is treated as block`);
+    if (r.shadow !== undefined && typeof r.shadow !== "boolean") problems.push(`rule ${r.id}: shadow must be true or false`);
     out.push({
       id: r.id,
       description: typeof r.description === "string" ? r.description : r.id,
       type: r.type,
       on: r.on === "read" || r.on === "write" || r.on === "any" ? r.on : "any",
       pattern: r.pattern,
-      action: "block",
+      action,
+      ...(r.shadow === true ? { shadow: true } : {}),
     });
   }
   return { rules: out, problems };

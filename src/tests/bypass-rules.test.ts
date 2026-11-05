@@ -69,17 +69,20 @@ test("bypass rules leave ordinary commands alone", () => {
   }
 });
 
-test("quote evasions are caught only through the normalized variant", () => {
+test("quote evasions are caught by the normalized variant and, since 0.2.0, by the parser too", () => {
   const raw = evaluate({ command: "git push origin +ma''in" }, rulesFor(), { ...linux, normalizeCommand: (s) => s });
   assert.equal(raw.rule?.id, "no-force-push-refspec"); // '+ma' already matches the raw text
+  // with the normalizer switched off, only the parser's own reading (quotes resolved) sees through fi''nd
   const find = evaluate({ command: "fi''nd . -delete" }, rulesFor(), { ...linux, normalizeCommand: (s) => s });
-  assert.equal(find.decision, "allow");
+  assert.equal(find.rule?.id, "find-delete");
   assert.equal(verdict("fi''nd . -delete").rule?.id, "find-delete");
 });
 
-test("find rules are POSIX built-ins and do not exist on Windows", () => {
+test("find rules are POSIX built-ins; Windows gets them too because agents there run Git Bash or WSL", () => {
   assert.ok(POSIX_RULES.some((r) => r.id === "find-delete") && POSIX_RULES.some((r) => r.id === "find-exec-rm"));
-  assert.ok(!getPlatform("win32").rules().some((r) => r.id.startsWith("find-")));
+  const win = getPlatform("win32").rules().map((r) => r.id);
+  assert.ok(win.includes("find-delete") && win.includes("find-exec-rm") && win.includes("rm-long-flags") && win.includes("no-preserve-root"));
+  assert.ok(!win.includes("chmod-chown-system"), "but not the rest of the POSIX-only rules");
 });
 
 test("new patterns finish quickly on adversarial input (vm watchdog)", () => {
@@ -118,7 +121,7 @@ test("an existing rules.yml is not updated: `cephalo rules` reports the new defa
     const out = listRules(file, linux).lines.join("\n");
     assert.match(out, /Missing defaults: no-force-push-refspec, no-pipe-to-shell\./);
     // the find rules are platform built-ins, so they apply to the old file with no action
-    assert.match(out, /find-delete\s+command\s+-\s+platform/);
+    assert.match(out, /find-delete\s+command\s+-\s+block\s+platform/);
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }

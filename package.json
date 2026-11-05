@@ -1,6 +1,6 @@
 {
   "name": "@nomajorconcerns/cephalo",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Guards AI coding agents by blocking dangerous tool calls before they run",
   "type": "module",
   "license": "MIT",
@@ -38,9 +38,9 @@
     "access": "public"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && node scripts/make-integrity.mjs",
     "test": "npm run build && node scripts/run-tests.mjs",
-    "test:release": "node --test scripts/release.test.mjs scripts/workflow.test.mjs scripts/stats.test.mjs scripts/site-rules.test.mjs scripts/checkout.test.mjs",
+    "test:release": "node --test scripts/release.test.mjs scripts/workflow.test.mjs scripts/stats.test.mjs scripts/site-rules.test.mjs scripts/checkout.test.mjs scripts/countdown.test.mjs",
     "release:check": "node scripts/release.mjs check",
     "release:pack": "node scripts/release.mjs pack",
     "prepublishOnly": "npm run build && node scripts/release.mjs check --quick"

@@ -9,7 +9,7 @@ It works through each agent's hook: the agent hands Cephalo the tool call as JSO
 against your rules and answers allow or block. Everything runs on your machine. There is no server,
 no account and no telemetry.
 
-> **Status.** Version 0.1.1 (0.1.0 is on npm). It has been exercised on Windows. The macOS and
+> **Status.** Version 0.2.0. It has been exercised on Windows only. The macOS and
 > Linux adapters are covered by unit tests only. The newer features (MCP firewall, tripwire, vault,
 > replay, incident-to-rule) were tested with simulated hook payloads and real child processes, not yet
 > in a long live agent session. See [Safety model and limits](#safety-model-and-limits).
@@ -17,10 +17,11 @@ no account and no telemetry.
 ## Contents
 
 - [Install](#install) · [Quick start](#quick-start) · [Commands](#commands)
-- [Rules](#rules) · [What each hook covers](#what-each-hook-covers)
+- [Rules](#rules) · [Allow, ask and shadow](#allow-ask-and-shadow) · [Command parsing](#command-parsing) · [What each hook covers](#what-each-hook-covers)
+- [Settings](#settings) · [Self-integrity check](#self-integrity-check) · [Themes and the loading animation](#themes-and-the-loading-animation)
 - [MCP firewall](#mcp-firewall) · [Prompt-injection tripwire](#prompt-injection-tripwire)
 - [Local-model judge](#local-model-judge) · [Secrets vault](#secrets-vault) · [Incident to rule](#incident-to-rule) · [PR replay](#pr-replay)
-- [Audit log](#audit-log) · [Files Cephalo keeps](#files-cephalo-keeps)
+- [Audit log](#audit-log) · [Pro and Team](#pro-and-team) · [Files Cephalo keeps](#files-cephalo-keeps)
 - [Safety model and limits](#safety-model-and-limits) · [Troubleshooting](#troubleshooting)
 - [Development](#development) · [Releases and verification](#releases-and-verification) · [Licence](#licence)
 
@@ -72,11 +73,15 @@ and keep a backup. `cephalo doctor` warns when the installed hooks are out of da
 |---|---|
 | `cephalo test "<command>"` | Check a shell command: prints `BLOCKED (rule-id: description)` or `ALLOWED` |
 | `cephalo init [--yes]` | Create rules, install hooks for the agents found. Asks first unless `--yes` |
-| `cephalo doctor` | Check rules, a self-test, vault, tripwire, MCP firewall, audit log, both hooks, Hermes approval. Exit 1 on failures |
+| `cephalo doctor` | Check rules, a self-test, install integrity, settings, vault, tripwire, MCP firewall, audit log, both hooks, Hermes approval. Exit 1 on failures |
 | `cephalo rules [list]` / `show <id>` / `path` / `reset [--yes]` | Inspect rules and where each came from; `reset` backs up `rules.yml` then rewrites it from the defaults |
-| `cephalo log [--blocked] [--limit N]` | Recent audit entries, newest last (default 20) |
-| `cephalo watch [--blocked] [--last N] [--no-color]` | Follow the audit log live. ALLOW green, BLOCK red. Ctrl+C stops |
+| `cephalo log [--blocked\|--shadow] [--limit N]` | Recent audit entries, newest last (default 20). `--shadow`: only what shadow-mode rules would have blocked |
+| `cephalo watch [--blocked] [--last N] [--no-color]` | Follow the audit log live, in your color scheme. Ctrl+C stops |
 | `cephalo install` / `uninstall claude\|hermes` | Add or remove Cephalo's hooks (idempotent; backs up first; uninstall removes only Cephalo's entries) |
+| `cephalo config [list\|get\|set\|path]` | Settings: fail-closed, shadow, ask-default, hook-timeout, theme. See [Settings](#settings) |
+| `cephalo theme [list\|preview\|set\|reset]` | Color scheme of the CLI. See [Themes](#themes-and-the-loading-animation) |
+| `cephalo pro [status\|activate\|renew\|install\|deactivate]` | License for the paid plans and the Pro package. See [Pro and Team](#pro-and-team) |
+| `cephalo egress ...`, `cephalo audit verify\|head`, `cephalo bench` | **Pro and Team.** Network egress allowlist, tamper-evident audit log, bypass benchmark |
 | `cephalo mcp ...` | MCP firewall: allowlist, fingerprints, scan, proxy. See [MCP firewall](#mcp-firewall) |
 | `cephalo tripwire ...` | Prompt-injection tripwire. See [below](#prompt-injection-tripwire) |
 | `cephalo models ...` | Local-model judge (Ollama). See [below](#local-model-judge) |
@@ -98,13 +103,14 @@ rules:
     type: command        # command | path
     on: any              # path rules only: read | write | any
     pattern: '\bDROP\s+(TABLE|DATABASE|SCHEMA)\b'
-    action: block
+    action: block        # block (default) | allow | ask
+    shadow: false        # true: log what this rule would do, but do not do it
 ```
 
 - Patterns are **case-insensitive JavaScript regular expressions**.
 - `command` rules are tested against shell commands (and, for Hermes `execute_code`, the script text).
 - `path` rules are tested against file paths for reads and/or writes.
-- The first matching rule blocks the call.
+- The first matching rule decides. `action` is `block` (the default), `allow` or `ask`; see [Allow, ask and shadow](#allow-ask-and-shadow).
 
 Default rules (in your file): `no-drop`, `no-truncate`, `no-delete-all` (DELETE without WHERE), `no-rm-rf`,
 `no-win-recursive-delete`, `no-force-push` (allows `--force-with-lease`), `no-hard-reset`,
@@ -123,24 +129,75 @@ built-in rules apply. Rules are matched against the raw text **and** a cleaned c
 
 | Group | Rule ids |
 |---|---|
-| Every OS ("system") | `protect-cephalo-policy`, `protect-audit-log`, `no-audit-tamper`, `protect-vault-files`, `no-vault-extract`, `secret-in-command`, `no-self-approve`, `no-self-incident` |
+| Every OS ("system") | `protect-cephalo-policy`, `protect-audit-log`, `no-audit-tamper`, `protect-vault-files`, `protect-policy-key`, `no-vault-extract`, `secret-in-command`, `no-self-approve`, `no-self-incident`, `no-secret-shell`, `no-agent-config-tamper`, `no-protected-symlink`, `protect-cephalo-install`, `no-install-tamper`, `no-protected-write-code` |
 | Windows | `win-format-drive`, `win-disk-wipe`, `win-registry-delete`, `win-shadow-delete`, `win-power` |
 | macOS | `mac-diskutil-erase`, `mac-disable-protection`, `mac-tmutil-delete`, `mac-keychain-secrets` + POSIX |
 | Linux | `linux-mkfs`, `linux-dd-device`, `linux-write-device`, `linux-shred-device`, `linux-fork-bomb` + POSIX |
-| POSIX (macOS + Linux) | `rm-long-flags`, `no-preserve-root`, `pipe-to-shell`, `chmod-chown-system` |
+| POSIX (macOS + Linux) | `rm-long-flags`, `no-preserve-root`, `pipe-to-shell`, `find-delete`, `find-exec-rm`, `chmod-chown-system`. Windows also gets `rm-long-flags`, `no-preserve-root`, `find-delete` and `find-exec-rm`, because agents there often run Git Bash or WSL |
 
 The system rules protect Cephalo itself: they stop an agent from writing the audit log or rules file,
 the MCP and tripwire state, the vault files; from running `cephalo vault reveal`; from pasting a literal
-API token into a command; and from approving MCP servers, releasing the tripwire, or adding learned rules
-on its own.
+API token into a command; from reading `.env` files through a shell or inline code; from writing the Claude Code
+or Hermes config or Cephalo's own installed files from a shell; and from approving MCP servers, releasing the
+tripwire, changing Cephalo's settings or rules, or adding learned rules on its own. An `allow` rule cannot lift any
+of these.
+
+## Allow, ask and shadow
+
+A rule's `action` is one of:
+
+- `block` (default): stop the call.
+- `allow`: an exception. The first matching rule still wins, so put an `allow` before the `block` it should lift. It is judged on each part of a compound command on its own, so `git status; rm -rf /` is still blocked, and it is ignored for a command Cephalo could not read cleanly. It cannot lift Cephalo's own built-in protections.
+- `ask`: the user approves or denies. Claude Code shows an approval prompt. Codex, Cursor and Hermes cannot show one, so for them the call follows the `ask-default` setting (`block` unless you set `allow`), and the audit log says which happened.
+
+`shadow: true` on a rule, or `cephalo config set shadow on` for every rule, logs what the rule would have done and does nothing. These appear in `cephalo log` and `cephalo watch` as `{would block: rule-id}`, and `cephalo log --shadow` lists them. The built-in protections stay on in global shadow mode. Use it to try a rule on real traffic before you trust it.
+
+`allow`, `ask` and `shadow` need 0.2.0. Version 0.1.x treats every rule as a block, so do not copy such a rule into an older install.
+
+## Command parsing
+
+Before the rules run, Cephalo reads a command the way a shell would and checks each part as well as the raw text: pipelines, `&&`, `||`, `;`, subshells, `$(...)`, backticks, `<(...)`, heredocs, wrappers (`sudo`, `env`, `timeout`), `bash -c`, `sh -c`, `eval`, `ssh host "..."`, `find -exec`, base64 payloads, inline code (`python -c`, `node -e`, `perl -e`, `ruby -e`), and on Windows `powershell -Command`, `-EncodedCommand`, `iex` and `cmd /c`. The raw text is always checked too, so parsing can only add blocks. If a command cannot be read cleanly (an unbalanced quote, a construct the parser does not handle) Cephalo falls back to plain text matching. The parser is written for Cephalo and has no dependencies. It is not a shell: it does not run anything, and it cannot see inside a script file or a command built at run time.
+
+## Settings
+
+`~/.cephalo/config.yml`, changed with `cephalo config list|get|set|path` (a backup is made first). Agents cannot write it.
+
+| Setting | Default | Meaning |
+|---|---|---|
+| `fail-closed` | off | If the hook crashes, times out or gets unreadable input, **block** the call instead of allowing it. Trade-off: a broken hook then stops your agent's tool calls until you turn this off. |
+| `hook-timeout` | 8 | Seconds the hook may take before fail-closed mode blocks the call (1 to 60). |
+| `shadow` | off | Shadow mode for every rule (see above). |
+| `ask-default` | block | What an `ask` rule does where the agent cannot show a prompt: `block` or `allow`. |
+| `theme` | reef | Color scheme of the CLI output. |
+
+## Self-integrity check
+
+`npm run build` writes `dist/integrity.json`, a SHA-256 for each installed file. On the first hook call of a session, and in `cephalo doctor`, Cephalo checks that its hook entry is still in the agent's config, that the entry points at this install, and that the files match. A failure warns loudly: Claude Code shows it once per session; Hermes has no warning field, so there it is logged and shown by `doctor`. With fail-closed on, a failed check blocks calls. It detects; it cannot prevent. Someone who can edit `dist/` as you can edit the hash list too.
+
+## Themes and the loading animation
+
+Every color the CLI prints comes from a theme, in `src/theme.ts`. Five ship, each with a dark-terminal and a light-terminal palette:
+
+| Theme | Look |
+|---|---|
+| `reef` (default) | Teal to violet, with the pink octopus |
+| `abyss` | Deep navy and slate blue |
+| `coral` | Warm pink, orange and cream |
+| `glow` | Bioluminescent cyan and green on black |
+| `ink` | No color: bold, underline and reverse video carry the meaning |
+
+`cephalo theme list` shows each with a small preview, `cephalo theme preview [name]` shows the logo and sample output, `cephalo theme set <name>` saves it, and `CEPHALO_THEME=glow cephalo log` is for one run. ALLOW, BLOCK and ASK are always words, so meaning never depends on color alone. Color falls back from 24-bit to 256 to 16 to none, and follows `NO_COLOR`, `FORCE_COLOR`, `TERM=dumb` and piped output. If Cephalo guesses a light or dark background wrong, set `CEPHALO_BACKGROUND=light` or `dark`.
+
+While `init --yes`, `doctor`, `mcp scan`, `models scan`, `models eval`, `replay` or `cost` work, the pixel octopus waves its tentacles beside a status message (about ten frames a second, in your theme's colors) and clears itself before results print. There is no animation, only a plain `Working...` line on stderr, when output is not a terminal or `NO_COLOR`, `CI`, `CEPHALO_NO_ANIMATION=1` or `REDUCE_MOTION=1` is set. The frames advance only while the command waits on something asynchronous; `doctor` and `replay` do synchronous work and hold the first frame. `cephalo hook ...` never prints color, banners or animation.
 
 ## What each hook covers
 
 | Agent | Before the call (can block) | After the call (reads the result) |
 |---|---|---|
-| Claude Code | `Bash` (command), `Read` (path, read), `Write`/`Edit`/`MultiEdit` (path, write), `NotebookEdit` (path, write), `mcp__*` (server, tool, parameters) | `Bash`, `Read`, `Grep`, `Glob`, `WebFetch`, `WebSearch`, `mcp__*` |
-| Hermes | `terminal` (command), `execute_code` (script text, a heuristic), `read_file`/`search_files` (path, read), `write_file`/`patch` (path, write), `mcp_*` | `terminal`, `read_file`, `search_files`, `execute_code`, `web_search`, `web_extract`, `browser_*`, `mcp_*` |
+| Claude Code | `Bash` (command), `Read` (path, read), `Grep`/`Glob` (path and file filters, read; they cannot be aimed at `.env` files), `WebFetch`/`WebSearch` (logged; the egress allowlist and a tripwire lock look at them), `Write`/`Edit`/`MultiEdit` (path, write), `NotebookEdit` (path, write), `mcp__*` (server, tool, parameters) | `Bash`, `Read`, `Grep`, `Glob`, `WebFetch`, `WebSearch`, `mcp__*` |
+| Hermes | `terminal` (command), `execute_code` (script text, a heuristic), `read_file`/`search_files` (path and file filters, read), `web_search`/`web_extract` (logged), `write_file`/`patch` (path, write), `mcp_*` | `terminal`, `read_file`, `search_files`, `execute_code`, `web_search`, `web_extract`, `browser_*`, `mcp_*` |
 
+Relative paths are resolved against the session's working directory, and symlinks are resolved, before path rules run.
 Other tools are allowed and logged. The after-call hook feeds the [tripwire](#prompt-injection-tripwire)
 and the [vault](#secrets-vault)'s leak detection. **In Hermes the after-call hook can only observe**, so
 the tripwire's block starts with the next call; Claude Code can also be given a warning in the same turn.
@@ -392,6 +449,20 @@ or `path`, `decision`, `rule`, and where relevant `user`, `session`, `cwd`, MCP 
 a `note`. Tokens are redacted before writing. Read it with `cephalo log`, follow it with `cephalo watch`
 (terminal control characters are neutralized), or summarise it with `cephalo replay`.
 
+## Pro and Team
+
+Everything above, and everything that was in 0.1.1, is free and MIT licensed. Pro ($15 per developer per month) and Team ($25) add three features that live in a separate, private package, `@nomajorconcerns/cephalo-pro`, which is **not** in this repository and is not on npm. Early users get 20% off the first year with code `CEPHALOG`. Prices and what each plan includes are on the [website](https://nomajorconcerns.github.io/cephalo/#pricing).
+
+**Getting it.** Your Lemon Squeezy order has a license key and a download, `cephalo-pro-0.2.0.tgz`. Install the download with `npm install -g ./cephalo-pro-0.2.0.tgz` (npm fetches the package's one dependency, `yaml`, from the public registry; nothing from your order goes to npm). Then run `cephalo pro activate`; it asks for the key without echo, checks it with the Lemon Squeezy license API, and stores a small record in `~/.cephalo/license.json` (tier, activation id and the last four characters of the key; not the key). The key must belong to the Cephalo store and to the Pro or Team product; a key for anything else is refused and its seat is given back. If Cephalo itself is not a global install (a clone, `npm link`), use `cephalo pro install ./cephalo-pro-0.2.0.tgz` instead, which installs it into `~/.cephalo/pro`. About every 35 days run `cephalo pro renew` so a cancelled subscription ends; `cephalo pro deactivate` gives the seat back; `cephalo pro status` shows where things stand.
+
+Without the package, `cephalo egress`, `cephalo audit` and `cephalo bench` print a plain "this is part of Cephalo Pro" message with the pricing link and do nothing else. The hook never loads the package unless there is a current license, loads it only from beside Cephalo's own install or from `~/.cephalo/pro` (never from the current directory), and never uses the network.
+
+- **Network egress allowlist.** `~/.cephalo/egress.yml` lists the domains agents may reach (`github.com` is exact, `*.npmjs.org` is any subdomain). With no file the feature is off. Shell commands (`curl`, `wget`, `Invoke-WebRequest`, `ssh`, `scp`, `rsync`, `nc`, git remotes, and URLs inside `bash -c`, `python -c` or `node -e`), `WebFetch` and MCP call parameters are blocked, or put to you with `mode: ask`, when they would reach another domain. Loopback is always allowed. A network tool whose destination cannot be read (`curl $URL`) counts as an unknown destination. Manage it with `cephalo egress list|allow|remove|mode|test`. It cannot see inside a script file, a program the agent just wrote, a host built at run time, an MCP server's own traffic, or package managers talking to their registries. It is a seatbelt, not a firewall.
+- **Tamper-evident audit log.** Each audit line carries a sequence number, the previous line's hash and its own. `cephalo audit verify` reports lines that were edited, removed, reordered, inserted or cut off the end. `cephalo audit head` prints the newest `seq:hash`; keep a copy somewhere the agent and this machine cannot reach, and `verify --expect-head` checks against it. Someone who can rewrite the whole file can recompute every hash, which is exactly what the saved head catches.
+- **Bypass benchmark.** `cephalo bench` runs about 100 known bypass attempts and ordinary commands through your rules without executing anything and reports the block rate, what got through, and any ordinary command blocked by mistake. `--defaults` judges the shipped rules, `--json` is for CI. Known gaps are listed and never counted in the rate. A CI job in the private package runs it on Windows, macOS and Linux.
+
+The download itself is not locked: it is a file, and the license key is what switches the features on. The license check is client-side. Someone who edits their own files can run the paid package without paying; it keeps honest customers honest and is not copy protection.
+
 ## Files Cephalo keeps
 
 All in `~/.cephalo` (the same on Windows, macOS and Linux). Agents cannot write any of these through their
@@ -400,7 +471,10 @@ tools.
 | File | Purpose |
 |---|---|
 | `rules.yml` | Your rules |
-| `audit.jsonl` | The audit log |
+| `audit.jsonl` | The audit log (with Pro: sealed lines, plus `audit.jsonl.head`) |
+| `config.yml` | Settings (`cephalo config`) |
+| `integrity/` | One marker per agent session, so the integrity check runs once per session |
+| `license.json`, `pro/`, `egress.yml` | Pro and Team only: the license record, the installed Pro package, the egress allowlist |
 | `mcp.yml`, `mcp-tools.json` | MCP allowlist and mode; approved tool fingerprints |
 | `tripwire.yml`, `tripwire/` | Tripwire mode; per-session state (`cleared/` holds released records) |
 | `models.yml`, `judge-cache.json`, `embed-cache.json`, `models-check.json`, `asks/` | Local-model judge settings (created only by `cephalo models enable`/`mode`); cached verdicts; embeddings of the known injection phrasings; the last model check; asks waiting for your answer |
@@ -409,19 +483,20 @@ tools.
 
 ## Safety model and limits
 
-- **Fail-open.** If the hook crashes or its input is not valid JSON, the call is **allowed**, the error goes
-  to stderr and into the audit log. A block decision is never weakened by a logging failure.
+- **Fail-open by default.** If the hook crashes or its input is not valid JSON, the call is **allowed**, the
+  error goes to stderr and into the audit log. A block decision is never weakened by a logging failure. Turn on
+  [fail-closed mode](#settings) to block instead; then a broken hook stops your agent's tool calls.
 - **Hook output is pure JSON.** Cephalo never prints the banner or colours on the hook paths.
-- **It matches patterns; it is not a sandbox.** It sees command text, not what a script does once it runs. A
-  command assembled at runtime, or run from inside a script file, can slip past. Cleaning catches common
-  tricks, not all of them.
+- **It reads commands; it is not a sandbox.** It sees command text, not what a script does once it runs. A
+  command assembled at runtime, or run from inside a script file, can slip past (`bash ./cleanup.sh`). Parsing
+  and cleaning catch the common tricks, not all of them. `git clean -fdx` and PowerShell `iex (iwr ...)` have no rule.
 - **Its own files are guarded by rules.** Rules stop agents writing the audit log, rules file, vault files
   and MCP and tripwire state. They are still rules: you, or anything running outside the hooks, can edit those
   files, so the audit log is a record and not a signed proof.
 - **The tripwire is a heuristic; the vault is hook-based.** See their sections.
-- **Platforms.** Windows has run on a real machine. macOS and Linux are covered by unit tests only.
-- **No licence checks.** Every feature works locally. The website describes how paid tiers will be packaged;
-  nothing in the code enforces them.
+- **Platforms.** Windows has run on a real machine, and all of 0.2.0 was developed there. macOS and Linux, and the Codex and Cursor adapters, are covered by unit tests only.
+- **Licence checks are client-side.** The free features need no licence. The Pro and Team package checks a
+  Lemon Squeezy key, but someone who edits their own files can run it without paying. See [Pro and Team](#pro-and-team).
 
 ## Troubleshooting
 
@@ -444,8 +519,10 @@ to the config files; nothing is deleted.
 ```powershell
 npm run build         # tsc -> dist/
 npm test              # build, then run every dist/tests/*.test.js with node --test (scripts/run-tests.mjs)
-npm run test:release  # tests for the release script and workflow
+npm run test:release  # tests for the release script, workflow, site data, checkout and countdown
 ```
+
+The Pro and Team package has its own repository and tests; it is not built from this one.
 
 The tests use temporary directories and never touch your real `~/.cephalo`, Claude settings or Hermes config.
 

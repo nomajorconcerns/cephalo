@@ -52,6 +52,16 @@ export const ESCALATION_RULES: Rule[] = [
 const MCP_WRITE_WORDS =
   /(^|[^a-z])(send|post|publish|upload|email|mail|message|notify|create|update|edit|delete|remove|write|push|commit|merge|deploy|execute|exec|run|shell|transfer|pay|share|invite|comment|reply|tweet|webhook|put|patch|set|add|insert|drop|move|rename)([^a-z]|$)/i;
 
+/** The agent's own web tools (Claude WebFetch/WebSearch, Hermes web_search/web_extract). A URL or a search query can carry data out, so a locked session loses them. */
+export const WEB_TOOLS = /^(WebFetch|WebSearch|web_search|web_extract)$/;
+export const TRIP_WEB_RULE: Rule = {
+  id: "trip-web",
+  description: "Fetching a page or searching the web (a URL or query can carry data out of this machine)",
+  type: "command",
+  pattern: "",
+  action: "block",
+};
+
 /** MCP tool names that look like they change something outside the machine. A name heuristic: it errs toward blocking. */
 export function mcpToolLooksMutating(toolName: string): boolean {
   // `mcp__server__tool` is unambiguous: judge the tool part only (a server called "mail" must not make every tool a sender).

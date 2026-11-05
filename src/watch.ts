@@ -1,8 +1,7 @@
 import fs from "node:fs";
-import { auditPath, entrySubject, readAudit, type AuditEntry } from "./audit.js";
+import { auditPath, entrySubject, readAudit, shadowLabel, type AuditEntry } from "./audit.js";
 
-const ESC = "\x1b[";
-const RESET = `${ESC}0m`;
+import { makePainter, type Painter } from "./theme.js";
 
 export interface TailState {
   offset: number;
@@ -15,22 +14,24 @@ export function sanitize(s: string): string {
   return s.replace(/\r?\n/g, " \u21b5 ").replace(/[\u0000-\u001f\u007f-\u009f]/g, "\u00b7");
 }
 
-export function formatWatchLine(e: AuditEntry, opts: { color: boolean; width?: number }): string {
+/** `color` turns color on at the lowest depth when no painter is given; the CLI passes the painter for the user's theme. */
+export function formatWatchLine(e: AuditEntry, opts: { color: boolean; width?: number; painter?: Painter }): string {
   const t = new Date(e.ts);
   const time = Number.isNaN(t.getTime())
     ? "--:--:--"
     : [t.getHours(), t.getMinutes(), t.getSeconds()].map((n) => String(n).padStart(2, "0")).join(":");
   const label = e.decision === "block" ? "BLOCK" : e.decision === "ask" ? "ASK" : "ALLOW";
-  const paint = (s: string, code: string) => (opts.color ? `${ESC}${code}m${s}${RESET}` : s);
-  const decision = paint(label, e.decision === "block" ? "1;31" : e.decision === "ask" ? "1;33" : "32");
+  const p = opts.color ? (opts.painter ?? makePainter({ level: 1 })) : makePainter({ level: 0 });
+  const decision = p.label(e.decision === "block" ? "block" : e.decision === "ask" ? "ask" : "allow", label);
   const who = `${e.agent}/${e.tool}`;
-  const rule = e.rule ? ` ${paint(`[${e.rule}]`, "33")}` : "";
-  const err = e.error ? ` ${paint(`(error: ${sanitize(e.error)})`, "90")}` : "";
-  const prefix = `${paint(time, "90")}  ${decision}  ${sanitize(who)}${rule}  `;
+  const rule = e.rule ? ` ${p.role("accent", `[${e.rule}]`)}` : "";
+  const err = e.error ? ` ${p.role("dim", `(error: ${sanitize(e.error)})`)}` : "";
+  const shadow = shadowLabel(e) ? ` ${p.role("shadow", `{${sanitize(shadowLabel(e))}}`)}` : "";
+  const prefix = `${p.role("dim", time)}  ${decision}  ${sanitize(who)}${rule}${shadow}  `;
   let what = sanitize(entrySubject(e));
   if (opts.width) {
     // visible prefix length: time(8) + 2 + 5 + 2 + who + rule + 2
-    const visible = 8 + 2 + 5 + 2 + who.length + (e.rule ? e.rule.length + 3 : 0) + 2;
+    const visible = 8 + 2 + 5 + 2 + who.length + (e.rule ? e.rule.length + 3 : 0) + (shadowLabel(e) ? shadowLabel(e).length + 3 : 0) + 2;
     const room = opts.width - visible - 1;
     if (room > 3 && what.length > room) what = what.slice(0, room - 1) + "\u2026";
   }
@@ -85,6 +86,8 @@ export interface WatchOptions {
   /** Existing entries to show before following (default 10). */
   last?: number;
   color: boolean;
+  /** The theme's painter, when color is on. */
+  painter?: Painter;
   width?: number;
   intervalMs?: number;
   write: (line: string) => void;
@@ -97,11 +100,11 @@ export function runWatch(o: WatchOptions): Promise<void> {
   const file = o.file ?? auditPath();
   const show = (e: AuditEntry) => {
     if (o.blocked && e.decision !== "block") return;
-    o.write(formatWatchLine(e, { color: o.color, width: o.width }));
+    o.write(formatWatchLine(e, { color: o.color, width: o.width, painter: o.painter }));
   };
   o.write(`Watching ${file}${o.blocked ? " (blocked only)" : ""}  -  Ctrl+C to stop`);
   for (const e of readAudit({ blocked: o.blocked, limit: o.last ?? 10 }, file)) {
-    o.write(formatWatchLine(e, { color: o.color, width: o.width }));
+    o.write(formatWatchLine(e, { color: o.color, width: o.width, painter: o.painter }));
   }
   // Start following from the current end of file so history is not printed twice.
   let size = 0;

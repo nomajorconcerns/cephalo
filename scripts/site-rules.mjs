@@ -16,9 +16,14 @@ const END = "/*END_RULES_JSON*/";
 export async function buildRulesData() {
   const { DEFAULT_RULES } = await import(pathToFileURL(path.join(root, "dist", "rules.js")).href);
   const { getPlatform } = await import(pathToFileURL(path.join(root, "dist", "platform.js")).href);
-  const slim = (r, extra) => ({ id: r.id, d: r.description, t: r.type, ...(r.type === "path" ? { on: r.on ?? "any" } : {}), p: r.pattern, ...extra });
+  const { SYSTEM_RULES } = await import(pathToFileURL(path.join(root, "dist", "platform-rules.js")).href);
+  const locked = new Set(SYSTEM_RULES.map((r) => r.id));
+  // l: 1 marks Cephalo's own protections: an `allow` rule cannot exempt a call from them
+  const slim = (r, extra) => ({ id: r.id, d: r.description, t: r.type, ...(r.type === "path" ? { on: r.on ?? "any" } : {}), p: r.pattern, ...(locked.has(r.id) ? { l: 1 } : {}), ...extra });
   const data = { defaults: DEFAULT_RULES.map((r) => slim(r, { o: "default" })) };
-  for (const os of ["win32", "darwin", "linux"]) data[os] = getPlatform(os).rules().map((r) => slim(r, { o: "platform", os }));
+  // These rules are built from the folder Cephalo is installed in (an absolute path on the machine that built them), so the page leaves them out.
+  const installBound = new Set(["protect-cephalo-install", "no-install-tamper", "no-protected-write-code", "no-protected-symlink"]);
+  for (const os of ["win32", "darwin", "linux"]) data[os] = getPlatform(os).rules().filter((r) => !installBound.has(r.id)).map((r) => slim(r, { o: "platform", os }));
   return data;
 }
 
