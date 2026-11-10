@@ -1,5 +1,6 @@
 import os from "node:os";
 import path from "node:path";
+import { stripMacPrivate } from "./paths.js";
 import { LINUX_RULES, MACOS_RULES, SYSTEM_RULES, WINDOWS_RULES } from "./platform-rules.js";
 import type { Rule } from "./rules.js";
 
@@ -104,7 +105,7 @@ const darwin: PlatformAdapter = {
     let s = expandPosixHome(raw.trim(), homeOf(p));
     s = cleanSlashes(s.replace(/\\/g, "/"));
     // /etc, /var, /tmp are symlinks into /private on macOS
-    return s.replace(/^\/private(?=\/(etc|var|tmp)(\/|$))/, "");
+    return stripMacPrivate(s);
   },
   normalizeCommand: normalizePosixCommand,
 };

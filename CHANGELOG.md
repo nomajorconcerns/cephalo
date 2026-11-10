@@ -12,6 +12,7 @@ Launches 10 November 2026. Everything that was in 0.1.1 stays free and MIT licen
 - Relative paths are resolved against the session's working directory, and symlinks are resolved, before path rules run.
 - Writes to the Claude Code and Hermes config files are blocked from the shell, not only from file tools (`no-agent-config-tamper`).
 - Cephalo's own `dist/` folder, the code the hook runs, is protected from agent writes (`protect-cephalo-install`, `no-install-tamper`, `no-protected-write-code`).
+- On macOS, an install folder under `/private/var`, `/private/tmp` or `/private/etc` is also guarded in its `/var`, `/tmp` or `/etc` form, so a relative write from inside it is blocked too.
 - `no-secret-shell`: reading `.env` files through a shell command or inline code. It also matches `.env` inside a commit message.
 - On Windows, the `rm`, `find -delete` and `find -exec rm` rules now apply too, because agents there often run Git Bash or WSL. Before, `rm -r -f ./build` was blocked on Linux and macOS but not on a Windows host.
 - Agents can no longer run `cephalo config set`, `cephalo rules reset`, `cephalo egress allow|remove|mode` or `cephalo pro activate|renew|install|deactivate` themselves (`no-self-approve`).

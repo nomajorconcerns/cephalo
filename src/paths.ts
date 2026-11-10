@@ -2,6 +2,11 @@ import fs from "node:fs";
 import path from "node:path";
 import type { PlatformAdapter } from "./platform.js";
 
+/** macOS: /etc, /var and /tmp are symlinks into /private, so `/private/var/x` is written as `/var/x`. Expects forward slashes. */
+export function stripMacPrivate(s: string): string {
+  return s.replace(/^\/private(?=\/(etc|var|tmp)(\/|$))/, "");
+}
+
 /**
  * Real location of a path: symlinks resolved. A path that does not exist yet (a file about to be written) is resolved
  * through its deepest existing parent, so `link-dir/new.txt` still lands where the link points. Never throws.

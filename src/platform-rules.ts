@@ -1,6 +1,6 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { realish } from "./paths.js";
+import { realish, stripMacPrivate } from "./paths.js";
 import type { Rule } from "./rules.js";
 import { ANY_TOKEN_SOURCE } from "./vault/patterns.js";
 
@@ -35,8 +35,11 @@ export function defaultInstallRoots(): string[] {
 /**
  * Rules that keep the agent from editing the code its own hook runs. They are built from where Cephalo is installed,
  * so they follow an npm link or a global install. Writes through file tools (path rule) and through a shell (command rules).
+ * Each root is also matched in the form the platform's path normalization produces (macOS: `/private/var/...` as
+ * `/var/...`), because a relative write resolved against the cwd is compared in that form. The raw forms stay.
  */
-export function installGuardRules(roots: string[] = defaultInstallRoots()): Rule[] {
+export function installGuardRules(roots: string[] = defaultInstallRoots(), platformId: string = process.platform): Rule[] {
+  roots = [...new Set(roots.flatMap((r) => (platformId === "darwin" ? [r, stripMacPrivate(r)] : [r])))];
   const typed = roots.map((r) => escapeRe(r).replace(/(?:\\\\|\/)+/g, SEP)).join("|");
   const slashed = roots.map((r) => escapeRe(r.replace(/\\/g, "/"))).join("|");
   const dist = String.raw`(?:${typed})${SEP}dist(?:${SEP}[^\s;&|'"]*)?(?![\w-])`;

@@ -204,6 +204,27 @@ test("Cephalo's install folder (the dist/ the hook runs) cannot be written by th
   assert.equal(bash(`ls ${slash}/dist`).decision, "allow");
 });
 
+test("macOS: an install under /private/var is also guarded as /var (the form a resolved relative write takes)", () => {
+  const darwin = getPlatform("darwin");
+  const rules = installGuardRules(["/private/var/folders/x/cephalo"], "darwin");
+  const w = (p: string, cwd?: string) => evaluate({ path: p, access: "write", cwd }, rules, darwin);
+  assert.equal(w("/var/folders/x/cephalo/dist/hooks.js").rule?.id, "protect-cephalo-install");
+  assert.equal(w("/private/var/folders/x/cephalo/dist/hooks.js").rule?.id, "protect-cephalo-install", "the raw form stays guarded");
+  assert.equal(w("dist/cli.js", "/private/var/folders/x/cephalo").rule?.id, "protect-cephalo-install", "relative to the cwd");
+  assert.equal(w("/var/folders/x/other/dist/hooks.js").decision, "allow", "an unrelated /var path is not guarded");
+  assert.equal(w("/var/folders/x/cephalo/src/hooks.ts").decision, "allow");
+  const sh = (c: string) => evaluate({ command: c }, rules, darwin);
+  assert.equal(sh("echo x > /var/folders/x/cephalo/dist/cli.js").rule?.id, "no-install-tamper");
+  assert.equal(sh("echo x > /private/var/folders/x/cephalo/dist/cli.js").rule?.id, "no-install-tamper");
+  assert.equal(sh("cat /var/folders/x/cephalo/dist/cli.js").decision, "allow");
+  // the Pro package next to a global install gets the same treatment
+  const pro = installGuardRules(["/private/var/g/node_modules/@nomajorconcerns/cephalo"], "darwin");
+  assert.equal(evaluate({ path: "/var/g/node_modules/@nomajorconcerns/cephalo-pro/dist/index.js", access: "write" }, pro, darwin).rule?.id, "protect-cephalo-pro-install");
+  assert.equal(evaluate({ command: "rm -f /var/g/node_modules/@nomajorconcerns/cephalo-pro/dist/index.js" }, pro, darwin).rule?.id, "no-pro-install-tamper");
+  // other platforms are unchanged: no extra form is added
+  assert.equal(installGuardRules(["/private/var/folders/x/cephalo"], "linux").find((r) => r.id === "protect-cephalo-install")?.pattern, "^(?:/private/var/folders/x/cephalo)/dist(?:/|$)");
+});
+
 test("the real install folder is guarded by the built-in rules", () => {
   const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
   assert.ok(defaultInstallRoots().some((r) => r.toLowerCase() === root.toLowerCase() || fs.realpathSync.native(root).toLowerCase() === r.toLowerCase()), "roots include this install");
