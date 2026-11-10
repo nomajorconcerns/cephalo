@@ -56,6 +56,8 @@ const ORG = "0a0a0a0a-0000-4000-8000-000000000001";
 const PRO_B = "0b0b0b0b-0000-4000-8000-000000000002";
 const TEAM_B = "0c0c0c0c-0000-4000-8000-000000000003";
 const IDS = { orgId: ORG, proBenefitId: PRO_B, teamBenefitId: TEAM_B };
+/** What src/pro.ts held before the store was set up; injected to keep the "not configured" path covered. */
+const PLACEHOLDERS = { orgId: "REPLACE_ME_POLAR_ORG_ID", proBenefitId: "REPLACE_ME_POLAR_PRO_BENEFIT_ID", teamBenefitId: "REPLACE_ME_POLAR_TEAM_BENEFIT_ID" };
 
 type Action = "activate" | "validate" | "deactivate";
 type Reply = { status: number; body?: unknown };
@@ -128,13 +130,20 @@ test("a Lemon Squeezy record from 0.2.0 still reads, turns nothing on, and says 
   assert.match(LEGACY_MESSAGE, /Lemon Squeezy, which Cephalo no longer uses/);
 });
 
-test("the plan comes from the Polar benefit the key was issued under; the shipped IDs are placeholders until the store is set up", () => {
-  for (const id of [POLAR_ORG_ID, POLAR_PRO_BENEFIT_ID, POLAR_TEAM_BENEFIT_ID]) assert.ok(isPlaceholder(id), `${id} is a REPLACE_ME placeholder`);
+test("the plan comes from the Polar benefit the key was issued under; the shipped IDs are set (UUIDs, not placeholders)", () => {
+  const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+  for (const id of [POLAR_ORG_ID, POLAR_PRO_BENEFIT_ID, POLAR_TEAM_BENEFIT_ID]) {
+    assert.ok(!isPlaceholder(id), `${id} is filled in`);
+    assert.match(id, UUID);
+  }
+  assert.notEqual(POLAR_PRO_BENEFIT_ID, POLAR_TEAM_BENEFIT_ID, "Pro and Team are different benefits");
+  for (const p of Object.values(PLACEHOLDERS)) assert.ok(isPlaceholder(p), p);
+  assert.ok(isPlaceholder(""), "an empty ID counts as not set");
   assert.equal(tierFromBenefit(PRO_B, IDS), "Pro");
   assert.equal(tierFromBenefit(TEAM_B, IDS), "Team");
   assert.equal(tierFromBenefit("0d0d0d0d-0000-4000-8000-000000000004", IDS), null, "some other benefit");
   assert.equal(tierFromBenefit(undefined, IDS), null);
-  assert.equal(tierFromBenefit(POLAR_PRO_BENEFIT_ID, { orgId: ORG, proBenefitId: POLAR_PRO_BENEFIT_ID, teamBenefitId: TEAM_B }), null, "a placeholder never matches");
+  assert.equal(tierFromBenefit(PLACEHOLDERS.proBenefitId, { ...IDS, proBenefitId: PLACEHOLDERS.proBenefitId }), null, "a placeholder never matches");
   assert.deepEqual(polarTarget({}), { api: POLAR_API, sandbox: false, orgId: POLAR_ORG_ID, proBenefitId: POLAR_PRO_BENEFIT_ID, teamBenefitId: POLAR_TEAM_BENEFIT_ID });
   assert.equal(POLAR_API, "https://api.polar.sh/v1/customer-portal/license-keys");
   assert.equal(POLAR_SANDBOX_API, "https://sandbox-api.polar.sh/v1/customer-portal/license-keys");
@@ -208,13 +217,13 @@ test("a key that activates but is not ours is refused and its activation is give
 
 test("with the placeholder IDs nothing is activated or renewed, and nothing is sent", async () => {
   const never: Fetch = async () => assert.fail("no request while the Polar IDs are placeholders");
-  const a = await activateLicense(KEY, { fetch: never, env: {} });
+  const a = await activateLicense(KEY, { fetch: never, env: {}, polar: PLACEHOLDERS });
   assert.equal(a.ok, false);
   assert.match(!a.ok ? a.error : "", /no Polar store set up yet .* Nothing was sent\./);
-  const v = await validateLicense(record(), KEY, { fetch: never, env: {} });
+  const v = await validateLicense(record(), KEY, { fetch: never, env: {}, polar: PLACEHOLDERS });
   assert.match(!v.ok ? v.error : "", /no Polar store set up yet/);
-  assert.equal((await activateLicense(KEY, { fetch: never, env: {}, polar: { ...IDS, teamBenefitId: "REPLACE_ME_POLAR_TEAM_BENEFIT_ID" } })).ok, false, "one placeholder is enough to refuse");
-  const w = world({ polar: undefined });
+  assert.equal((await activateLicense(KEY, { fetch: never, env: {}, polar: { ...IDS, teamBenefitId: PLACEHOLDERS.teamBenefitId } })).ok, false, "one placeholder is enough to refuse");
+  const w = world({ polar: PLACEHOLDERS });
   const cli = await proCommand(["activate", KEY], { ...w.deps, fetch: never });
   assert.equal(cli.exitCode, 1);
   assert.match(cli.lines[0]!, /Could not activate: this copy of Cephalo has no Polar store set up yet/);
