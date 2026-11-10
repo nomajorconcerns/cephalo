@@ -18,25 +18,29 @@ import {
   readLicense,
   validateLicense,
   writeLicense,
+  LEGACY_MESSAGE,
+  isLegacyRecord,
   type Fetch,
+  type PolarIds,
 } from "./pro.js";
 
 export const PRO_USAGE = `Usage: cephalo pro [status | activate [key] | renew [key] | install <file.tgz> | deactivate [key] | path]
 
   status          what plan this machine has, and whether the Pro package is installed (no network)
-  activate        use the license key from your Lemon Squeezy order on this machine
+  activate        use the license key from your Polar purchase on this machine
   renew           check the license with the server again (needed about every ${LICENSE_VALID_DAYS} days, so cancelled subscriptions end)
   install <file>  install the downloaded Pro package into ~/.cephalo/pro (an alternative to: npm install -g ./cephalo-pro-0.2.0.tgz)
   deactivate      give this machine's seat back, so the key can be used on another computer
   path            where the license and the package are kept
 
-Your Lemon Squeezy order has two things: a license key and a download, cephalo-pro-0.2.0.tgz. Install the download with
+Your Polar purchase has two things: a license key and a file download, cephalo-pro-0.2.0.tgz (both are in Polar's
+email and its customer portal). Install the download with
   npm install -g ./cephalo-pro-0.2.0.tgz
 then run: cephalo pro activate
-(npm fetches the package's one dependency, yaml, from the public registry. Nothing from your order goes to npm.)
+(npm fetches the package's one dependency, yaml, from the public registry. Nothing from your purchase goes to npm.)
 
 The key is asked for without echo if you do not give it. It is not stored; only its last four characters are.
-CEPHALO_LICENSE_KEY can hold it for a script.
+CEPHALO_LICENSE_KEY can hold it for a script. CEPHALO_POLAR_SANDBOX=1 uses Polar's sandbox (for testing).
 Plans: ${PRICING_URL}
 `;
 
@@ -48,6 +52,8 @@ export interface ProCmdDeps {
   dir?: string;
   fetch?: Fetch;
   api?: string;
+  /** Polar organization and benefit IDs (tests); the built-in settings by default. */
+  polar?: PolarIds;
   now?: Date;
   env?: Record<string, string | undefined>;
   /** Asks for the key without echo; null when there is no terminal. */
@@ -78,7 +84,7 @@ export function installProFile(file: string, d: ProCmdDeps = {}): { ok: boolean;
   const dir = d.dir ?? cephaloDir();
   const run = d.runNpm ?? defaultRunNpm;
   const abs = path.resolve(file);
-  if (!/\.(tgz|tar\.gz)$/i.test(abs)) return { ok: false, lines: [`${file} is not a package file. Use the cephalo-pro-0.2.0.tgz from your Lemon Squeezy order.`] };
+  if (!/\.(tgz|tar\.gz)$/i.test(abs)) return { ok: false, lines: [`${file} is not a package file. Use the cephalo-pro-0.2.0.tgz from your Polar purchase.`] };
   if (!fs.existsSync(abs)) return { ok: false, lines: [`No file at ${abs}.`] };
   const target = proDir(dir);
   fs.mkdirSync(target, { recursive: true });
@@ -102,7 +108,7 @@ export async function proCommand(args: string[], d: ProCmdDeps = {}): Promise<Pr
   const dir = d.dir ?? cephaloDir();
   const sub = args[0] ?? "status";
   const rest = args.slice(1);
-  const ops = { fetch: d.fetch, api: d.api, now: d.now, hostname: d.hostname };
+  const ops = { fetch: d.fetch, api: d.api, polar: d.polar, env: d.env ?? process.env, now: d.now, hostname: d.hostname };
   const roots = d.roots ?? proRoots(dir);
 
   if (sub === "path") return { lines: [`license: ${licensePath(dir)}`, `package: ${roots.join("  or  ")}`], exitCode: 0 };
@@ -114,8 +120,12 @@ export async function proCommand(args: string[], d: ProCmdDeps = {}): Promise<Pr
       lines.push("Plan: Free (everything that was in 0.1.1, plus the free 0.2.0 features).", `Pro adds the network egress allowlist, the tamper-evident audit log and the bypass benchmark. Plans: ${PRICING_URL}`, "Have a key? Run: cephalo pro activate");
       return { lines, exitCode: 0 };
     }
+    if (st.state === "legacy") {
+      lines.push(`Plan: Free for now. ${LEGACY_MESSAGE}`, "Everything that was in 0.1.1, plus the free 0.2.0 features, keeps working.");
+      return { lines, exitCode: 0 };
+    }
     const l = st.license;
-    lines.push(`Plan: ${l.tier}${l.email ? ` (${l.email})` : ""}, key ending ${l.keyHint}, on ${l.instanceName}`);
+    lines.push(`Plan: ${l.tier}${l.email ? ` (${l.email})` : ""}, key ending ${l.keyHint}, on ${l.instanceName}${l.sandbox ? " (Polar sandbox)" : ""}`);
     if (st.state === "active") lines.push(`License: checked ${new Date(l.validatedAt).toISOString().slice(0, 10)}; trusted for ${st.daysLeft} more day(s) before it needs: cephalo pro renew`);
     else if (st.state === "stale") lines.push(`License: last checked ${st.daysAgo} days ago, so the paid features are off. Run: cephalo pro renew`);
     else lines.push(`License: expired ${l.expiresAt}. Renew the subscription, then run: cephalo pro renew`);
@@ -141,13 +151,14 @@ export async function proCommand(args: string[], d: ProCmdDeps = {}): Promise<Pr
     writeLicense(r.record, licensePath(dir));
     const lines = [`Activated: Cephalo ${r.record.tier} on ${r.record.instanceName} (key ending ${r.record.keyHint}).`];
     if (proEntry(dir, roots)) lines.push("The Pro package is installed. Try: cephalo bench   |   cephalo audit verify   |   cephalo egress");
-    else lines.push("The Pro package is not installed yet. Install the cephalo-pro-0.2.0.tgz from your Lemon Squeezy order:", "  npm install -g ./cephalo-pro-0.2.0.tgz");
+    else lines.push("The Pro package is not installed yet. Install the cephalo-pro-0.2.0.tgz download from your Polar purchase:", "  npm install -g ./cephalo-pro-0.2.0.tgz");
     return { lines, exitCode: 0 };
   }
 
   if (sub === "renew") {
     const rec = readLicense(licensePath(dir));
     if (!rec) return { lines: ["No license on this machine. Run: cephalo pro activate"], exitCode: 1 };
+    if (isLegacyRecord(rec)) return { lines: [LEGACY_MESSAGE], exitCode: 1 };
     const key = await keyFrom(rest, d);
     if (!key) return { lines: NO_KEY, exitCode: 1 };
     const r = await validateLicense(rec, key, ops);
@@ -159,6 +170,11 @@ export async function proCommand(args: string[], d: ProCmdDeps = {}): Promise<Pr
   if (sub === "deactivate") {
     const rec = readLicense(licensePath(dir));
     if (!rec) return { lines: ["No license on this machine."], exitCode: 0 };
+    if (isLegacyRecord(rec)) {
+      // A Lemon Squeezy activation cannot be released through Polar; only the local record can go.
+      fs.rmSync(licensePath(dir), { force: true });
+      return { lines: ["Removed this machine's old Lemon Squeezy license record. Cephalo no longer talks to Lemon Squeezy, so that seat was not released there.", "To use Pro again, run: cephalo pro activate (with a Polar key)"], exitCode: 0 };
+    }
     const key = await keyFrom(rest, d);
     if (!key) return { lines: NO_KEY, exitCode: 1 };
     const r = await deactivateLicense(rec, key, ops);

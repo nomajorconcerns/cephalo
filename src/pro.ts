@@ -1,8 +1,8 @@
 /**
  * The seam between the free, MIT-licensed core and the optional paid package (@nomajorconcerns/cephalo-pro).
  *
- * This file holds no paid feature. It does four things: it keeps the license record, it talks to the Lemon Squeezy
- * license API to activate, check and release a key, it finds the paid package where `cephalo pro activate` installed it,
+ * This file holds no paid feature. It does four things: it keeps the license record, it talks to Polar's public
+ * license-key API to activate, check and release a key, it finds the paid package where `cephalo pro activate` installed it,
  * and it says plainly what is missing when a paid command is run without it.
  *
  * Rules the seam keeps:
@@ -28,15 +28,51 @@ import { cephaloDir } from "./rules.js";
 export const PRO_PACKAGE = "@nomajorconcerns/cephalo-pro";
 export const PLUGIN_API_VERSION = 1;
 export const PRICING_URL = "https://nomajorconcerns.github.io/cephalo/#pricing";
-export const LICENSE_API = "https://api.lemonsqueezy.com/v1/licenses";
 
-/**
- * The Lemon Squeezy store and the two products a key must belong to. A key for any other store or product is refused, so a key
- * bought for something else cannot unlock Cephalo Pro. The product decides the plan.
- */
-export const LS_STORE_ID = 513818;
-export const LS_PRO_PRODUCT_ID = 1504334;
-export const LS_TEAM_PRODUCT_ID = 1504325;
+/* ==================================================================================================================
+ * POLAR SETTINGS: the only place to edit when connecting the Polar store. Nothing here is secret.
+ *
+ *  POLAR_ORG_ID           Polar dashboard > Settings (the organization ID, a UUID).
+ *  POLAR_PRO_BENEFIT_ID   Polar dashboard > Products > Benefits > the "License Keys" benefit attached to the Pro product.
+ *  POLAR_TEAM_BENEFIT_ID  the same, for the Team product.
+ *
+ * A key must belong to this organization and to one of these two benefits; the benefit decides the plan. While any of them
+ * is still a REPLACE_ME placeholder, `cephalo pro activate` and `renew` refuse with a plain message and send nothing.
+ * Sandbox (CEPHALO_POLAR_SANDBOX=1) is a separate Polar environment with its own IDs: set CEPHALO_POLAR_ORG_ID,
+ * CEPHALO_POLAR_PRO_BENEFIT_ID and CEPHALO_POLAR_TEAM_BENEFIT_ID for it. Those variables are ignored outside sandbox mode.
+ * ================================================================================================================== */
+export const POLAR_ORG_ID = "REPLACE_ME_POLAR_ORG_ID";
+export const POLAR_PRO_BENEFIT_ID = "REPLACE_ME_POLAR_PRO_BENEFIT_ID";
+export const POLAR_TEAM_BENEFIT_ID = "REPLACE_ME_POLAR_TEAM_BENEFIT_ID";
+/** Polar's customer-portal license-key endpoints. They need no access token and are meant to be called from a client. */
+export const POLAR_API = "https://api.polar.sh/v1/customer-portal/license-keys";
+export const POLAR_SANDBOX_API = "https://sandbox-api.polar.sh/v1/customer-portal/license-keys";
+
+export const isPlaceholder = (id: string): boolean => !id || id.startsWith("REPLACE_ME");
+
+/** The Polar organization, the two benefits, and the API base to use. */
+export interface PolarIds {
+  orgId: string;
+  proBenefitId: string;
+  teamBenefitId: string;
+}
+export interface PolarTarget extends PolarIds {
+  api: string;
+  sandbox: boolean;
+}
+
+/** Production by default; the sandbox, with IDs from the environment, when CEPHALO_POLAR_SANDBOX=1. */
+export function polarTarget(env: Record<string, string | undefined> = process.env): PolarTarget {
+  const sandbox = env.CEPHALO_POLAR_SANDBOX === "1";
+  if (!sandbox) return { api: POLAR_API, sandbox, orgId: POLAR_ORG_ID, proBenefitId: POLAR_PRO_BENEFIT_ID, teamBenefitId: POLAR_TEAM_BENEFIT_ID };
+  return {
+    api: POLAR_SANDBOX_API,
+    sandbox,
+    orgId: env.CEPHALO_POLAR_ORG_ID?.trim() || POLAR_ORG_ID,
+    proBenefitId: env.CEPHALO_POLAR_PRO_BENEFIT_ID?.trim() || POLAR_PRO_BENEFIT_ID,
+    teamBenefitId: env.CEPHALO_POLAR_TEAM_BENEFIT_ID?.trim() || POLAR_TEAM_BENEFIT_ID,
+  };
+}
 
 /** A license is trusted this long after the server last said it was valid. Then `cephalo pro renew` is needed. */
 export const LICENSE_VALID_DAYS = 35;
@@ -52,19 +88,28 @@ export const PAID_COMMANDS: Readonly<Record<string, string>> = {
 
 export interface LicenseRecord {
   version: 1;
+  /** Who issued the key. Records without it were made by Cephalo 0.2.0 with Lemon Squeezy, which is no longer used. */
+  provider?: "polar";
+  /** Activated against Polar's sandbox (CEPHALO_POLAR_SANDBOX=1); renew and deactivate must use the sandbox too. */
+  sandbox?: boolean;
   tier: Tier;
-  /** The Lemon Squeezy activation this machine holds. */
+  /** The Polar activation ID this machine holds (the field name is kept from 0.2.0). */
   instanceId: string;
+  /** The activation label: this machine's name. */
   instanceName: string;
   /** Last four characters of the key, so `status` can say which key it is. The key itself is not stored. */
   keyHint: string;
   activatedAt: string;
   validatedAt: string;
-  /** Subscription end date reported by the server, if any. */
+  /** The key's expiry date reported by Polar, if any. */
   expiresAt?: string;
-  /** The customer's email as Lemon Squeezy reports it; shown in `status` only. */
+  /** The customer's email as Polar reports it; shown in `status` only. */
   email?: string;
 }
+
+/** A record left by Cephalo 0.2.0's Lemon Squeezy licensing. It still reads, but turns nothing on. */
+export const isLegacyRecord = (rec: LicenseRecord): boolean => rec.provider !== "polar";
+export const LEGACY_MESSAGE = "This license was activated with Lemon Squeezy, which Cephalo no longer uses. Re-activate with a Polar key: cephalo pro activate";
 
 export const licensePath = (dir: string = cephaloDir()): string => path.join(dir, "license.json");
 export const proDir = (dir: string = cephaloDir()): string => path.join(dir, "pro");
@@ -88,10 +133,12 @@ export type LicenseState =
   | { state: "none" }
   | { state: "active"; license: LicenseRecord; daysLeft: number }
   | { state: "stale"; license: LicenseRecord; daysAgo: number }
-  | { state: "expired"; license: LicenseRecord };
+  | { state: "expired"; license: LicenseRecord }
+  | { state: "legacy"; license: LicenseRecord };
 
 export function licenseState(rec: LicenseRecord | null, now: Date = new Date()): LicenseState {
   if (!rec) return { state: "none" };
+  if (isLegacyRecord(rec)) return { state: "legacy", license: rec };
   if (rec.expiresAt) {
     const end = Date.parse(rec.expiresAt);
     if (Number.isFinite(end) && end < now.getTime()) return { state: "expired", license: rec };
@@ -102,63 +149,91 @@ export function licenseState(rec: LicenseRecord | null, now: Date = new Date()):
   return { state: "active", license: rec, daysLeft: Math.max(0, Math.ceil(LICENSE_VALID_DAYS - ageDays)) };
 }
 
-/* ------------------------------------------------------------------ Lemon Squeezy license API */
+/* ------------------------------------------------------------------ Polar license-key API */
 
 export type Fetch = (url: string, init: { method: string; headers: Record<string, string>; body: string }) => Promise<{ ok: boolean; status: number; json(): Promise<unknown> }>;
 
-interface LsMeta {
-  store_id?: number;
-  product_id?: number;
-  variant_name?: string;
-  customer_email?: string;
-}
-interface LsLicenseKey {
+/** The parts of Polar's license key object Cephalo reads (activate's `license_key`, and validate's reply). */
+interface PolarKey {
+  organization_id?: string;
+  benefit_id?: string;
   status?: string;
-  key?: string;
   expires_at?: string | null;
+  limit_activations?: number | null;
+  validations?: number;
+  customer?: { email?: string | null } | null;
+  activation?: { id?: string } | null;
 }
-interface LsReply {
-  activated?: boolean;
-  valid?: boolean;
-  deactivated?: boolean;
-  error?: string | null;
-  license_key?: LsLicenseKey;
-  instance?: { id?: string; name?: string } | null;
-  meta?: LsMeta;
+interface PolarActivation {
+  id?: string;
+  label?: string;
+  license_key?: PolarKey;
 }
 
-async function lsCall(fetchFn: Fetch, base: string, action: "activate" | "validate" | "deactivate", fields: Record<string, string>): Promise<{ ok: true; reply: LsReply } | { ok: false; error: string }> {
+type CallResult = { ok: true; status: number; body: unknown } | { ok: false; status: number; error: string };
+
+/** One POST with a JSON body. Turns every failure into a plain sentence; `status` is 0 when the server was not reached. */
+async function polarCall(fetchFn: Fetch, base: string, action: "activate" | "validate" | "deactivate", body: Record<string, string>): Promise<CallResult> {
   let res;
   try {
     res = await fetchFn(`${base}/${action}`, {
       method: "POST",
-      headers: { Accept: "application/json", "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams(fields).toString(),
+      headers: { Accept: "application/json", "Content-Type": "application/json" },
+      body: JSON.stringify(body),
     });
   } catch (e) {
-    return { ok: false, error: `could not reach the license server (${(e as Error).message}). Check your connection and try again.` };
+    return { ok: false, status: 0, error: `could not reach the license server (${(e as Error).message}). Check your connection and try again.` };
   }
-  let reply: LsReply;
+  if (res.status === 204) return { ok: true, status: 204, body: null };
+  let parsed: unknown;
   try {
-    reply = (await res.json()) as LsReply;
+    parsed = await res.json();
   } catch {
-    return { ok: false, error: `the license server sent a reply Cephalo could not read (HTTP ${res.status}).` };
+    if (res.ok) return { ok: false, status: res.status, error: `the license server sent a reply Cephalo could not read (HTTP ${res.status}).` };
+    parsed = undefined;
   }
-  return { ok: true, reply };
+  if (res.ok) return { ok: true, status: res.status, body: parsed };
+  const detail = (parsed as { detail?: unknown } | undefined)?.detail;
+  // Polar's own words, ending in a full stop so a sentence of ours can follow.
+  const said = typeof detail === "string" && detail.trim() ? detail.trim().replace(/([^.!?])$/, "$1.") : "";
+  switch (res.status) {
+    case 404:
+      return { ok: false, status: 404, error: said ? `Polar said: ${said}` : "Polar does not know this key." };
+    case 403:
+      return { ok: false, status: 403, error: said ? `Polar refused: ${said}` : "Polar refused this key." };
+    case 422:
+      return { ok: false, status: 422, error: "Polar could not read the request. Check that you copied the whole key." };
+    case 429:
+      return { ok: false, status: 429, error: "Polar is limiting license checks right now. Wait a few seconds and try again." };
+    default:
+      return { ok: false, status: res.status, error: `the license server answered HTTP ${res.status}${said ? `: ${said}` : ""}.` };
+  }
 }
 
-/** Pro or Team from the store and product the key was sold under; null if it is neither (then the key is not for Cephalo). */
-export function tierFromMeta(meta: LsMeta | undefined): Tier | null {
-  if (meta?.store_id !== LS_STORE_ID) return null;
-  if (meta.product_id === LS_TEAM_PRODUCT_ID) return "Team";
-  if (meta.product_id === LS_PRO_PRODUCT_ID) return "Pro";
+/** Pro or Team from the benefit the key was issued under; null if it is neither (then the key is not for Cephalo). */
+export function tierFromBenefit(benefitId: string | undefined, ids: PolarIds): Tier | null {
+  if (!benefitId || isPlaceholder(benefitId)) return null;
+  if (benefitId === ids.teamBenefitId) return "Team";
+  if (benefitId === ids.proBenefitId) return "Pro";
+  return null;
+}
+
+/** Why a key Polar answered for is still not one Cephalo accepts, or null if it is fine. */
+function refusal(k: PolarKey | undefined, ids: PolarIds): string | null {
+  if (!k) return "the license server sent no license details.";
+  if (k.organization_id !== ids.orgId) return "that key was issued by another Polar seller, not for Cephalo.";
+  if (k.status !== "granted") return `the license is ${k.status ?? "not active"} (cancelled, refunded or disabled).`;
+  if (!tierFromBenefit(k.benefit_id, ids)) return "that key is valid, but it is not a Cephalo Pro or Team key.";
   return null;
 }
 
 export interface LicenseOps {
   fetch?: Fetch;
-  /** API base, for tests; the real one by default. */
+  /** API base, for tests; Polar's (or its sandbox, with CEPHALO_POLAR_SANDBOX=1) by default. */
   api?: string;
+  /** Organization and benefit IDs, for tests; the POLAR SETTINGS above (or the sandbox variables) by default. */
+  polar?: PolarIds;
+  env?: Record<string, string | undefined>;
   now?: Date;
   hostname?: string;
 }
@@ -166,56 +241,104 @@ export interface LicenseOps {
 const hint = (key: string) => key.trim().slice(-4);
 const defaultFetch: Fetch = (url, init) => fetch(url, init) as ReturnType<Fetch>;
 
+function target(o: LicenseOps): PolarTarget {
+  const t = polarTarget(o.env ?? process.env);
+  return { ...t, ...(o.polar ?? {}), api: o.api ?? t.api };
+}
+const NOT_CONFIGURED =
+  "this copy of Cephalo has no Polar store set up yet (the organization and benefit IDs are placeholders), so it cannot check a key. Nothing was sent.";
+const notConfigured = (t: PolarIds, needBenefits = true) => isPlaceholder(t.orgId) || (needBenefits && (isPlaceholder(t.proBenefitId) || isPlaceholder(t.teamBenefitId)));
+
 export type OpResult = { ok: true; record: LicenseRecord } | { ok: false; error: string };
 
+/**
+ * Activate the key for this machine (label: the hostname), then validate that activation and refuse unless the key is
+ * granted, belongs to our organization and to the Pro or Team benefit. A key that is refused after it was activated has
+ * its activation given back, so a seat is never left used up.
+ */
 export async function activateLicense(key: string, o: LicenseOps = {}): Promise<OpResult> {
   const k = key.trim();
   if (!k) return { ok: false, error: "no license key given." };
-  const name = `${o.hostname ?? os.hostname()}`.slice(0, 60) || "cephalo";
-  const r = await lsCall(o.fetch ?? defaultFetch, o.api ?? LICENSE_API, "activate", { license_key: k, instance_name: name });
-  if (!r.ok) return r;
-  const a = r.reply;
-  if (!a.activated || !a.instance?.id) return { ok: false, error: a.error ? `the license server said: ${a.error}` : "the license server did not activate this key." };
-  const tier = tierFromMeta(a.meta);
-  if (!tier) {
-    // the key is valid but not for us: give the seat back rather than leave it used up
-    await lsCall(o.fetch ?? defaultFetch, o.api ?? LICENSE_API, "deactivate", { license_key: k, instance_id: a.instance.id });
-    return { ok: false, error: "that key is valid, but it is not a Cephalo Pro or Team key." };
+  const t = target(o);
+  if (notConfigured(t)) return { ok: false, error: NOT_CONFIGURED };
+  const f = o.fetch ?? defaultFetch;
+  const label = `${o.hostname ?? os.hostname()}`.slice(0, 60) || "cephalo";
+  const a = await polarCall(f, t.api, "activate", { key: k, organization_id: t.orgId, label });
+  if (!a.ok) {
+    const limit = a.status === 403 ? " If every seat of this key is in use, run `cephalo pro deactivate` on a machine you no longer use, then try again." : "";
+    return { ok: false, error: a.error + limit };
   }
+  const act = a.body as PolarActivation | null;
+  if (!act?.id) return { ok: false, error: "the license server did not activate this key." };
+  const giveBack = async (why: string): Promise<OpResult> => {
+    const d = await polarCall(f, t.api, "deactivate", { key: k, organization_id: t.orgId, activation_id: act.id! });
+    return { ok: false, error: d.ok ? why : `${why} (The activation could not be given back: ${d.error})` };
+  };
+  const v = await polarCall(f, t.api, "validate", { key: k, organization_id: t.orgId, activation_id: act.id });
+  if (!v.ok) return giveBack(`the key was activated but did not pass the check that follows: ${v.error}`);
+  const lk = v.body as PolarKey | null;
+  const no = refusal(lk ?? undefined, t);
+  if (no) return giveBack(no);
   const now = (o.now ?? new Date()).toISOString();
+  const email = lk?.customer?.email;
   return {
     ok: true,
     record: {
       version: 1,
-      tier,
-      instanceId: a.instance.id,
-      instanceName: a.instance.name ?? name,
+      provider: "polar",
+      ...(t.sandbox ? { sandbox: true } : {}),
+      tier: tierFromBenefit(lk!.benefit_id, t)!,
+      instanceId: act.id,
+      instanceName: act.label ?? label,
       keyHint: hint(k),
       activatedAt: now,
       validatedAt: now,
-      ...(a.license_key?.expires_at ? { expiresAt: a.license_key.expires_at } : {}),
-      ...(a.meta?.customer_email ? { email: a.meta.customer_email } : {}),
+      ...(lk?.expires_at ? { expiresAt: lk.expires_at } : {}),
+      ...(typeof email === "string" && email ? { email } : {}),
     },
   };
 }
 
-/** Ask the server whether this machine's activation is still good. `key` is needed again because it is not stored. */
+/** Records made against the sandbox are renewed and released against the sandbox, and the other way round. */
+function sameEnvironment(rec: LicenseRecord, t: PolarTarget): string | null {
+  if (isLegacyRecord(rec)) return LEGACY_MESSAGE;
+  if (Boolean(rec.sandbox) !== t.sandbox) return rec.sandbox ? "this license was activated against Polar's sandbox. Set CEPHALO_POLAR_SANDBOX=1 to use it." : "this license was activated against Polar itself, not the sandbox. Unset CEPHALO_POLAR_SANDBOX to use it.";
+  return null;
+}
+
+/**
+ * Ask Polar whether this machine's activation is still good. `key` is needed again because it is not stored. Polar answers
+ * 404 for a key that is revoked, disabled or expired, so that, like any status other than granted, ends the license.
+ */
 export async function validateLicense(rec: LicenseRecord, key: string, o: LicenseOps = {}): Promise<OpResult> {
-  const r = await lsCall(o.fetch ?? defaultFetch, o.api ?? LICENSE_API, "validate", { license_key: key.trim(), instance_id: rec.instanceId });
-  if (!r.ok) return r;
-  const v = r.reply;
-  if (!v.valid) return { ok: false, error: v.error ? `the license server said: ${v.error}` : `the license is ${v.license_key?.status ?? "not valid"}.` };
-  const tier = tierFromMeta(v.meta) ?? rec.tier;
+  const t = target(o);
+  const env = sameEnvironment(rec, t);
+  if (env) return { ok: false, error: env };
+  if (notConfigured(t)) return { ok: false, error: NOT_CONFIGURED };
+  const v = await polarCall(o.fetch ?? defaultFetch, t.api, "validate", { key: key.trim(), organization_id: t.orgId, activation_id: rec.instanceId });
+  if (!v.ok) {
+    if (v.status === 404) return { ok: false, error: `the license has ended: it was revoked, disabled or expired (for example, the subscription was cancelled), or this machine's activation was removed. ${v.error}` };
+    return v;
+  }
+  const lk = v.body as PolarKey | null;
+  const no = refusal(lk ?? undefined, t);
+  if (no) return { ok: false, error: no };
+  const { expiresAt: _old, ...rest } = rec;
+  void _old;
   return {
     ok: true,
-    record: { ...rec, tier, validatedAt: (o.now ?? new Date()).toISOString(), ...(v.license_key?.expires_at ? { expiresAt: v.license_key.expires_at } : {}) },
+    record: { ...rest, tier: tierFromBenefit(lk!.benefit_id, t)!, validatedAt: (o.now ?? new Date()).toISOString(), ...(lk?.expires_at ? { expiresAt: lk.expires_at } : {}) },
   };
 }
 
+/** Give this machine's seat back. */
 export async function deactivateLicense(rec: LicenseRecord, key: string, o: LicenseOps = {}): Promise<{ ok: true } | { ok: false; error: string }> {
-  const r = await lsCall(o.fetch ?? defaultFetch, o.api ?? LICENSE_API, "deactivate", { license_key: key.trim(), instance_id: rec.instanceId });
-  if (!r.ok) return r;
-  if (!r.reply.deactivated) return { ok: false, error: r.reply.error ? `the license server said: ${r.reply.error}` : "the license server did not release this machine." };
+  const t = target(o);
+  const env = sameEnvironment(rec, t);
+  if (env) return { ok: false, error: env };
+  if (notConfigured(t, false)) return { ok: false, error: NOT_CONFIGURED };
+  const r = await polarCall(o.fetch ?? defaultFetch, t.api, "deactivate", { key: key.trim(), organization_id: t.orgId, activation_id: rec.instanceId });
+  if (!r.ok) return { ok: false, error: r.status === 404 ? `Polar has no such activation for this key (${r.error.replace(/^Polar said: /, "").replace(/\.$/, "")}).` : r.error };
   return { ok: true };
 }
 
@@ -266,7 +389,7 @@ export interface ProRuntime {
 
 export type Loaded =
   | { ok: true; runtime: ProRuntime }
-  | { ok: false; reason: "no-license" | "stale" | "expired" | "not-installed" | "incompatible" | "broken"; detail?: string };
+  | { ok: false; reason: "no-license" | "legacy" | "stale" | "expired" | "not-installed" | "incompatible" | "broken"; detail?: string };
 
 export interface LoadOptions {
   dir?: string;
@@ -317,6 +440,7 @@ export function loadPro(o: LoadOptions = {}): Loaded {
   const rec = readLicense(licensePath(dir));
   const st = licenseState(rec, o.now);
   if (st.state === "none") return { ok: false, reason: "no-license" };
+  if (st.state === "legacy") return { ok: false, reason: "legacy" };
   if (st.state === "stale") return { ok: false, reason: "stale", detail: `last checked ${st.daysAgo} days ago` };
   if (st.state === "expired") return { ok: false, reason: "expired", detail: rec?.expiresAt };
   const entry = proEntry(dir, o.roots);
@@ -340,15 +464,17 @@ export function notAvailableMessage(cmd: string, loaded: Extract<Loaded, { ok: f
   switch (loaded.reason) {
     case "no-license":
       return [head, `Plans and prices: ${PRICING_URL}`, "Already bought it? Run: cephalo pro activate", "Everything that was in Cephalo 0.1.1 is free and keeps working."];
+    case "legacy":
+      return [head, LEGACY_MESSAGE];
     case "stale":
       return [head, `Your license was last checked ${loaded.detail?.replace("last checked ", "")}. Run: cephalo pro renew`];
     case "expired":
       return [head, "Your license has expired. Renew the subscription, then run: cephalo pro renew"];
     case "not-installed":
-      return [head, "Your license is active but the Pro package is not installed on this machine.", "Install the cephalo-pro-0.2.0.tgz that came with your Lemon Squeezy order: npm install -g ./cephalo-pro-0.2.0.tgz"];
+      return [head, "Your license is active but the Pro package is not installed on this machine.", "Install the cephalo-pro-0.2.0.tgz download from your Polar purchase: npm install -g ./cephalo-pro-0.2.0.tgz"];
     case "incompatible":
-      return [head, `The installed Pro package does not match this Cephalo (${loaded.detail}). Download the current cephalo-pro .tgz from your Lemon Squeezy order and install it again.`];
+      return [head, `The installed Pro package does not match this Cephalo (${loaded.detail}). Download the current cephalo-pro .tgz from your Polar purchase and install it again.`];
     default:
-      return [head, `The installed Pro package could not be loaded (${loaded.detail ?? "unknown error"}). Install the .tgz from your Lemon Squeezy order again.`];
+      return [head, `The installed Pro package could not be loaded (${loaded.detail ?? "unknown error"}). Install the .tgz from your Polar purchase again.`];
   }
 }
