@@ -19,6 +19,8 @@ import {
   validateLicense,
   writeLicense,
   LEGACY_MESSAGE,
+  PRO_DOWNLOAD,
+  PRO_TGZ,
   isLegacyRecord,
   type Fetch,
   type PolarIds,
@@ -29,13 +31,13 @@ export const PRO_USAGE = `Usage: cephalo pro [status | activate [key] | renew [k
   status          what plan this machine has, and whether the Pro package is installed (no network)
   activate        use the license key from your Polar purchase on this machine
   renew           check the license with the server again (needed about every ${LICENSE_VALID_DAYS} days, so cancelled subscriptions end)
-  install <file>  install the downloaded Pro package into ~/.cephalo/pro (an alternative to: npm install -g ./cephalo-pro-0.2.0.tgz)
+  install <file>  install the downloaded Pro package into ~/.cephalo/pro (an alternative to: npm install -g ./${PRO_TGZ})
   deactivate      give this machine's seat back, so the key can be used on another computer
   path            where the license and the package are kept
 
-Your Polar purchase has two things: a license key and a file download, cephalo-pro-0.2.0.tgz (both are in Polar's
+Your Polar purchase has two things: a license key and a file download, the cephalo-pro .tgz (both are in Polar's
 email and its customer portal). Install the download with
-  npm install -g ./cephalo-pro-0.2.0.tgz
+  npm install -g ./${PRO_TGZ}      (use the file name of your download)
 then run: cephalo pro activate
 (npm fetches the package's one dependency, yaml, from the public registry. Nothing from your purchase goes to npm.)
 
@@ -84,7 +86,7 @@ export function installProFile(file: string, d: ProCmdDeps = {}): { ok: boolean;
   const dir = d.dir ?? cephaloDir();
   const run = d.runNpm ?? defaultRunNpm;
   const abs = path.resolve(file);
-  if (!/\.(tgz|tar\.gz)$/i.test(abs)) return { ok: false, lines: [`${file} is not a package file. Use the cephalo-pro-0.2.0.tgz from your Polar purchase.`] };
+  if (!/\.(tgz|tar\.gz)$/i.test(abs)) return { ok: false, lines: [`${file} is not a package file. Use ${PRO_DOWNLOAD}.`] };
   if (!fs.existsSync(abs)) return { ok: false, lines: [`No file at ${abs}.`] };
   const target = proDir(dir);
   fs.mkdirSync(target, { recursive: true });
@@ -136,7 +138,7 @@ export async function proCommand(args: string[], d: ProCmdDeps = {}): Promise<Pr
 
   if (sub === "install") {
     const file = rest.find((a) => !a.startsWith("-"));
-    if (!file) return { lines: ["Pass the downloaded file: cephalo pro install ./cephalo-pro-0.2.0.tgz", "Or install it for every user of this computer with: npm install -g ./cephalo-pro-0.2.0.tgz"], exitCode: 1 };
+    if (!file) return { lines: [`Pass the downloaded file (${PRO_DOWNLOAD}): cephalo pro install ./${PRO_TGZ}`, `Or install it for every user of this computer with: npm install -g ./${PRO_TGZ}`], exitCode: 1 };
     const r = installProFile(file, d);
     return { lines: r.lines, exitCode: r.ok ? 0 : 1 };
   }
@@ -151,7 +153,7 @@ export async function proCommand(args: string[], d: ProCmdDeps = {}): Promise<Pr
     writeLicense(r.record, licensePath(dir));
     const lines = [`Activated: Cephalo ${r.record.tier} on ${r.record.instanceName} (key ending ${r.record.keyHint}).`];
     if (proEntry(dir, roots)) lines.push("The Pro package is installed. Try: cephalo bench   |   cephalo audit verify   |   cephalo egress");
-    else lines.push("The Pro package is not installed yet. Install the cephalo-pro-0.2.0.tgz download from your Polar purchase:", "  npm install -g ./cephalo-pro-0.2.0.tgz");
+    else lines.push(`The Pro package is not installed yet. Install ${PRO_DOWNLOAD}:`, `  npm install -g ./${PRO_TGZ}   (use the file name of your download)`);
     return { lines, exitCode: 0 };
   }
 

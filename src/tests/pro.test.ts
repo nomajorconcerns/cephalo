@@ -329,7 +329,8 @@ test("activate: asks the server, stores a record without the key, and says how t
   const text = r.lines.join("\n");
   assert.match(text, /Activated: Cephalo Pro on laptop \(key ending 4D51\)/);
   assert.match(text, /The Pro package is not installed yet/);
-  assert.match(text, /npm install -g \.\/cephalo-pro-0\.2\.0\.tgz/);
+  assert.match(text, /Install the cephalo-pro \.tgz from your Polar download:\n  npm install -g \.\/cephalo-pro-<version>\.tgz/);
+  assert.doesNotMatch(text, /cephalo-pro-\d/, "no fixed Pro version is named");
   const saved = fs.readFileSync(licensePath(w.dir), "utf8");
   assert.ok(!saved.includes(KEY));
   assert.equal(JSON.parse(saved).tier, "Pro");
@@ -383,7 +384,7 @@ test("`pro install` refuses a file that is not a package, a missing file and no 
   assert.equal(w.npmCalls.length, 0);
   const none = await proCommand(["install"], w.deps);
   assert.equal(none.exitCode, 1);
-  assert.match(none.lines.join("\n"), /cephalo pro install \.\/cephalo-pro-0\.2\.0\.tgz/);
+  assert.match(none.lines.join("\n"), /cephalo pro install \.\/cephalo-pro-<version>\.tgz/);
   assert.match(none.lines.join("\n"), /npm install -g/);
   w.failNpm("npm ERR! network request failed");
   const bad = await proCommand(["install", tgz(w.dir)], w.deps);
@@ -538,8 +539,10 @@ test("what a person sees when a paid command is run without the package, in each
   assert.match(msg("no-license"), /Everything that was in Cephalo 0\.1\.1 is free and keeps working\./);
   assert.match(msg("stale", "last checked 40 days ago"), /last checked 40 days ago\. Run: cephalo pro renew/);
   assert.match(msg("expired"), /expired/);
-  assert.match(msg("not-installed"), /npm install -g \.\/cephalo-pro-0\.2\.0\.tgz/);
-  assert.match(msg("not-installed"), /Polar purchase/);
+  assert.match(msg("not-installed"), /Install the cephalo-pro \.tgz from your Polar download: npm install -g \.\/cephalo-pro-<version>\.tgz/);
+  assert.doesNotMatch(PRO_USAGE, /cephalo-pro-\d/, "the help names no fixed Pro version");
+  assert.match(msg("not-installed"), /Polar download/);
+  assert.match(msg("broken", "boom"), /Install the cephalo-pro \.tgz from your Polar download again\./);
   assert.match(msg("incompatible", "x"), /does not match this Cephalo/);
   assert.match(msg("incompatible", "x"), /Download the current cephalo-pro/);
   assert.match(msg("broken", "boom"), /could not be loaded \(boom\)/);
@@ -715,7 +718,7 @@ test("real CLI: a license record with no package installed points at the downloa
   const r = spawnSync(process.execPath, [CLI, "bench"], { encoding: "utf8", env });
   assert.equal(r.status, 1);
   assert.match(r.stderr, /license is active but the Pro package is not installed/);
-  assert.match(r.stderr, /npm install -g \.\/cephalo-pro-0\.2\.0\.tgz/);
+  assert.match(r.stderr, /npm install -g \.\/cephalo-pro-<version>\.tgz/);
   const payload = JSON.stringify({ hook_event_name: "PreToolUse", tool_name: "Bash", tool_input: { command: "git push --force origin main" }, session_id: "s" });
   const h = spawnSync(process.execPath, [CLI, "hook", "claude"], { input: payload, encoding: "utf8", env });
   assert.equal(h.status, 0);

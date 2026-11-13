@@ -1,6 +1,6 @@
 {
   "name": "@nomajorconcerns/cephalo",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Guards AI coding agents by blocking dangerous tool calls before they run",
   "type": "module",
   "license": "MIT",

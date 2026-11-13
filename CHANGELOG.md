@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.3.0 (unreleased)
+## 0.3.0
 
 ### Pro and Team: Polar replaces Lemon Squeezy
 
@@ -12,7 +12,8 @@ Checkout, license keys and the Pro download move to [Polar](https://polar.sh), t
 - `~/.cephalo/license.json` keeps its shape (plan, activation ID, last four characters of the key, dates; never the key) and gains `provider: "polar"`.
 - A `license.json` written by 0.2.0 with Lemon Squeezy still reads, but turns nothing on: `cephalo pro status`, the paid commands and `renew` say to re-activate with a Polar key, and nothing is sent anywhere for it. `cephalo pro deactivate` removes it (the Lemon Squeezy seat itself cannot be released from Cephalo any more).
 - `CEPHALO_POLAR_SANDBOX=1` uses Polar's sandbox (`sandbox-api.polar.sh`) for testing, with its own IDs from `CEPHALO_POLAR_ORG_ID`, `CEPHALO_POLAR_PRO_BENEFIT_ID` and `CEPHALO_POLAR_TEAM_BENEFIT_ID`. A record activated in one environment is not renewed or released in the other.
-- The organization and benefit IDs are placeholders in this build, so activation refuses with a plain message and sends nothing until the store is set up.
+- The Polar organization and the Pro and Team license-key benefit IDs are built in. If a build ever ships without them (placeholders), activation refuses with a plain message and sends nothing.
+- The install hints no longer name a fixed Pro file version: they point at the cephalo-pro `.tgz` from your Polar download.
 - The hook still never touches the network; only `cephalo pro activate | renew | deactivate` do.
 - Website: the checkout settings name Polar and accept only `https://buy.polar.sh/...` and `https://polar.sh/...` links (still off, no links). The privacy, terms and refund pages and the README name Polar.
 

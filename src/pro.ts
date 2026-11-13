@@ -28,6 +28,9 @@ import { cephaloDir } from "./rules.js";
 export const PRO_PACKAGE = "@nomajorconcerns/cephalo-pro";
 export const PLUGIN_API_VERSION = 1;
 export const PRICING_URL = "https://nomajorconcerns.github.io/cephalo/#pricing";
+/** How messages name the Pro download. The core does not know its version until it is installed, so none is hard-coded. */
+export const PRO_DOWNLOAD = "the cephalo-pro .tgz from your Polar download";
+export const PRO_TGZ = "cephalo-pro-<version>.tgz";
 
 /* ==================================================================================================================
  * POLAR SETTINGS: the only place to edit when connecting the Polar store. Nothing here is secret.
@@ -403,7 +406,7 @@ export interface LoadOptions {
 /**
  * Where the paid package may be installed, in the order they are tried:
  *  1. next to Cephalo itself, when Cephalo is installed as @nomajorconcerns/cephalo in a node_modules folder. This is where
- *     `npm install -g ./cephalo-pro-0.2.0.tgz` puts it. (A clone linked with `npm link` has no such sibling.)
+ *     `npm install -g ./cephalo-pro-<version>.tgz` puts it. (A clone linked with `npm link` has no such sibling.)
  *  2. ~/.cephalo/pro, where `cephalo pro install <file>` puts it.
  */
 export function proRoots(dir: string = cephaloDir()): string[] {
@@ -471,10 +474,10 @@ export function notAvailableMessage(cmd: string, loaded: Extract<Loaded, { ok: f
     case "expired":
       return [head, "Your license has expired. Renew the subscription, then run: cephalo pro renew"];
     case "not-installed":
-      return [head, "Your license is active but the Pro package is not installed on this machine.", "Install the cephalo-pro-0.2.0.tgz download from your Polar purchase: npm install -g ./cephalo-pro-0.2.0.tgz"];
+      return [head, "Your license is active but the Pro package is not installed on this machine.", `Install ${PRO_DOWNLOAD}: npm install -g ./${PRO_TGZ} (use the file name of your download)`];
     case "incompatible":
-      return [head, `The installed Pro package does not match this Cephalo (${loaded.detail}). Download the current cephalo-pro .tgz from your Polar purchase and install it again.`];
+      return [head, `The installed Pro package does not match this Cephalo (${loaded.detail}). Download the current cephalo-pro .tgz from your Polar download and install it again.`];
     default:
-      return [head, `The installed Pro package could not be loaded (${loaded.detail ?? "unknown error"}). Install the .tgz from your Polar purchase again.`];
+      return [head, `The installed Pro package could not be loaded (${loaded.detail ?? "unknown error"}). Install ${PRO_DOWNLOAD} again.`];
   }
 }
