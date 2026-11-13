@@ -42,8 +42,8 @@ export const PRICING_URL = "https://nomajorconcerns.github.io/cephalo/#pricing";
  * CEPHALO_POLAR_PRO_BENEFIT_ID and CEPHALO_POLAR_TEAM_BENEFIT_ID for it. Those variables are ignored outside sandbox mode.
  * ================================================================================================================== */
 export const POLAR_ORG_ID = "888ef463-f98b-46bb-8b67-42ec0c1da73a";
-export const POLAR_PRO_BENEFIT_ID = "1278cd12-4369-426e-b1eb-5b69e3f9bf36";
-export const POLAR_TEAM_BENEFIT_ID = "652bac53-e3f8-405c-8f43-2adac4f34e6f";
+export const POLAR_PRO_BENEFIT_ID = "54c9de64-a222-443d-a956-b5bf2db6d04e";
+export const POLAR_TEAM_BENEFIT_ID = "c90ec7aa-f616-456a-94d5-2cb83732e828";
 /** Polar's customer-portal license-key endpoints. They need no access token and are meant to be called from a client. */
 export const POLAR_API = "https://api.polar.sh/v1/customer-portal/license-keys";
 export const POLAR_SANDBOX_API = "https://sandbox-api.polar.sh/v1/customer-portal/license-keys";
