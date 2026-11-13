@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- **`cephalo update [--check] [--yes]`.** Updates Cephalo to the newest version on npm: it looks up the latest version from the public registry (only when you run the command), shows `current -> newest`, asks, then runs `npm install -g @nomajorconcerns/cephalo@<newest>`. `--check` only looks. It refuses to replace a copy that is not in npm's global folder (a git checkout or an `npm link`), and agents cannot run it (`no-self-approve` now covers `cephalo update`). Rules, audit log, settings and license are not touched. Not in 0.2.0.
+- Website: the pre-launch announcement and countdown are replaced by a release notice and an Install / Update section; the page has a new look based on the CLI's reef theme.
+
 ## 0.2.0
 
 Launches 10 November 2026. Everything that was in 0.1.1 stays free and MIT licensed. This release adds free features and a paid layer (Pro and Team) that lives in a separate, private package.

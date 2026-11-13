@@ -16,7 +16,7 @@ no account and no telemetry.
 
 ## Contents
 
-- [Install](#install) · [Quick start](#quick-start) · [Commands](#commands)
+- [Install](#install) · [Update](#update) · [Quick start](#quick-start) · [Commands](#commands)
 - [Rules](#rules) · [Allow, ask and shadow](#allow-ask-and-shadow) · [Command parsing](#command-parsing) · [What each hook covers](#what-each-hook-covers)
 - [Settings](#settings) · [Self-integrity check](#self-integrity-check) · [Themes and the loading animation](#themes-and-the-loading-animation)
 - [MCP firewall](#mcp-firewall) · [Prompt-injection tripwire](#prompt-injection-tripwire)
@@ -33,6 +33,29 @@ npm install -g @nomajorconcerns/cephalo
 
 That puts the `cephalo` command on your PATH. Node.js 20 or newer is required by `package.json`; the
 code has only been run on Node 24, and the `npm test` script's glob needs Node 21+.
+
+## Update
+
+Updating replaces the program only. Your rules (`~/.cephalo/rules.yml`), audit log, settings and license are never changed.
+
+```
+npm install -g @nomajorconcerns/cephalo@latest
+cephalo install claude        # once, only if the release notes mention new hook matchers (0.2.0 did)
+cephalo install hermes        # same, if you use Hermes
+cephalo doctor
+```
+
+`cephalo rules` lists default rules your rules file does not have yet. Restart Claude Code after an update; it reads hooks at start.
+
+**`cephalo update`** does the lookup and the npm step for you. It is not in 0.2.0; it arrives in the next release.
+
+```
+cephalo update --check      # only look: is a newer version on npm?
+cephalo update              # show what changes, ask, then run: npm install -g @nomajorconcerns/cephalo@<newest>
+cephalo update --yes        # do not ask
+```
+
+It contacts only the public npm registry, and only when you run it (Cephalo never checks for updates by itself). It refuses to replace a copy that was not installed with `npm install -g` (a clone or an `npm link`), and agents cannot run it (`no-self-approve`). The paid Pro package is a separate download from your order and is not updated by this command.
 
 To work on Cephalo itself, or to run it from a clone, install from source instead:
 
@@ -77,6 +100,7 @@ and keep a backup. `cephalo doctor` warns when the installed hooks are out of da
 | `cephalo rules [list]` / `show <id>` / `path` / `reset [--yes]` | Inspect rules and where each came from; `reset` backs up `rules.yml` then rewrites it from the defaults |
 | `cephalo log [--blocked\|--shadow] [--limit N]` | Recent audit entries, newest last (default 20). `--shadow`: only what shadow-mode rules would have blocked |
 | `cephalo watch [--blocked] [--last N] [--no-color]` | Follow the audit log live, in your color scheme. Ctrl+C stops |
+| `cephalo update [--check] [--yes]` | Update Cephalo to the newest version on npm (arrives after 0.2.0). See [Update](#update) |
 | `cephalo install` / `uninstall claude\|hermes` | Add or remove Cephalo's hooks (idempotent; backs up first; uninstall removes only Cephalo's entries) |
 | `cephalo config [list\|get\|set\|path]` | Settings: fail-closed, shadow, ask-default, hook-timeout, theme. See [Settings](#settings) |
 | `cephalo theme [list\|preview\|set\|reset]` | Color scheme of the CLI. See [Themes](#themes-and-the-loading-animation) |

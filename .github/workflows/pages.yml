@@ -51,7 +51,7 @@ jobs:
       - name: Collect the site files
         run: |
           mkdir _site
-          cp site/index.html site/commands.js site/stats.js site/checkout.config.js site/checkout.js site/countdown.js site/legal.css site/privacy.html site/terms.html site/refunds.html site/contact.html site/og.png _site/
+          cp site/index.html site/commands.js site/stats.js site/checkout.config.js site/checkout.js site/legal.css site/privacy.html site/terms.html site/refunds.html site/contact.html site/og.png _site/
       - name: Build the public numbers (stats.json)
         env:
           GITHUB_TOKEN: ${{ github.token }}

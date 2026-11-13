@@ -126,7 +126,7 @@ export const SYSTEM_RULES: Rule[] = [
     "A literal API token in a command. Store it with `cephalo vault set NAME` (the user does this) and run with `cephalo run --env NAME -- ...`",
     ANY_TOKEN_SOURCE,
   ),
-  cmd("no-self-approve", "An agent approving MCP servers, releasing the tripwire, changing Cephalo's settings or rules, the egress allowlist or the Pro license, itself", "(\\bcephalo(\\.cmd|\\.ps1)?|cli\\.js[\"']?)\\s+(mcp\\s+(allow|approve|pin|mode|trust)|tripwire\\s+(clear|mode|reset|allow)|config\\s+set|rules\\s+reset|egress\\s+(allow|remove|mode)|pro\\s+(activate|renew|install|deactivate))\\b"),
+  cmd("no-self-approve", "An agent approving MCP servers, releasing the tripwire, changing Cephalo's settings or rules, the egress allowlist, the Pro license or Cephalo's own version, itself", "(\\bcephalo(\\.cmd|\\.ps1)?|cli\\.js[\"']?)\\s+(mcp\\s+(allow|approve|pin|mode|trust)|tripwire\\s+(clear|mode|reset|allow)|config\\s+set|rules\\s+reset|egress\\s+(allow|remove|mode)|pro\\s+(activate|renew|install|deactivate)|update)\\b"),
   cmd("no-self-incident", "An agent adding or removing its own learned rules", "(\\bcephalo(\\.cmd|\\.ps1)?|cli\\.js[\"']?)\\s+incident\\b[^\\n]*(--use|\\bundo\\b)"),
   // ---- Bypass fixes in 0.2.0. Here, not in rules.yml, so they protect existing installs without any user action.
   cmd(

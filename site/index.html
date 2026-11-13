@@ -799,22 +799,9 @@ html:not(.js) .handle,html:not(.js) .splitrange{display:none}
 html.theming *,html.theming *::before,html.theming *::after{transition:background-color .4s var(--ease),color .4s var(--ease),border-color .4s var(--ease),box-shadow .4s var(--ease)!important}
 @media (prefers-reduced-motion:reduce){.js .reveal{opacity:1;transform:none}}
 /* ---- 0.2.0 announcement, countdown, what's new, theme preview ---- */
-.announce{background:var(--bg2);border-bottom:1px solid var(--line);padding:26px 0}
-.ann-grid{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:34px;align-items:center}
-.cd-label{font:600 12px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin:0 0 12px}
-.cd{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;max-width:420px;margin:0}
-.cd>div{border:1px solid var(--line2);background:var(--panel);border-radius:var(--r);padding:12px 4px 10px;text-align:center}
-.cd b{display:block;font:700 34px/1 var(--serif);font-variant-numeric:tabular-nums;color:var(--text)}
-.cd span{display:block;margin-top:7px;font:600 10.5px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
-.cd-when{margin:12px 0 0;color:var(--muted);font-size:14px}
-.cd-out{font:600 28px/1.2 var(--serif);margin:0 0 12px}
-.ann-copy h2{font-size:24px;margin:0 0 10px}
-.ann-copy p{margin:0 0 10px;color:var(--muted);font-size:16px}
-.ann-copy p.keep{color:var(--text)}
 .chip{font:600 13px var(--mono);letter-spacing:.06em;color:var(--mint-ink);background:var(--mint);border-radius:5px;padding:2px 7px}
 .badge.soon{color:var(--mint);border-style:dashed;border-color:currentColor}
 .badge.free{color:var(--text)}
-.fcard.soon{border-style:dashed;border-color:color-mix(in srgb,var(--mint) 45%,transparent)}
 .subhead+.feat,.feat+.subhead{margin-top:10px}
 .bigcard{grid-column:1/-1}
 .subgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 22px;margin-top:16px}
@@ -842,13 +829,89 @@ html.theming *,html.theming *::before,html.theming *::after{transition:backgroun
 @keyframes of2k{0%{opacity:0}25%{opacity:1}50%,100%{opacity:0}}
 @keyframes of3k{0%,50%{opacity:0}50%{opacity:1}75%,100%{opacity:0}}
 @keyframes of4k{0%,75%{opacity:0}75%{opacity:1}100%{opacity:1}}
-html:not(.js) .cd{display:none}
 .preview-note{color:var(--faint);font-size:14px;margin:6px 0 0}
 .promo{margin:0;padding:8px 10px;border:1px dashed var(--line2);border-radius:8px;font-size:13.5px;color:var(--muted)}
 .promo code{font-size:12.5px;color:var(--text)}
 @media(max-width:1040px){.themes{grid-template-columns:repeat(3,minmax(0,1fr))}}
-@media(max-width:820px){.ann-grid{grid-template-columns:1fr;gap:22px}.cd{max-width:none}.cd b{font-size:28px}}
-@media(max-width:560px){.themes{grid-template-columns:repeat(2,minmax(0,1fr))}.announce{padding:20px 0}}
+@media(max-width:560px){.themes{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* ---- 0.2.0 look: the CLI's reef theme (teal to violet, pink octopus) carried onto the page ---- */
+:root{
+  --g1:#2dd4bf; --g2:#8b5cf6; --on-grad:#04121a;
+  --grad:linear-gradient(100deg,var(--g1),var(--g2));
+  --glow-a:rgb(45 212 191 / .13); --glow-b:rgb(139 92 246 / .20);
+  --sans-display:Inter,"Inter var",system-ui,"Segoe UI Variable Display","Segoe UI","Helvetica Neue",Arial,sans-serif;
+}
+[data-theme="light"]{ --g1:#0f766e; --g2:#6d28d9; --on-grad:#ffffff; --glow-a:rgb(15 118 110 / .10); --glow-b:rgb(109 40 217 / .10); }
+
+/* type: one sans family for headings, mono for labels, as in the terminal */
+h1,h2{font-family:var(--sans-display);font-weight:800;letter-spacing:-.035em;line-height:1.06}
+h1{font-size:clamp(42px,6vw,72px)}
+h2{font-size:clamp(30px,3.8vw,46px)}
+.eyebrow::before{content:"$ ";opacity:.55}
+.hero h1 em,.gradtext{font-style:normal;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}
+
+/* brand wordmark gradient, like the CLI banner */
+.brand{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;letter-spacing:.02em}
+.brand svg{-webkit-text-fill-color:initial}
+
+/* hero backdrop */
+section.hero{position:relative;overflow:hidden;background:
+  radial-gradient(60% 55% at 88% -5%,var(--glow-b),transparent 70%),
+  radial-gradient(45% 45% at 4% 8%,var(--glow-a),transparent 70%)}
+section.hero::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.5;
+  background-image:linear-gradient(var(--hairline) 1px,transparent 1px),linear-gradient(90deg,var(--hairline) 1px,transparent 1px);
+  background-size:44px 44px;-webkit-mask-image:radial-gradient(ellipse 70% 60% at 70% 20%,#000,transparent 75%);mask-image:radial-gradient(ellipse 70% 60% at 70% 20%,#000,transparent 75%)}
+section.hero>.wrap{position:relative}
+
+/* buttons, nav, focus */
+.btn{border-radius:10px;transition:transform var(--dur-fast) var(--ease-out),border-color var(--dur-fast),box-shadow var(--dur-fast)}
+.btn:hover{transform:translateY(-1px)}
+.btn.primary{background:var(--grad);border-color:transparent;color:var(--on-grad);box-shadow:0 8px 24px -10px var(--g2)}
+.btn.primary:hover{filter:none;box-shadow:0 10px 28px -8px var(--g2)}
+nav.top .links a.cta{border-color:transparent;background:var(--grad);color:var(--on-grad);font-weight:600}
+nav.top .links a.cta:hover{background:var(--grad);color:var(--on-grad);filter:brightness(1.1)}
+.seg button[aria-pressed=true]{background:var(--grad);color:var(--on-grad)}
+
+/* terminal windows and code blocks */
+.term{border-color:color-mix(in srgb,var(--g2) 40%,var(--hairline-2));box-shadow:0 24px 60px -24px rgb(139 92 246 / .45),0 0 0 1px rgb(255 255 255 / .02)}
+.cb{border-radius:10px}
+
+/* cards: a gradient hairline on top, rounder, a touch of lift */
+.fcard,.tier,.ucard,.card{border-radius:14px}
+.fcard,.ucard{position:relative;transition:transform var(--dur-med) var(--ease-out),border-color var(--dur-med)}
+.fcard::before,.ucard::before{content:"";position:absolute;left:14px;right:14px;top:-1px;height:2px;border-radius:2px;background:var(--grad);opacity:.0;transition:opacity var(--dur-med)}
+.fcard:hover,.ucard:hover{transform:translateY(-2px);border-color:var(--hairline-2)}
+.fcard:hover::before,.ucard:hover::before,.fcard.new::before,.ucard.hl::before{opacity:1}
+.badge.new{color:var(--on-grad);background:var(--grad);border:0;font-weight:700;letter-spacing:.04em}
+.fcard.new{border-color:color-mix(in srgb,var(--g2) 35%,var(--hairline))}
+
+/* release strip (replaces the pre-launch announcement and countdown) */
+.released{background:linear-gradient(90deg,color-mix(in srgb,var(--g1) 14%,var(--bg2)),color-mix(in srgb,var(--g2) 18%,var(--bg2)));border-bottom:1px solid var(--hairline-2);padding:0}
+.released .wrap{display:flex;align-items:center;gap:14px;flex-wrap:wrap;min-height:46px;padding-top:8px;padding-bottom:8px;font-size:14.5px}
+.released .rel-pill{font:700 12px/1 var(--mono);letter-spacing:.08em;padding:5px 9px;border-radius:999px;background:var(--grad);color:var(--on-grad)}
+.released .rel-text b{font-weight:700}
+.released .rel-links{margin-left:auto;display:flex;gap:18px}
+.released .rel-links a{font-weight:600}
+@media(max-width:640px){.released .rel-links{margin-left:0}}
+.vtag{font:600 12px var(--mono);padding:3px 8px;border-radius:999px;background:var(--grad);color:var(--on-grad)}
+
+/* install / update section */
+#update{background:linear-gradient(180deg,transparent,color-mix(in srgb,var(--g2) 6%,transparent))}
+.upd-grid{display:grid;grid-template-columns:1fr;gap:18px}
+.ucard{border:1px solid var(--line);background:var(--panel);padding:24px 24px 22px;display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:12px 36px;align-items:start}
+.uc-l,.uc-r{display:flex;flex-direction:column;gap:12px;min-width:0}
+@media(max-width:860px){.ucard{grid-template-columns:1fr}}
+.ucard.hl{border-color:color-mix(in srgb,var(--g1) 45%,var(--hairline-2));background:linear-gradient(180deg,color-mix(in srgb,var(--g1) 7%,var(--panel)),var(--panel))}
+.ucard h3{font-size:21px}
+.ucard p{margin:0;color:var(--muted);font-size:15px}
+.ucard .cb{margin:0}
+.ucard .cb pre{white-space:pre;overflow-x:auto;padding:12px 14px;font-size:13px;line-height:1.6}
+.ucard .lim{font-size:13.5px;color:var(--faint);border:0;background:none;padding:0;margin:0}
+.ucard .lim code{font-size:12.5px}
+.sec-head p.eyebrow{margin:0 0 14px}
+.upd-more{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin-top:18px}
+@media(max-width:1000px){.upd-more{grid-template-columns:1fr}}
+.upd-more .callout{margin:0}
 </style>
 </head>
 <body>
@@ -858,45 +921,27 @@ html:not(.js) .cd{display:none}
   <div class="wrap">
     <a class="brand" href="#top"><span id="logo" aria-hidden="true"></span>Cephalo</a>
     <div class="links">
-      <a href="#how">How it works</a><a href="#playground">Playground</a><a href="#rules">Rules</a><a href="#pricing">Pricing</a><a href="https://github.com/nomajorconcerns/cephalo#readme" rel="noopener">Docs</a><!-- TODO: verify: URL comes from package.json "homepage"; this checkout has no git remote, so confirm the repository is public -->
+      <a href="#how">How it works</a><a href="#playground">Playground</a><a href="#rules">Rules</a><a href="#update">Update</a><a href="#pricing">Pricing</a><a href="https://github.com/nomajorconcerns/cephalo#readme" rel="noopener">Docs</a><!-- TODO: verify: URL comes from package.json "homepage"; this checkout has no git remote, so confirm the repository is public -->
       <a class="cta" href="#install">Install</a>
       <button class="iconbtn" id="themeBtn" type="button" aria-label="Switch colour theme" aria-pressed="false"><svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg><svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
       <button class="iconbtn menubtn" id="menuBtn" type="button" popovertarget="menu" aria-label="Open menu" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
     </div>
   </div>
 </nav>
-<div class="menu" id="menu" popover aria-label="Menu"><a href="#how">How it works</a><a href="#playground">Playground</a><a href="#rules">Rules</a><a href="#commands">Commands</a><a href="#platforms">Platforms</a><a href="#pricing">Pricing</a><a href="#stats">Numbers</a><a href="#limits">Limits</a><a href="#faq">FAQ</a><a href="https://github.com/nomajorconcerns/cephalo#readme" rel="noopener">Docs</a></div>
+<div class="menu" id="menu" popover aria-label="Menu"><a href="#update">Install &amp; update</a><a href="#how">How it works</a><a href="#playground">Playground</a><a href="#rules">Rules</a><a href="#commands">Commands</a><a href="#platforms">Platforms</a><a href="#pricing">Pricing</a><a href="#stats">Numbers</a><a href="#limits">Limits</a><a href="#faq">FAQ</a><a href="https://github.com/nomajorconcerns/cephalo#readme" rel="noopener">Docs</a></div>
 
 <div id="live" class="sr" role="status" aria-live="polite"></div>
 
 <main id="top">
 
-<!-- 0.2.0 ANNOUNCEMENT -->
-<section class="announce" id="announce" aria-labelledby="annTitle">
-  <div class="wrap ann-grid">
-    <div>
-      <div id="cdBox" data-launch="2026-11-10T13:00:00-05:00">
-        <p class="cd-label" id="cdLabel">Cephalo 0.2.0 launches</p>
-        <div class="cd" id="cd" role="timer" aria-label="Time left until Cephalo 0.2.0 launches" aria-live="off">
-          <div><b id="cdD" aria-hidden="true">--</b><span aria-hidden="true">days</span></div>
-          <div><b id="cdH" aria-hidden="true">--</b><span aria-hidden="true">hours</span></div>
-          <div><b id="cdM" aria-hidden="true">--</b><span aria-hidden="true">minutes</span></div>
-          <div><b id="cdS" aria-hidden="true">--</b><span aria-hidden="true">seconds</span></div>
-        </div>
-        <p class="cd-when" id="cdWhen">November 10, 2026 at 1:00 PM Eastern Time.</p>
-      </div>
-      <div id="cdOut" hidden>
-        <p class="cd-out">Cephalo 0.2.0 is out</p>
-        <a class="btn primary" href="#install">Install steps</a>
-      </div>
-    </div>
-    <div class="ann-copy">
-      <h2 id="annTitle">Cephalo 0.2.0 launches Nov 10, 2026 at 1:00 PM ET.</h2>
-      <p class="keep">Version 0.1.1 keeps working. It is MIT licensed and stays free and open source forever.</p>
-      <p>Early users get 20% off Pro or Team for the first year with code <span class="chip">CEPHALOG</span>. The code works from launch day. <a href="#whatsnew">What is coming in 0.2.0</a>.</p>
-    </div>
+<!-- 0.2.0 RELEASE STRIP -->
+<aside class="released" id="released" aria-label="Release notice">
+  <div class="wrap">
+    <span class="rel-pill">v0.2.0</span>
+    <span class="rel-text"><b>Cephalo 0.2.0 is out.</b> Released November 10, 2026.</span>
+    <span class="rel-links"><a href="#whatsnew">What&rsquo;s new</a><a href="#update">Install or update</a></span>
   </div>
-</section>
+</aside>
 
 <!-- HERO -->
 <section class="hero">
@@ -916,7 +961,7 @@ html:not(.js) .cd{display:none}
           <code id="heroCmd"><i>$ </i>cephalo init</code>
           <button class="copy" data-copy="cephalo init" type="button">Copy</button>
         </div>
-        <p class="setup">First time? Install it once from npm:</p>
+        <p class="setup">First time? Install it once from npm. Already on 0.1.x? <a href="#update">Update to 0.2.0</a>.</p>
         <div class="cb"><pre id="heroSetup">npm install -g @nomajorconcerns/cephalo</pre><button class="copy" data-copy-from="heroSetup" type="button">Copy</button></div>
       </div>
       <div class="hero-actions">
@@ -964,60 +1009,113 @@ html:not(.js) .cd{display:none}
   </div>
 </section>
 
+<!-- GET 0.2.0: INSTALL AND UPDATE -->
+<section id="update" aria-labelledby="updTitle">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Get 0.2.0</p>
+      <h2 id="updTitle">Install it, or update in one command.</h2>
+      <p>0.2.0 is on npm. Your rules, audit log, settings and license are never changed by an update. Everything in 0.1.1 stays free and MIT licensed.</p>
+    </div>
+    <div class="upd-grid">
+      <div class="ucard">
+<div class="uc-l">
+        <div class="fmeta"><span class="badge new">New install</span></div>
+        <h3>First time</h3>
+        <p>Needs Node.js and Claude Code, Hermes, or both.</p>
+</div>
+        <div class="uc-r">
+        <div class="cb"><pre id="updNew">npm install -g @nomajorconcerns/cephalo
+cephalo init</pre><button class="copy" data-copy-from="updNew" type="button">Copy</button></div>
+        <p class="lim">Full walk-through: <a href="#install">install steps</a>.</p></div>
+      </div>
+      <div class="ucard hl">
+<div class="uc-l">
+        <div class="fmeta"><span class="badge new">Update to 0.2.0</span><span class="badge free">From 0.1.x</span></div>
+        <h3>Already installed</h3>
+        <p>One npm command replaces the program. Then re-run the hook install once, so the wider 0.2.0 matchers (Grep, Glob, WebFetch, WebSearch) are added to the agent&rsquo;s config.</p>
+</div>
+        <div class="uc-r">
+        <div class="cb"><pre id="updOld">npm install -g @nomajorconcerns/cephalo@latest
+cephalo install claude
+cephalo install hermes
+cephalo doctor</pre><button class="copy" data-copy-from="updOld" type="button">Copy</button></div>
+        <p class="lim">Skip the line for an agent you do not use. <code>cephalo doctor</code> confirms the hook and the install integrity. Restart Claude Code afterwards; it reads hooks at start.</p></div>
+      </div>
+      <div class="ucard">
+<div class="uc-l">
+        <div class="fmeta"><span class="badge soon">Next release</span><span class="badge free">Built in updater</span></div>
+        <h3><code>cephalo update</code></h3>
+        <p>Cephalo can update itself with one command. It looks up the newest version on npm, shows what changes, asks, and runs the npm command for you.</p>
+</div>
+        <div class="uc-r">
+        <div class="cb"><pre id="updCmd">cephalo update --check
+cephalo update</pre><button class="copy" data-copy-from="updCmd" type="button">Copy</button></div>
+        <p class="lim"><b>Not in 0.2.0.</b> It arrives in the release after 0.2.0, so on 0.2.0 or older use the npm command in the card above. It only runs when you type it, contacts only the public npm registry, never touches your rules, and refuses to replace a git checkout or an <code>npm link</code>. Agents cannot run it.</p></div>
+      </div>
+    </div>
+    <div class="upd-more">
+      <div class="callout"><b>Check what you have.</b> <code>npm ls -g @nomajorconcerns/cephalo</code> prints the installed version. <code>cephalo help</code> shows it in the banner.</div>
+      <div class="callout"><b>Your rules file is yours.</b> Cephalo never rewrites an existing <code>rules.yml</code>. <code>cephalo rules</code> lists the default rules your file lacks. The new built-in protections are active without any change to your file.</div>
+      <div class="callout"><b>Pro and Team.</b> The paid features are a separate download from your order, not on npm. Install the newer download with <code>npm install -g ./cephalo-pro-VERSION.tgz</code>; your license stays valid. See <a href="#pricing">plans</a>.</div>
+    </div>
+  </div>
+</section>
+
 <!-- WHAT'S NEW IN 0.2.0 -->
 <section id="whatsnew">
   <div class="wrap">
     <div class="sec-head">
-      <p class="eyebrow">Coming November 10</p>
-      <h2>What&rsquo;s new in 0.2.0 (Nov 10).</h2>
-      <p>None of this is released yet. Each card is marked <span class="badge soon">Coming Nov 10 in 0.2.0</span> or <span class="badge soon">Launching Nov 10</span> until it is built, tested and out, and says what it cannot do. Everything in 0.1.1 stays free.</p>
+      <p class="eyebrow">Released November 10</p>
+      <h2>What&rsquo;s new in 0.2.0.</h2>
+      <p>Everything below is in the published 0.2.0 release. Each card says how it works and what it cannot do. Everything in 0.1.1 stays free. Still on 0.1.x? <a href="#update">Update in one command</a>.</p>
     </div>
     <p class="subhead">Free in 0.2.0</p>
     <div class="feat" id="newfree">
-      <div class="fcard soon">
-        <div class="fmeta"><span class="badge soon">Coming Nov 10 in 0.2.0</span><span class="badge free">Free</span></div>
+      <div class="fcard new">
+        <div class="fmeta"><span class="badge new">New in 0.2.0</span><span class="badge free">Free</span></div>
         <h3>Command parsing, not just text matching</h3>
         <p>Splits a command into its parts (pipelines, <code>&amp;&amp;</code>, <code>||</code>, <code>;</code>, subshells, substitutions) and checks each one. Looks inside <code>bash -c</code>, <code>python -c</code>, <code>node -e</code>, <code>powershell -Command</code>, <code>cmd /c</code> and <code>eval</code>. The raw text is still checked too, so parsing can only add blocks.</p>
         <p class="lim"><b>Limit:</b> it reads the command as written. Code that a script file builds at run time, or a command assembled from data, is still out of sight.</p>
       </div>
-      <div class="fcard soon">
-        <div class="fmeta"><span class="badge soon">Coming Nov 10 in 0.2.0</span><span class="badge free">Free</span></div>
+      <div class="fcard new">
+        <div class="fmeta"><span class="badge new">New in 0.2.0</span><span class="badge free">Free</span></div>
         <h3>Bypass fixes</h3>
         <p>Closes the gaps found in 0.1.1: <code>Grep</code>, <code>Glob</code>, <code>WebFetch</code> and <code>WebSearch</code> are checked, relative paths and symlinks are resolved before path rules run, shell writes to the Claude Code and Hermes config are blocked, and Cephalo&rsquo;s own install folder is protected.</p>
         <p class="lim"><b>Limit:</b> these are still rules. Anything running as you outside the hooks can edit those files.</p>
       </div>
-      <div class="fcard soon">
-        <div class="fmeta"><span class="badge soon">Coming Nov 10 in 0.2.0</span><span class="badge free">Free</span></div>
+      <div class="fcard new">
+        <div class="fmeta"><span class="badge new">New in 0.2.0</span><span class="badge free">Free</span></div>
         <h3>Self-integrity check</h3>
         <p>At session start and in <code>cephalo doctor</code>, confirms the hook is still in the agent&rsquo;s config and that the installed files match their hashes, and warns loudly if not.</p>
         <p class="lim"><b>Limit:</b> it detects a change; it cannot stop one. Someone who edits both the files and the recorded hashes as the same user can hide it.</p>
       </div>
-      <div class="fcard soon">
-        <div class="fmeta"><span class="badge soon">Coming Nov 10 in 0.2.0</span><span class="badge free">Free</span></div>
+      <div class="fcard new">
+        <div class="fmeta"><span class="badge new">New in 0.2.0</span><span class="badge free">Free</span></div>
         <h3>Optional fail-closed mode</h3>
         <p>Off by default. When on, a hook that crashes, times out or gets bad input blocks the call instead of allowing it.</p>
         <p class="lim"><b>Limit:</b> a broken hook then stops your agent&rsquo;s tool calls until you fix it. That is the trade-off, and why it is off by default.</p>
       </div>
-      <div class="fcard soon">
-        <div class="fmeta"><span class="badge soon">Coming Nov 10 in 0.2.0</span><span class="badge free">Free</span></div>
+      <div class="fcard new">
+        <div class="fmeta"><span class="badge new">New in 0.2.0</span><span class="badge free">Free</span></div>
         <h3>Allow and ask rules</h3>
         <p><code>action: allow</code> makes an exception (the first match still wins). <code>action: ask</code> has you approve or deny the call. Agents that cannot ask follow a default you set, and it is logged.</p>
         <p class="lim"><b>Limit:</b> only Claude Code can show an approval prompt. For Hermes, Codex and Cursor, ask falls back to your default.</p>
       </div>
-      <div class="fcard soon">
-        <div class="fmeta"><span class="badge soon">Coming Nov 10 in 0.2.0</span><span class="badge free">Free</span></div>
+      <div class="fcard new">
+        <div class="fmeta"><span class="badge new">New in 0.2.0</span><span class="badge free">Free</span></div>
         <h3>Shadow mode</h3>
         <p>Run a rule, or all of them, in log-only mode. <code>cephalo log</code> and <code>cephalo watch</code> mark what it <em>would</em> block.</p>
         <p class="lim"><b>Limit:</b> nothing is stopped while a rule is in shadow mode. It is for testing a rule, not for protection.</p>
       </div>
-      <div class="fcard soon">
-        <div class="fmeta"><span class="badge soon">Coming Nov 10 in 0.2.0</span><span class="badge free">Free</span></div>
+      <div class="fcard new">
+        <div class="fmeta"><span class="badge new">New in 0.2.0</span><span class="badge free">Free</span></div>
         <h3>Themed CLI</h3>
         <p>Five colour schemes (reef, abyss, coral, glow, ink). <code>cephalo theme list</code>, <code>set</code> and <code>preview</code>. ALLOW, BLOCK and ASK always keep their words and symbols.</p>
         <p class="lim"><b>Limit:</b> colour is cosmetic. It falls back to 256, 16 or no colour, and is off for pipes and <code>NO_COLOR</code>.</p>
       </div>
-      <div class="fcard soon">
-        <div class="fmeta"><span class="badge soon">Coming Nov 10 in 0.2.0</span><span class="badge free">Free</span></div>
+      <div class="fcard new">
+        <div class="fmeta"><span class="badge new">New in 0.2.0</span><span class="badge free">Free</span></div>
         <h3>Animated logo</h3>
         <p>The octopus waves its tentacles in your theme&rsquo;s colours while slow commands run.</p>
         <p class="lim"><b>Limit:</b> only on an interactive terminal. Never in hook output, in CI, with <code>NO_COLOR</code>, or with <code>CEPHALO_NO_ANIMATION=1</code>.</p>
@@ -1025,20 +1123,20 @@ html:not(.js) .cd{display:none}
     </div>
     <p class="subhead">Pro in 0.2.0 (Team includes Pro)</p>
     <div class="feat" id="newpaid">
-      <div class="fcard soon">
-        <div class="fmeta"><span class="badge soon">Launching Nov 10</span><span class="badge">Pro</span></div>
+      <div class="fcard new">
+        <div class="fmeta"><span class="badge new">New in 0.2.0</span><span class="badge">Pro</span></div>
         <h3>Network egress allowlist</h3>
         <p>Shell commands (<code>curl</code>, <code>wget</code>, <code>Invoke-WebRequest</code> and the like), <code>WebFetch</code> and MCP calls can only reach the domains you list. Others are blocked or put to you.</p>
         <p class="lim"><b>Limit:</b> it matches the destinations it can see in the call. A program that opens its own connections inside a script is not seen.</p>
       </div>
-      <div class="fcard soon">
-        <div class="fmeta"><span class="badge soon">Launching Nov 10</span><span class="badge">Pro</span></div>
+      <div class="fcard new">
+        <div class="fmeta"><span class="badge new">New in 0.2.0</span><span class="badge">Pro</span></div>
         <h3>Tamper-evident audit log</h3>
         <p>Each audit line is chained to the one before by a hash. <code>cephalo audit verify</code> reports lines that were edited, removed or reordered.</p>
         <p class="lim"><b>Limit:</b> it shows tampering; it does not prevent it. Someone who rewrites the whole chain from the start can produce a log that verifies, unless you keep a copy of the latest hash elsewhere.</p>
       </div>
-      <div class="fcard soon">
-        <div class="fmeta"><span class="badge soon">Launching Nov 10</span><span class="badge">Pro</span></div>
+      <div class="fcard new">
+        <div class="fmeta"><span class="badge new">New in 0.2.0</span><span class="badge">Pro</span></div>
         <h3>Bypass benchmark</h3>
         <p>A set of known bypass attempts with the verdict each should get. <code>cephalo bench</code> reports the block rate, and a CI job runs it on Windows, macOS and Linux.</p>
         <p class="lim"><b>Limit:</b> it measures only the bypasses it contains. A high score is not a guarantee against the next one.</p>
@@ -1052,7 +1150,7 @@ html:not(.js) .cd{display:none}
 <figure class="theme th-glow" style="--t1:#22d3ee;--t2:#4ade80;--ob:#22d3ee;--ol:#a5f3fc;--ow:#ecfeff;--ok:#022c22;--allow:#4ade80;--block:#f87171;--ask:#facc15;--fg:#c7f9ee"><svg class="octo-anim" viewBox="0 0 16 12" shape-rendering="crispEdges" role="img" aria-label="The Cephalo octopus in the glow theme"><g class="of of1"><path class="ob" d="M6 0h4v1h-4zM3 1h10v1h-10zM2 2h2v1h-2zM6 2h8v1h-8zM1 3h2v1h-2zM4 3h11v1h-11zM1 4h3v1h-3zM6 4h4v1h-4zM12 4h3v1h-3zM1 5h3v1h-3zM6 5h4v1h-4zM12 5h3v1h-3zM1 6h14v1h-14zM2 7h12v1h-12zM1 8h2v1h-2zM4 8h2v1h-2zM7 8h2v1h-2zM10 8h2v1h-2zM13 8h2v1h-2zM2 9h2v1h-2zM5 9h2v1h-2zM8 9h2v1h-2zM11 9h2v1h-2zM14 9h2v1h-2zM1 10h2v1h-2zM4 10h2v1h-2zM7 10h2v1h-2zM10 10h2v1h-2zM13 10h2v1h-2zM0 11h2v1h-2zM3 11h2v1h-2zM6 11h2v1h-2zM9 11h2v1h-2zM12 11h2v1h-2z"/><path class="ol" d="M4 2h2v1h-2zM3 3h1v1h-1z"/><path class="ow" d="M4 4h2v1h-2zM10 4h2v1h-2zM4 5h1v1h-1zM10 5h1v1h-1z"/><path class="ok" d="M5 5h1v1h-1zM11 5h1v1h-1z"/></g><g class="of of2"><path class="ob" d="M6 0h4v1h-4zM3 1h10v1h-10zM2 2h2v1h-2zM6 2h8v1h-8zM1 3h2v1h-2zM4 3h11v1h-11zM1 4h3v1h-3zM6 4h4v1h-4zM12 4h3v1h-3zM1 5h3v1h-3zM6 5h4v1h-4zM12 5h3v1h-3zM1 6h14v1h-14zM2 7h12v1h-12zM1 8h2v1h-2zM4 8h2v1h-2zM7 8h2v1h-2zM10 8h2v1h-2zM13 8h2v1h-2zM1 9h2v1h-2zM4 9h2v1h-2zM7 9h2v1h-2zM10 9h2v1h-2zM13 9h2v1h-2zM0 10h2v1h-2zM3 10h2v1h-2zM6 10h2v1h-2zM9 10h2v1h-2zM12 10h2v1h-2zM1 11h2v1h-2zM4 11h2v1h-2zM7 11h2v1h-2zM10 11h2v1h-2zM13 11h2v1h-2z"/><path class="ol" d="M4 2h2v1h-2zM3 3h1v1h-1z"/><path class="ow" d="M4 4h2v1h-2zM10 4h2v1h-2zM4 5h1v1h-1zM10 5h1v1h-1z"/><path class="ok" d="M5 5h1v1h-1zM11 5h1v1h-1z"/></g><g class="of of3"><path class="ob" d="M6 0h4v1h-4zM3 1h10v1h-10zM2 2h2v1h-2zM6 2h8v1h-8zM1 3h2v1h-2zM4 3h11v1h-11zM1 4h3v1h-3zM6 4h4v1h-4zM12 4h3v1h-3zM1 5h3v1h-3zM6 5h4v1h-4zM12 5h3v1h-3zM1 6h14v1h-14zM2 7h12v1h-12zM1 8h2v1h-2zM4 8h2v1h-2zM7 8h2v1h-2zM10 8h2v1h-2zM13 8h2v1h-2zM0 9h2v1h-2zM3 9h2v1h-2zM6 9h2v1h-2zM9 9h2v1h-2zM12 9h2v1h-2zM1 10h2v1h-2zM4 10h2v1h-2zM7 10h2v1h-2zM10 10h2v1h-2zM13 10h2v1h-2zM2 11h2v1h-2zM5 11h2v1h-2zM8 11h2v1h-2zM11 11h2v1h-2zM14 11h2v1h-2z"/><path class="ol" d="M4 2h2v1h-2zM3 3h1v1h-1z"/><path class="ow" d="M4 4h2v1h-2zM10 4h2v1h-2zM4 5h1v1h-1zM10 5h1v1h-1z"/><path class="ok" d="M5 5h1v1h-1zM11 5h1v1h-1z"/></g><g class="of of4"><path class="ob" d="M6 0h4v1h-4zM3 1h10v1h-10zM2 2h2v1h-2zM6 2h8v1h-8zM1 3h2v1h-2zM4 3h11v1h-11zM1 4h3v1h-3zM6 4h4v1h-4zM12 4h3v1h-3zM1 5h3v1h-3zM6 5h4v1h-4zM12 5h3v1h-3zM1 6h14v1h-14zM2 7h12v1h-12zM1 8h2v1h-2zM4 8h2v1h-2zM7 8h2v1h-2zM10 8h2v1h-2zM13 8h2v1h-2zM1 9h2v1h-2zM4 9h2v1h-2zM7 9h2v1h-2zM10 9h2v1h-2zM13 9h2v1h-2zM2 10h2v1h-2zM5 10h2v1h-2zM8 10h2v1h-2zM11 10h2v1h-2zM14 10h2v1h-2zM1 11h2v1h-2zM4 11h2v1h-2zM7 11h2v1h-2zM10 11h2v1h-2zM13 11h2v1h-2z"/><path class="ol" d="M4 2h2v1h-2zM3 3h1v1h-1z"/><path class="ow" d="M4 4h2v1h-2zM10 4h2v1h-2zM4 5h1v1h-1zM10 5h1v1h-1z"/><path class="ok" d="M5 5h1v1h-1zM11 5h1v1h-1z"/></g></svg><figcaption><b class="wm">CEPHALO</b><span class="tn">glow</span></figcaption><p class="tb">Bioluminescent cyan and green on black.</p><div class="tl" aria-hidden="true"><span class="a">✓ ALLOW</span> git status</div><div class="tl" aria-hidden="true"><span class="b">✕ BLOCK</span> rm -rf /</div><div class="tl" aria-hidden="true"><span class="k">? ASK</span> git push</div><p class="sr">glow theme: ALLOW, BLOCK and ASK each keep their text label and symbol.</p></figure>
 <figure class="theme th-ink" style="--t1:#f3f4f6;--t2:#9ca3af;--ob:#d1d5db;--ol:#f9fafb;--ow:#ffffff;--ok:#111827;--allow:#f3f4f6;--block:#f3f4f6;--ask:#d1d5db;--fg:#e5e7eb"><svg class="octo-anim" viewBox="0 0 16 12" shape-rendering="crispEdges" role="img" aria-label="The Cephalo octopus in the ink theme"><g class="of of1"><path class="ob" d="M6 0h4v1h-4zM3 1h10v1h-10zM2 2h2v1h-2zM6 2h8v1h-8zM1 3h2v1h-2zM4 3h11v1h-11zM1 4h3v1h-3zM6 4h4v1h-4zM12 4h3v1h-3zM1 5h3v1h-3zM6 5h4v1h-4zM12 5h3v1h-3zM1 6h14v1h-14zM2 7h12v1h-12zM1 8h2v1h-2zM4 8h2v1h-2zM7 8h2v1h-2zM10 8h2v1h-2zM13 8h2v1h-2zM2 9h2v1h-2zM5 9h2v1h-2zM8 9h2v1h-2zM11 9h2v1h-2zM14 9h2v1h-2zM1 10h2v1h-2zM4 10h2v1h-2zM7 10h2v1h-2zM10 10h2v1h-2zM13 10h2v1h-2zM0 11h2v1h-2zM3 11h2v1h-2zM6 11h2v1h-2zM9 11h2v1h-2zM12 11h2v1h-2z"/><path class="ol" d="M4 2h2v1h-2zM3 3h1v1h-1z"/><path class="ow" d="M4 4h2v1h-2zM10 4h2v1h-2zM4 5h1v1h-1zM10 5h1v1h-1z"/><path class="ok" d="M5 5h1v1h-1zM11 5h1v1h-1z"/></g><g class="of of2"><path class="ob" d="M6 0h4v1h-4zM3 1h10v1h-10zM2 2h2v1h-2zM6 2h8v1h-8zM1 3h2v1h-2zM4 3h11v1h-11zM1 4h3v1h-3zM6 4h4v1h-4zM12 4h3v1h-3zM1 5h3v1h-3zM6 5h4v1h-4zM12 5h3v1h-3zM1 6h14v1h-14zM2 7h12v1h-12zM1 8h2v1h-2zM4 8h2v1h-2zM7 8h2v1h-2zM10 8h2v1h-2zM13 8h2v1h-2zM1 9h2v1h-2zM4 9h2v1h-2zM7 9h2v1h-2zM10 9h2v1h-2zM13 9h2v1h-2zM0 10h2v1h-2zM3 10h2v1h-2zM6 10h2v1h-2zM9 10h2v1h-2zM12 10h2v1h-2zM1 11h2v1h-2zM4 11h2v1h-2zM7 11h2v1h-2zM10 11h2v1h-2zM13 11h2v1h-2z"/><path class="ol" d="M4 2h2v1h-2zM3 3h1v1h-1z"/><path class="ow" d="M4 4h2v1h-2zM10 4h2v1h-2zM4 5h1v1h-1zM10 5h1v1h-1z"/><path class="ok" d="M5 5h1v1h-1zM11 5h1v1h-1z"/></g><g class="of of3"><path class="ob" d="M6 0h4v1h-4zM3 1h10v1h-10zM2 2h2v1h-2zM6 2h8v1h-8zM1 3h2v1h-2zM4 3h11v1h-11zM1 4h3v1h-3zM6 4h4v1h-4zM12 4h3v1h-3zM1 5h3v1h-3zM6 5h4v1h-4zM12 5h3v1h-3zM1 6h14v1h-14zM2 7h12v1h-12zM1 8h2v1h-2zM4 8h2v1h-2zM7 8h2v1h-2zM10 8h2v1h-2zM13 8h2v1h-2zM0 9h2v1h-2zM3 9h2v1h-2zM6 9h2v1h-2zM9 9h2v1h-2zM12 9h2v1h-2zM1 10h2v1h-2zM4 10h2v1h-2zM7 10h2v1h-2zM10 10h2v1h-2zM13 10h2v1h-2zM2 11h2v1h-2zM5 11h2v1h-2zM8 11h2v1h-2zM11 11h2v1h-2zM14 11h2v1h-2z"/><path class="ol" d="M4 2h2v1h-2zM3 3h1v1h-1z"/><path class="ow" d="M4 4h2v1h-2zM10 4h2v1h-2zM4 5h1v1h-1zM10 5h1v1h-1z"/><path class="ok" d="M5 5h1v1h-1zM11 5h1v1h-1z"/></g><g class="of of4"><path class="ob" d="M6 0h4v1h-4zM3 1h10v1h-10zM2 2h2v1h-2zM6 2h8v1h-8zM1 3h2v1h-2zM4 3h11v1h-11zM1 4h3v1h-3zM6 4h4v1h-4zM12 4h3v1h-3zM1 5h3v1h-3zM6 5h4v1h-4zM12 5h3v1h-3zM1 6h14v1h-14zM2 7h12v1h-12zM1 8h2v1h-2zM4 8h2v1h-2zM7 8h2v1h-2zM10 8h2v1h-2zM13 8h2v1h-2zM1 9h2v1h-2zM4 9h2v1h-2zM7 9h2v1h-2zM10 9h2v1h-2zM13 9h2v1h-2zM2 10h2v1h-2zM5 10h2v1h-2zM8 10h2v1h-2zM11 10h2v1h-2zM14 10h2v1h-2zM1 11h2v1h-2zM4 11h2v1h-2zM7 11h2v1h-2zM10 11h2v1h-2zM13 11h2v1h-2z"/><path class="ol" d="M4 2h2v1h-2zM3 3h1v1h-1z"/><path class="ow" d="M4 4h2v1h-2zM10 4h2v1h-2zM4 5h1v1h-1zM10 5h1v1h-1z"/><path class="ok" d="M5 5h1v1h-1zM11 5h1v1h-1z"/></g></svg><figcaption><b class="wm">CEPHALO</b><span class="tn">ink</span></figcaption><p class="tb">Monochrome. Meaning stays in the words and symbols.</p><div class="tl" aria-hidden="true"><span class="a">✓ ALLOW</span> git status</div><div class="tl" aria-hidden="true"><span class="b">✕ BLOCK</span> rm -rf /</div><div class="tl" aria-hidden="true"><span class="k">? ASK</span> git push</div><p class="sr">ink theme: ALLOW, BLOCK and ASK each keep their text label and symbol.</p></figure>
     </div>
-    <p class="preview-note">A preview drawn for this page, not output from the CLI. The themes and the animation are <span class="badge soon">Coming Nov 10 in 0.2.0</span>; the octopus here is the CLI banner&rsquo;s pixel sprite with its tentacles animated. If your system asks for reduced motion, it stays still.</p>
+    <p class="preview-note">A preview drawn for this page, not output from the CLI. The themes and the animation are <span class="badge new">New in 0.2.0</span>; the octopus here is the CLI banner&rsquo;s pixel sprite with its tentacles animated. If your system asks for reduced motion, it stays still.</p>
   </div>
 </section>
 
@@ -1273,9 +1371,9 @@ psql -c &quot;DROP TABLE users;&quot;
           <div class="field"><label for="rbDesc">description</label><input type="text" id="rbDesc" autocomplete="off" maxlength="120"></div>
           <div class="field"><span class="lbl" id="rbTypeL">type</span><div class="seg" role="group" aria-labelledby="rbTypeL" id="rbType"><button type="button" data-v="command" aria-pressed="true">command</button><button type="button" data-v="path" aria-pressed="false">path</button></div></div>
           <div class="field" id="rbOnF" hidden><span class="lbl" id="rbOnL">on (path rules only)</span><div class="seg" role="group" aria-labelledby="rbOnL" id="rbOn"><button type="button" data-v="any" aria-pressed="true">any</button><button type="button" data-v="read" aria-pressed="false">read</button><button type="button" data-v="write" aria-pressed="false">write</button></div></div>
-          <div class="field"><span class="lbl" id="rbActL">action <span class="badge soon">0.2.0</span></span><div class="seg" role="group" aria-labelledby="rbActL" id="rbAct"><button type="button" data-v="block" aria-pressed="true">block</button><button type="button" data-v="allow" aria-pressed="false">allow</button><button type="button" data-v="ask" aria-pressed="false">ask</button></div></div>
+          <div class="field"><span class="lbl" id="rbActL">action <span class="badge new">0.2.0</span></span><div class="seg" role="group" aria-labelledby="rbActL" id="rbAct"><button type="button" data-v="block" aria-pressed="true">block</button><button type="button" data-v="allow" aria-pressed="false">allow</button><button type="button" data-v="ask" aria-pressed="false">ask</button></div></div>
           <div class="field"><label class="chk" for="rbShadow"><input type="checkbox" id="rbShadow"><span>shadow mode: log what this rule would do, and let the call through</span></label></div>
-          <p class="rbnote"><strong>allow, ask and shadow need 0.2.0 (Nov 10).</strong> Version 0.1.1 treats every rule as a block rule, whatever <code>action</code> says, so do not copy an allow or ask rule into a 0.1.1 file. An allow rule cannot lift Cephalo&rsquo;s own protections. This preview reads commands as plain text; 0.2.0 also splits them into parts, so it can block more than this page shows.</p>
+          <p class="rbnote"><strong>allow, ask and shadow need 0.2.0 or newer.</strong> Version 0.1.1 treats every rule as a block rule, whatever <code>action</code> says, so do not copy an allow or ask rule into a 0.1.1 file. An allow rule cannot lift Cephalo&rsquo;s own protections. This preview reads commands as plain text; 0.2.0 also splits them into parts, so it can block more than this page shows.</p>
           <div class="field"><label for="rbPat">pattern (regular expression)</label><input type="text" id="rbPat" autocomplete="off" spellcheck="false" maxlength="200"></div>
           <p class="rberr" id="rbErr" aria-live="polite"></p>
         </div>
@@ -1349,7 +1447,7 @@ rules:
     <div class="sec-head">
       <p class="eyebrow">Beyond the rules file</p>
       <h2>What is built, and what is only planned.</h2>
-      <p>Everything marked <span class="badge built">Built</span> is in version 0.1.1: it runs locally on your machine, has tests, and is free and open source. Each entry says what it cannot do. Items marked <span class="badge planned">Planned</span> do not exist yet. What is coming in 0.2.0 is <a href="#whatsnew">listed above</a>.</p>
+      <p>Everything marked <span class="badge built">Built</span> was in version 0.1.1 and is still in 0.2.0: it runs locally on your machine, has tests, and is free and open source. Each entry says what it cannot do. Items marked <span class="badge planned">Planned</span> do not exist yet. What 0.2.0 added is <a href="#whatsnew">listed above</a>.</p>
     </div>
     <div class="feat" id="feat">
       <div class="fcard bigcard">
@@ -1468,7 +1566,7 @@ rules:
     <div class="sec-head">
       <p class="eyebrow">Plans</p>
       <h2>Free for one developer. Paid plans for teams.</h2>
-      <p>Everything in version 0.1.1 stays free. Pro adds the new features marked <span class="badge soon">Launching Nov 10</span>; Pro and Team are not for sale yet. <span class="badge planned">Planned</span> items do not exist.</p>
+      <p>Everything in version 0.1.1 stays free. Pro adds the three features marked <span class="badge new">New in 0.2.0</span>. There is no checkout on this page yet. <span class="badge planned">Planned</span> items do not exist.</p>
     </div>
     <div class="tiers">
       <div class="tier">
@@ -1477,7 +1575,7 @@ rules:
         <div class="price">$0</div>
         <ul>
           <li><span>Everything from 0.1.1 (<a href="#feat">the full list</a>)</span></li>
-          <li><span>Every free 0.2.0 feature <span class="badge soon">Launching Nov 10</span> (<a href="#newfree">list</a>)</span></li>
+          <li><span>Every free 0.2.0 feature <span class="badge new">New in 0.2.0</span> (<a href="#newfree">list</a>)</span></li>
         </ul>
         <a class="btn primary" href="#install">Install</a>
       </div>
@@ -1488,12 +1586,12 @@ rules:
         <div class="price">$15<small> / dev / month</small></div>
         <ul>
           <li class="base"><span>Everything in Free</span></li>
-          <li><span>Network egress allowlist <span class="badge soon">Launching Nov 10</span></span></li>
-          <li><span>Tamper-evident audit log <span class="badge soon">Launching Nov 10</span></span></li>
-          <li><span>Bypass benchmark <span class="badge soon">Launching Nov 10</span></span></li>
+          <li><span>Network egress allowlist <span class="badge new">New in 0.2.0</span></span></li>
+          <li><span>Tamper-evident audit log <span class="badge new">New in 0.2.0</span></span></li>
+          <li><span>Bypass benchmark <span class="badge new">New in 0.2.0</span></span></li>
         </ul>
-        <p class="promo">20% off your first year with code <code>CEPHALOG</code>. Works from launch day.</p>
-        <span class="btn soon" data-plan="pro">Launching Nov 10</span>
+        <p class="promo">20% off your first year with code <code>CEPHALOG</code>.</p>
+        <span class="btn soon" data-plan="pro">Not on sale yet</span>
       </div>
       <div class="tier">
         <h3>Team</h3>
@@ -1506,8 +1604,8 @@ rules:
           <li><span>Audit log sync with user and time, through a shared folder</span></li>
           <li class="pl"><span>Hosted dashboard <span class="badge planned">Planned</span></span></li>
         </ul>
-        <p class="promo">20% off your first year with code <code>CEPHALOG</code>. Works from launch day.</p>
-        <span class="btn soon" data-plan="team">Launching Nov 10</span>
+        <p class="promo">20% off your first year with code <code>CEPHALOG</code>.</p>
+        <span class="btn soon" data-plan="team">Not on sale yet</span>
       </div>
       <div class="tier">
         <h3>Enterprise</h3>
@@ -1528,7 +1626,7 @@ rules:
       <input type="number" id="seats" min="1" max="1000" value="5" inputmode="numeric">
       <output id="seatOut" for="seats" aria-live="polite"></output>
     </div>
-    <p class="pricenote">Nothing checks a licence today, and there is no checkout. Everything marked Built is in version 0.1.1 and is free. Pro adds the new features marked Launching Nov 10, which do not exist until they are built, tested and released; Team is Pro plus the items listed under it. Prices ($15 Pro, $25 Team, per developer per month) are the intended list prices and may change before anything goes on sale. The CEPHALOG code (20% off the first year of Pro or Team) works from launch day. Lines marked Planned are not built.</p>
+    <p class="pricenote">A license key switches the paid features on (<code>cephalo pro activate</code>). The check runs on your machine and is not copy protection. There is no checkout on this page yet. Everything marked Built is in version 0.1.1 and is free. Pro adds the three features marked New in 0.2.0; Team is Pro plus the items listed under it. Prices ($15 Pro, $25 Team, per developer per month) are the intended list prices and may change before anything goes on sale. The CEPHALOG code (20% off the first year of Pro or Team) is for early users. Lines marked Planned are not built.</p>
   </div>
 </section>
 
@@ -1587,6 +1685,7 @@ cephalo watch</pre><button class="copy" data-copy='cephalo doctor&#10;cephalo te
         </div></div>
         <div class="callout"><b>Undo it any time.</b><br>
           <code>cephalo uninstall claude</code><br><code>cephalo uninstall hermes</code><br>removes only Cephalo's entries, after a backup. <code>npm uninstall -g @nomajorconcerns/cephalo</code> removes the command.</div>
+        <div class="callout"><b>Updating later?</b> <a href="#update">One npm command</a>, and from the release after 0.2.0 also <code>cephalo update</code>.</div>
         <div class="callout"><b>Your rules, your file.</b> Edit <code>~/.cephalo/rules.yml</code>. Defaults added in later versions are not pushed into an existing file; <code>cephalo rules</code> lists what is missing.</div>
       </aside>
     </div>
@@ -1612,7 +1711,7 @@ cephalo watch</pre><button class="copy" data-copy='cephalo doctor&#10;cephalo te
     <div class="sec-head">
       <p class="eyebrow">Honest limits</p>
       <h2>A seatbelt, not a sandbox.</h2>
-      <p>What Cephalo does, and the matching thing it does not do. The first rows describe how version 0.1.1 behaves today. The last rows describe 0.2.0 and are not released yet.</p>
+      <p>What Cephalo does, and the matching thing it does not do. The first rows describe how version 0.1.1 behaved. The last rows describe what 0.2.0 added.</p>
     </div>
     <div class="lim">
       <table>
@@ -1633,17 +1732,17 @@ cephalo watch</pre><button class="copy" data-copy='cephalo doctor&#10;cephalo te
               <td><span class="g" aria-hidden="true">&minus;</span>Prove macOS and Linux, the Keychain and Secret Service vault backends, or the Codex and Cursor adapters on real machines or in the real apps. Those are covered by unit tests only. The newer features have not yet run through a long live agent session.</td></tr>
           <tr><td><span class="g" aria-hidden="true">+</span>Work entirely on your machine, with a local dashboard and a shared-folder sync.</td>
               <td><span class="g" aria-hidden="true">&minus;</span>Offer a hosted service. There is no Cephalo server; the hosted dashboard is <span class="badge planned">Planned</span>.</td></tr>
-          <tr><td><span class="g" aria-hidden="true">+</span><span class="badge soon">Coming Nov 10 in 0.2.0</span> Check each part of a command (pipelines, subshells, <code>bash -c</code>, <code>python -c</code> and similar) as well as the raw text.</td>
+          <tr><td><span class="g" aria-hidden="true">+</span><span class="badge new">New in 0.2.0</span> Check each part of a command (pipelines, subshells, <code>bash -c</code>, <code>python -c</code> and similar) as well as the raw text.</td>
               <td><span class="g" aria-hidden="true">&minus;</span>See inside a script file, or a command assembled from data at run time. It is still pattern and parser based, not a sandbox.</td></tr>
-          <tr><td><span class="g" aria-hidden="true">+</span><span class="badge soon">Coming Nov 10 in 0.2.0</span> Offer an optional fail-closed mode and check that its own hook and files are intact.</td>
+          <tr><td><span class="g" aria-hidden="true">+</span><span class="badge new">New in 0.2.0</span> Offer an optional fail-closed mode and check that its own hook and files are intact.</td>
               <td><span class="g" aria-hidden="true">&minus;</span>Fail closed by default (it stays off unless you turn it on), or stop someone who can edit both the files and the recorded hashes.</td></tr>
-          <tr><td><span class="g" aria-hidden="true">+</span><span class="badge soon">Launching Nov 10</span> Chain each audit line to the one before it (Pro and Team), so edited, removed or reordered lines are reported.</td>
+          <tr><td><span class="g" aria-hidden="true">+</span><span class="badge new">New in 0.2.0</span> Chain each audit line to the one before it (Pro and Team), so edited, removed or reordered lines are reported.</td>
               <td><span class="g" aria-hidden="true">&minus;</span>Prevent tampering, or prove who did it. A log rewritten from the start can still verify unless you keep the latest hash somewhere else.</td></tr>
-          <tr><td><span class="g" aria-hidden="true">+</span><span class="badge soon">Launching Nov 10</span> Block shell commands, web fetches and MCP calls that would reach a domain you have not listed (Pro and Team).</td>
+          <tr><td><span class="g" aria-hidden="true">+</span><span class="badge new">New in 0.2.0</span> Block shell commands, web fetches and MCP calls that would reach a domain you have not listed (Pro and Team).</td>
               <td><span class="g" aria-hidden="true">&minus;</span>Act as a firewall. It cannot see inside a script file, a program the agent just wrote, a host built at run time, or an MCP server's own traffic.</td></tr>
-          <tr><td><span class="g" aria-hidden="true">+</span><span class="badge soon">Launching Nov 10</span> Run about 100 known bypass attempts through your rules and report how many are stopped and which got through (Pro and Team).</td>
+          <tr><td><span class="g" aria-hidden="true">+</span><span class="badge new">New in 0.2.0</span> Run about 100 known bypass attempts through your rules and report how many are stopped and which got through (Pro and Team).</td>
               <td><span class="g" aria-hidden="true">&minus;</span>Prove that nothing gets through. A pass means those cases are handled. The gaps it knows about are listed and never counted in the rate.</td></tr>
-          <tr><td><span class="g" aria-hidden="true">+</span><span class="badge soon">Launching Nov 10</span> Check a Lemon Squeezy license key for the paid package, and ask the server again about every 35 days.</td>
+          <tr><td><span class="g" aria-hidden="true">+</span><span class="badge new">New in 0.2.0</span> Check a Lemon Squeezy license key for the paid package, and ask the server again about every 35 days.</td>
               <td><span class="g" aria-hidden="true">&minus;</span>Stop someone who edits their own files from running the paid package. The check is client-side: it keeps honest customers honest and is not copy protection.</td></tr>
         </tbody>
       </table>
@@ -1673,12 +1772,14 @@ cephalo watch</pre><button class="copy" data-copy='cephalo doctor&#10;cephalo te
         <div class="ans"><p>Built-in rules stop agents from writing the Claude Code or Hermes config (where the hook lives), Cephalo's rules file, audit log and vault files, and its MCP and tripwire state. They are rules, not a sandbox: you, or anything running outside the hooks, can still edit those files, and a crashed hook lets the call through. See <a href="#limits">the limits</a>.</p></div></details>
       <details><summary>Does it work on Windows?</summary>
         <div class="ans"><p>Yes. Windows is the platform it has been run on for real. macOS and Linux have adapters that are covered by unit tests only.</p></div></details>
+      <details><summary>How do I update Cephalo?</summary>
+        <div class="ans"><p>On 0.1.x or 0.2.0, run <code>npm install -g @nomajorconcerns/cephalo@latest</code>, then <code>cephalo install claude</code> (and <code>cephalo install hermes</code> if you use Hermes) once, then <code>cephalo doctor</code>. The release after 0.2.0 adds <code>cephalo update</code>, which does the lookup and the npm step for you (<code>cephalo update --check</code> only looks). Your rules, audit log, settings and license are not changed either way.</p></div></details>
       <details><summary>Will version 0.1.1 stay free?</summary>
         <div class="ans"><p>Yes. Version 0.1.1 is MIT licensed, stays on npm, and stays free and open source. Nothing that is in it moves to a paid plan.</p></div></details>
       <details><summary>What is in Pro and Team?</summary>
-        <div class="ans"><p>Pro adds three new features that launch with 0.2.0: a network egress allowlist, a tamper-evident audit log and a bypass benchmark. Team is Pro plus the dashboard, shared policy and audit log sync through a shared folder; the hosted dashboard is Planned. The three Pro features do not exist until they are built, tested and released, and the site marks them as launching Nov 10 until then.</p></div></details>
+        <div class="ans"><p>Pro adds three features that are new in 0.2.0: a network egress allowlist, a tamper-evident audit log and a bypass benchmark. Team is Pro plus the dashboard, shared policy and audit log sync through a shared folder; the hosted dashboard is Planned. The three Pro features ship in the separate cephalo-pro package that comes with your order, not in the npm package.</p></div></details>
       <details><summary>What is the CEPHALOG code?</summary>
-        <div class="ans"><p>Early users get 20% off the first year of Pro or Team with code <code>CEPHALOG</code>. It works from launch day, Nov 10, 2026. There is no checkout yet.</p></div></details>
+        <div class="ans"><p>Early users get 20% off the first year of Pro or Team with code <code>CEPHALOG</code>. It is for early users and covers the first year. There is no checkout on this page yet.</p></div></details>
     </div>
   </div>
 </section>
@@ -1701,9 +1802,9 @@ cephalo watch</pre><button class="copy" data-copy='cephalo doctor&#10;cephalo te
 <div class="stick" id="stick" role="region" aria-label="Install Cephalo" inert><code>$ cephalo init</code><button class="copy" data-copy="cephalo init" type="button">Copy</button></div>
 
 <footer>
-  <div class="wrap"><span class="brand" style="font-size:17px"><span id="logo2" aria-hidden="true"></span>Cephalo</span><span>v0.2.0</span><span class="sp"></span>
+  <div class="wrap"><span class="brand" style="font-size:17px"><span id="logo2" aria-hidden="true"></span>Cephalo</span><span class="vtag">v0.2.0</span><span class="sp"></span>
     <nav aria-label="Footer">
-      <a href="https://github.com/nomajorconcerns/cephalo#readme" rel="noopener">Docs</a><a href="https://github.com/nomajorconcerns/cephalo" rel="noopener">GitHub</a><a href="https://github.com/nomajorconcerns/cephalo/issues" rel="noopener">Issues</a><a href="https://github.com/nomajorconcerns/cephalo/blob/master/CHANGELOG.md" rel="noopener">Changelog</a><a href="https://github.com/nomajorconcerns/cephalo/blob/master/SECURITY.md" rel="noopener">Security</a><a href="https://www.npmjs.com/package/@nomajorconcerns/cephalo" rel="noopener">npm</a><a href="#stats">Numbers</a><a href="#limits">Limits</a><a href="#faq">FAQ</a><a href="#install">Install</a>
+      <a href="#update">Install &amp; update</a><a href="https://github.com/nomajorconcerns/cephalo#readme" rel="noopener">Docs</a><a href="https://github.com/nomajorconcerns/cephalo" rel="noopener">GitHub</a><a href="https://github.com/nomajorconcerns/cephalo/issues" rel="noopener">Issues</a><a href="https://github.com/nomajorconcerns/cephalo/blob/master/CHANGELOG.md" rel="noopener">Changelog</a><a href="https://github.com/nomajorconcerns/cephalo/blob/master/SECURITY.md" rel="noopener">Security</a><a href="https://www.npmjs.com/package/@nomajorconcerns/cephalo" rel="noopener">npm</a><a href="#stats">Numbers</a><a href="#limits">Limits</a><a href="#faq">FAQ</a><a href="#install">Install</a>
       <a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="refunds.html">Refunds</a><a href="contact.html">Contact</a>
     </nav>
   </div>
@@ -1718,7 +1819,7 @@ cephalo watch</pre><button class="copy" data-copy='cephalo doctor&#10;cephalo te
 <script id="engine">
 /* Cephalo rule engine, ported from src/engine.ts and src/platform.ts. Rule data is generated from the built project. */
 var CephaloEngine=(function(){
-  var RULES=/*RULES_JSON*/{"defaults":[{"id":"no-drop","d":"Dropping tables or databases","t":"command","p":"\\bDROP\\s+(TABLE|DATABASE|SCHEMA)\\b","o":"default"},{"id":"no-truncate","d":"Truncating tables","t":"command","p":"\\bTRUNCATE\\s+(TABLE\\s+)?[\\w.\"]+","o":"default"},{"id":"no-delete-all","d":"DELETE FROM with no WHERE clause","t":"command","p":"\\bDELETE\\s+FROM\\s+[\\w.\"]+\\s*(;|\"|$)","o":"default"},{"id":"no-rm-rf","d":"Recursive forced rm","t":"command","p":"\\brm\\s+-(?=[a-z]*r)(?=[a-z]*f)[a-z]+","o":"default"},{"id":"no-win-recursive-delete","d":"Recursive delete on Windows","t":"command","p":"(Remove-Item\\b(?=.*-Recurse)(?=.*-Force))|(\\b(rd|rmdir)\\s+\\/s\\b)|(\\bdel\\s+.*\\/s\\b)","o":"default"},{"id":"no-force-push","d":"Force pushing to git remotes","t":"command","p":"\\bgit\\s+push\\b(?=.*(\\s--force(?!-with-lease)\\b|\\s-f\\b))","o":"default"},{"id":"no-force-push-refspec","d":"Force pushing with a + refspec (git push origin +main)","t":"command","p":"\\bgit(\\s+-[cC]\\s+\\S+)*\\s+push\\b[^;&|\\n]*\\s[\"']?\\+[^\\s;&|]","o":"default"},{"id":"no-pipe-to-shell","d":"Piping output into a shell, eval of a substitution, or running a substitution as a script (ask the user to run installers)","t":"command","p":"\\|&?\\s*(sudo\\s+(-\\S+\\s+)*)?(env\\s+)?(\\/(usr\\/)?bin\\/)?(ba|z|da|k)?sh(?=[\\s;&|)]|$)|\\beval\\s+[\"']?(\\$\\(|`)|\\b(ba|z|da|k)?sh\\s+(-\\S+\\s+)*<\\(|\\b(ba|z|da|k)?sh\\s+-c\\s+[\"']?\\$\\(|\\bsource\\s+<\\(","o":"default"},{"id":"no-hard-reset","d":"git reset --hard","t":"command","p":"\\bgit\\s+reset\\s+--hard\\b","o":"default"},{"id":"no-secret-read","d":"Reading .env secret files via shell","t":"command","p":"\\b(cat|type|Get-Content|gc|more|less|head|tail)\\b.*\\.env\\b(?!\\.example)","o":"default"},{"id":"no-secret-file","d":"Accessing .env secret files","t":"path","on":"any","p":"(^|[\\/\\\\])\\.env(\\.(?!example$)[\\w.-]+)?$","o":"default"},{"id":"protect-config","d":"Writing Claude Code or Hermes config","t":"path","on":"write","p":"[\\/\\\\]\\.claude[\\/\\\\]settings(\\.local)?\\.json$|[\\/\\\\]hermes[\\/\\\\]config\\.yaml$","o":"default"}],"win32":[{"id":"protect-cephalo-policy","d":"Writing Cephalo's settings (config.yml), the Pro license and egress allowlist, the Pro package, MCP allowlist, tool approvals, tripwire state, integrity markers or local-model settings","t":"path","on":"write","p":"[\\/\\\\]\\.cephalo[\\/\\\\](mcp[^\\/\\\\]*$|models\\.yml[^\\/\\\\]*$|sync\\.yml[^\\/\\\\]*$|prices\\.yml[^\\/\\\\]*$|config\\.yml[^\\/\\\\]*$|license\\.json[^\\/\\\\]*$|egress\\.yml[^\\/\\\\]*$|pro([\\/\\\\]|$)|integrity([\\/\\\\]|$)|(judge|embed)-cache\\.json$|models-check\\.json$|asks([\\/\\\\]|$)|tripwire([\\/\\\\.]|$))","l":1,"o":"platform","os":"win32"},{"id":"protect-audit-log","d":"Writing Cephalo's audit log or rules file (the record of what the agent did, and the limits on it)","t":"path","on":"write","p":"[\\/\\\\]\\.cephalo[\\/\\\\](audit\\.jsonl(\\.head)?|rules\\.yml)(\\.cephalo-backup-[\\w.-]+)?$","l":1,"o":"platform","os":"win32"},{"id":"no-audit-tamper","d":"Changing or deleting Cephalo's audit log, rules file or settings (config.yml) from a shell","t":"command","p":"(>>?|\\btee\\b|\\bsed\\s+-i|\\brm\\b|\\bdel\\b|\\berase\\b|\\bmv\\b|\\bmove(-item)?\\b|\\bcp\\b|\\bcopy(-item)?\\b|\\btruncate\\b|\\bset-content\\b|\\bout-file\\b|\\badd-content\\b|\\bremove-item\\b|\\bclear-content\\b|\\bren(ame)?(-item)?\\b|\\bdd\\b)[^\\n]*\\.cephalo[\\/\\\\](audit\\.jsonl|rules\\.yml|config\\.yml|license\\.json|egress\\.yml|pro(?![w.-]))","l":1,"o":"platform","os":"win32"},{"id":"protect-vault-files","d":"Reading or writing Cephalo's secrets vault files","t":"path","on":"any","p":"[\\/\\\\]\\.cephalo[\\/\\\\]vault[^\\/\\\\]*$","l":1,"o":"platform","os":"win32"},{"id":"protect-policy-key","d":"Reading or writing the key that signs shared policy (cephalo sync keygen)","t":"path","on":"any","p":"[\\/\\\\]\\.cephalo[\\/\\\\]policy-(signing\\.key|trusted\\.pub)[^\\/\\\\]*$","l":1,"o":"platform","os":"win32"},{"id":"no-vault-extract","d":"Changing or reading the secrets vault outside `cephalo run` (vault set/allow/remove/reveal, OS key APIs, the vault files)","t":"command","p":"(\\bcephalo(\\.cmd|\\.ps1)?|cli\\.js[\"']?)\\s+vault\\s+(set|allow|remove|rm|reveal)\\b|\\.cephalo[\\/\\\\]vault|\\.cephalo[\\/\\\\]policy-signing\\.key|\\b(ProtectedData|Unprotect)\\b|\\bsecret-tool\\s+(lookup|search|clear)\\b","l":1,"o":"platform","os":"win32"},{"id":"secret-in-command","d":"A literal API token in a command. Store it with `cephalo vault set NAME` (the user does this) and run with `cephalo run --env NAME -- ...`","t":"command","p":"(?:\\bgh[pousr]_[A-Za-z0-9]{36,}\\b)|(?:\\bgithub_pat_[A-Za-z0-9_]{50,}\\b)|(?:\\bsk-ant-[A-Za-z0-9_-]{30,})|(?:\\bsk-(?:proj-)?[A-Za-z0-9_-]{32,})|(?:\\b(?:AKIA|ASIA)[0-9A-Z]{16}\\b)|(?:\\bxox[baprs]-[A-Za-z0-9-]{10,})|(?:\\bAIza[0-9A-Za-z_-]{35}\\b)|(?:\\bglpat-[A-Za-z0-9_-]{20,})|(?:\\bnpm_[A-Za-z0-9]{36}\\b)|(?:\\b[rs]k_live_[A-Za-z0-9]{24,})|(?:-----BEGIN [A-Z ]*PRIVATE KEY-----)|(?:\\beyJ[A-Za-z0-9_-]{10,}\\.eyJ[A-Za-z0-9_-]{10,}\\.[A-Za-z0-9_-]{10,})","l":1,"o":"platform","os":"win32"},{"id":"no-self-approve","d":"An agent approving MCP servers, releasing the tripwire, changing Cephalo's settings or rules, the egress allowlist or the Pro license, itself","t":"command","p":"(\\bcephalo(\\.cmd|\\.ps1)?|cli\\.js[\"']?)\\s+(mcp\\s+(allow|approve|pin|mode|trust)|tripwire\\s+(clear|mode|reset|allow)|config\\s+set|rules\\s+reset|egress\\s+(allow|remove|mode)|pro\\s+(activate|renew|install|deactivate))\\b","l":1,"o":"platform","os":"win32"},{"id":"no-self-incident","d":"An agent adding or removing its own learned rules","t":"command","p":"(\\bcephalo(\\.cmd|\\.ps1)?|cli\\.js[\"']?)\\s+incident\\b[^\\n]*(--use|\\bundo\\b)","l":1,"o":"platform","os":"win32"},{"id":"no-secret-shell","d":"A shell command that names a .env secret file (cat, grep, awk, cp, source, ... .env). .env.example is fine","t":"command","p":"(?:^|[\\s'\"=:/\\\\<>(,])\\.env(?:\\.(?!(?:example|sample|template)\\b)[\\w.-]+)?(?=$|[\\s'\";&|)<>,])","l":1,"o":"platform","os":"win32"},{"id":"no-agent-config-tamper","d":"Changing the Claude Code or Hermes config from a shell (the file tools are already blocked)","t":"command","p":"(?:>>?|\\btee\\b|\\bsed\\s+-i|\\brm\\b|\\bdel\\b|\\berase\\b|\\btruncate\\b|\\bset-content\\b|\\bout-file\\b|\\badd-content\\b|\\bremove-item\\b|\\bclear-content\\b|\\bdd\\b|\\bperl\\s+-[a-z]*i|\\bchmod\\b|\\bchown\\b|\\btouch\\b|\\bsponge\\b)[^\\n]*(?:\\.claude[\\/\\\\]settings(?:\\.local)?\\.json|(?:\\.hermes|\\bhermes)[\\/\\\\]config\\.yaml)|\\b(?:cp|copy(?:-item)?|mv|move(?:-item)?|ren(?:ame)?(?:-item)?|install|ln|mklink|rsync)\\b[^\\n]*(?:\\.claude[\\/\\\\]settings(?:\\.local)?\\.json|(?:\\.hermes|\\bhermes)[\\/\\\\]config\\.yaml)[\"']?\\s*(?:$|[;&|])","l":1,"o":"platform","os":"win32"},{"id":"rm-long-flags","d":"rm with separate or long recursive+force flags","t":"command","p":"\\brm\\b(?=[^;&|\\n]*(\\s-[a-z]*r[a-z]*\\b|--recursive))(?=[^;&|\\n]*(\\s-[a-z]*f[a-z]*\\b|--force))","o":"platform","os":"win32"},{"id":"no-preserve-root","d":"rm --no-preserve-root","t":"command","p":"--no-preserve-root","o":"platform","os":"win32"},{"id":"find-delete","d":"find -delete (recursive delete without rm)","t":"command","p":"\\bfind\\b[^;&|\\n]*\\s-delete\\b","o":"platform","os":"win32"},{"id":"find-exec-rm","d":"find -exec/-execdir rm (recursive delete without rm -rf)","t":"command","p":"\\bfind\\b[^;&|\\n]*\\s-(exec|execdir|ok|okdir)\\s+(\\S*\\/)?rm\\b","o":"platform","os":"win32"},{"id":"win-format-drive","d":"Formatting a drive (format X:)","t":"command","p":"\\bformat(\\.com)?\\s+[a-z]:(?![\\w\\\\/])","o":"platform","os":"win32"},{"id":"win-disk-wipe","d":"Disk partitioning or wiping tools","t":"command","p":"\\b(diskpart|Clear-Disk|Remove-Partition|Format-Volume|Initialize-Disk)\\b","o":"platform","os":"win32"},{"id":"win-registry-delete","d":"Deleting registry keys or values","t":"command","p":"\\breg(\\.exe)?\\s+delete\\b|Remove-Item(Property)?\\b[^;&|\\n]*\\bHK(LM|CU|CR|U):","o":"platform","os":"win32"},{"id":"win-shadow-delete","d":"Deleting shadow copies or boot entries","t":"command","p":"\\bvssadmin(\\.exe)?\\s+delete\\b|\\bwmic\\b[^;&|\\n]*\\bshadowcopy\\s+delete\\b|\\bbcdedit(\\.exe)?\\s+/delete\\b","o":"platform","os":"win32"},{"id":"win-power","d":"Shutting down or restarting the machine","t":"command","p":"\\bshutdown(\\.exe)?\\s+/[srp]\\b|\\b(Stop|Restart)-Computer\\b","o":"platform","os":"win32"}],"darwin":[{"id":"protect-cephalo-policy","d":"Writing Cephalo's settings (config.yml), the Pro license and egress allowlist, the Pro package, MCP allowlist, tool approvals, tripwire state, integrity markers or local-model settings","t":"path","on":"write","p":"[\\/\\\\]\\.cephalo[\\/\\\\](mcp[^\\/\\\\]*$|models\\.yml[^\\/\\\\]*$|sync\\.yml[^\\/\\\\]*$|prices\\.yml[^\\/\\\\]*$|config\\.yml[^\\/\\\\]*$|license\\.json[^\\/\\\\]*$|egress\\.yml[^\\/\\\\]*$|pro([\\/\\\\]|$)|integrity([\\/\\\\]|$)|(judge|embed)-cache\\.json$|models-check\\.json$|asks([\\/\\\\]|$)|tripwire([\\/\\\\.]|$))","l":1,"o":"platform","os":"darwin"},{"id":"protect-audit-log","d":"Writing Cephalo's audit log or rules file (the record of what the agent did, and the limits on it)","t":"path","on":"write","p":"[\\/\\\\]\\.cephalo[\\/\\\\](audit\\.jsonl(\\.head)?|rules\\.yml)(\\.cephalo-backup-[\\w.-]+)?$","l":1,"o":"platform","os":"darwin"},{"id":"no-audit-tamper","d":"Changing or deleting Cephalo's audit log, rules file or settings (config.yml) from a shell","t":"command","p":"(>>?|\\btee\\b|\\bsed\\s+-i|\\brm\\b|\\bdel\\b|\\berase\\b|\\bmv\\b|\\bmove(-item)?\\b|\\bcp\\b|\\bcopy(-item)?\\b|\\btruncate\\b|\\bset-content\\b|\\bout-file\\b|\\badd-content\\b|\\bremove-item\\b|\\bclear-content\\b|\\bren(ame)?(-item)?\\b|\\bdd\\b)[^\\n]*\\.cephalo[\\/\\\\](audit\\.jsonl|rules\\.yml|config\\.yml|license\\.json|egress\\.yml|pro(?![w.-]))","l":1,"o":"platform","os":"darwin"},{"id":"protect-vault-files","d":"Reading or writing Cephalo's secrets vault files","t":"path","on":"any","p":"[\\/\\\\]\\.cephalo[\\/\\\\]vault[^\\/\\\\]*$","l":1,"o":"platform","os":"darwin"},{"id":"protect-policy-key","d":"Reading or writing the key that signs shared policy (cephalo sync keygen)","t":"path","on":"any","p":"[\\/\\\\]\\.cephalo[\\/\\\\]policy-(signing\\.key|trusted\\.pub)[^\\/\\\\]*$","l":1,"o":"platform","os":"darwin"},{"id":"no-vault-extract","d":"Changing or reading the secrets vault outside `cephalo run` (vault set/allow/remove/reveal, OS key APIs, the vault files)","t":"command","p":"(\\bcephalo(\\.cmd|\\.ps1)?|cli\\.js[\"']?)\\s+vault\\s+(set|allow|remove|rm|reveal)\\b|\\.cephalo[\\/\\\\]vault|\\.cephalo[\\/\\\\]policy-signing\\.key|\\b(ProtectedData|Unprotect)\\b|\\bsecret-tool\\s+(lookup|search|clear)\\b","l":1,"o":"platform","os":"darwin"},{"id":"secret-in-command","d":"A literal API token in a command. Store it with `cephalo vault set NAME` (the user does this) and run with `cephalo run --env NAME -- ...`","t":"command","p":"(?:\\bgh[pousr]_[A-Za-z0-9]{36,}\\b)|(?:\\bgithub_pat_[A-Za-z0-9_]{50,}\\b)|(?:\\bsk-ant-[A-Za-z0-9_-]{30,})|(?:\\bsk-(?:proj-)?[A-Za-z0-9_-]{32,})|(?:\\b(?:AKIA|ASIA)[0-9A-Z]{16}\\b)|(?:\\bxox[baprs]-[A-Za-z0-9-]{10,})|(?:\\bAIza[0-9A-Za-z_-]{35}\\b)|(?:\\bglpat-[A-Za-z0-9_-]{20,})|(?:\\bnpm_[A-Za-z0-9]{36}\\b)|(?:\\b[rs]k_live_[A-Za-z0-9]{24,})|(?:-----BEGIN [A-Z ]*PRIVATE KEY-----)|(?:\\beyJ[A-Za-z0-9_-]{10,}\\.eyJ[A-Za-z0-9_-]{10,}\\.[A-Za-z0-9_-]{10,})","l":1,"o":"platform","os":"darwin"},{"id":"no-self-approve","d":"An agent approving MCP servers, releasing the tripwire, changing Cephalo's settings or rules, the egress allowlist or the Pro license, itself","t":"command","p":"(\\bcephalo(\\.cmd|\\.ps1)?|cli\\.js[\"']?)\\s+(mcp\\s+(allow|approve|pin|mode|trust)|tripwire\\s+(clear|mode|reset|allow)|config\\s+set|rules\\s+reset|egress\\s+(allow|remove|mode)|pro\\s+(activate|renew|install|deactivate))\\b","l":1,"o":"platform","os":"darwin"},{"id":"no-self-incident","d":"An agent adding or removing its own learned rules","t":"command","p":"(\\bcephalo(\\.cmd|\\.ps1)?|cli\\.js[\"']?)\\s+incident\\b[^\\n]*(--use|\\bundo\\b)","l":1,"o":"platform","os":"darwin"},{"id":"no-secret-shell","d":"A shell command that names a .env secret file (cat, grep, awk, cp, source, ... .env). .env.example is fine","t":"command","p":"(?:^|[\\s'\"=:/\\\\<>(,])\\.env(?:\\.(?!(?:example|sample|template)\\b)[\\w.-]+)?(?=$|[\\s'\";&|)<>,])","l":1,"o":"platform","os":"darwin"},{"id":"no-agent-config-tamper","d":"Changing the Claude Code or Hermes config from a shell (the file tools are already blocked)","t":"command","p":"(?:>>?|\\btee\\b|\\bsed\\s+-i|\\brm\\b|\\bdel\\b|\\berase\\b|\\btruncate\\b|\\bset-content\\b|\\bout-file\\b|\\badd-content\\b|\\bremove-item\\b|\\bclear-content\\b|\\bdd\\b|\\bperl\\s+-[a-z]*i|\\bchmod\\b|\\bchown\\b|\\btouch\\b|\\bsponge\\b)[^\\n]*(?:\\.claude[\\/\\\\]settings(?:\\.local)?\\.json|(?:\\.hermes|\\bhermes)[\\/\\\\]config\\.yaml)|\\b(?:cp|copy(?:-item)?|mv|move(?:-item)?|ren(?:ame)?(?:-item)?|install|ln|mklink|rsync)\\b[^\\n]*(?:\\.claude[\\/\\\\]settings(?:\\.local)?\\.json|(?:\\.hermes|\\bhermes)[\\/\\\\]config\\.yaml)[\"']?\\s*(?:$|[;&|])","l":1,"o":"platform","os":"darwin"},{"id":"mac-diskutil-erase","d":"diskutil erase/partition/zero a disk","t":"command","p":"\\bdiskutil\\s+(erase\\w*|secureErase|partitionDisk|zeroDisk|randomDisk|apfs\\s+delete\\w*)\\b","o":"platform","os":"darwin"},{"id":"mac-disable-protection","d":"Disabling SIP or Gatekeeper","t":"command","p":"\\bcsrutil\\s+disable\\b|\\bspctl\\s+--master-disable\\b","o":"platform","os":"darwin"},{"id":"mac-tmutil-delete","d":"Deleting or disabling Time Machine backups","t":"command","p":"\\btmutil\\s+(delete|deletelocalsnapshots|disable)\\b","o":"platform","os":"darwin"},{"id":"mac-keychain-secrets","d":"Reading or deleting keychain secrets","t":"command","p":"\\bsecurity\\s+(dump-keychain|delete-(generic-|internet-)?(password|keychain)|find-(generic|internet)-password\\b[^;&|\\n]*\\s-[a-z]*w)","o":"platform","os":"darwin"},{"id":"rm-long-flags","d":"rm with separate or long recursive+force flags","t":"command","p":"\\brm\\b(?=[^;&|\\n]*(\\s-[a-z]*r[a-z]*\\b|--recursive))(?=[^;&|\\n]*(\\s-[a-z]*f[a-z]*\\b|--force))","o":"platform","os":"darwin"},{"id":"no-preserve-root","d":"rm --no-preserve-root","t":"command","p":"--no-preserve-root","o":"platform","os":"darwin"},{"id":"pipe-to-shell","d":"Piping a download straight into a shell","t":"command","p":"\\b(curl|wget)\\b[^|\\n]*\\|\\s*(sudo\\s+)?(ba|z|da|k)?sh\\b","o":"platform","os":"darwin"},{"id":"find-delete","d":"find -delete (recursive delete without rm)","t":"command","p":"\\bfind\\b[^;&|\\n]*\\s-delete\\b","o":"platform","os":"darwin"},{"id":"find-exec-rm","d":"find -exec/-execdir rm (recursive delete without rm -rf)","t":"command","p":"\\bfind\\b[^;&|\\n]*\\s-(exec|execdir|ok|okdir)\\s+(\\S*\\/)?rm\\b","o":"platform","os":"darwin"},{"id":"chmod-chown-system","d":"Recursive chmod/chown on / or a system directory","t":"command","p":"\\b(chmod|chown)\\s+(-[a-z]*R[a-z]*|--recursive)\\b[^;&|\\n]*\\s(/|/etc|/usr|/var|/bin|/sbin|/boot|/lib|/opt|/home|~)/?(\\s|$|[;&|])","o":"platform","os":"darwin"}],"linux":[{"id":"protect-cephalo-policy","d":"Writing Cephalo's settings (config.yml), the Pro license and egress allowlist, the Pro package, MCP allowlist, tool approvals, tripwire state, integrity markers or local-model settings","t":"path","on":"write","p":"[\\/\\\\]\\.cephalo[\\/\\\\](mcp[^\\/\\\\]*$|models\\.yml[^\\/\\\\]*$|sync\\.yml[^\\/\\\\]*$|prices\\.yml[^\\/\\\\]*$|config\\.yml[^\\/\\\\]*$|license\\.json[^\\/\\\\]*$|egress\\.yml[^\\/\\\\]*$|pro([\\/\\\\]|$)|integrity([\\/\\\\]|$)|(judge|embed)-cache\\.json$|models-check\\.json$|asks([\\/\\\\]|$)|tripwire([\\/\\\\.]|$))","l":1,"o":"platform","os":"linux"},{"id":"protect-audit-log","d":"Writing Cephalo's audit log or rules file (the record of what the agent did, and the limits on it)","t":"path","on":"write","p":"[\\/\\\\]\\.cephalo[\\/\\\\](audit\\.jsonl(\\.head)?|rules\\.yml)(\\.cephalo-backup-[\\w.-]+)?$","l":1,"o":"platform","os":"linux"},{"id":"no-audit-tamper","d":"Changing or deleting Cephalo's audit log, rules file or settings (config.yml) from a shell","t":"command","p":"(>>?|\\btee\\b|\\bsed\\s+-i|\\brm\\b|\\bdel\\b|\\berase\\b|\\bmv\\b|\\bmove(-item)?\\b|\\bcp\\b|\\bcopy(-item)?\\b|\\btruncate\\b|\\bset-content\\b|\\bout-file\\b|\\badd-content\\b|\\bremove-item\\b|\\bclear-content\\b|\\bren(ame)?(-item)?\\b|\\bdd\\b)[^\\n]*\\.cephalo[\\/\\\\](audit\\.jsonl|rules\\.yml|config\\.yml|license\\.json|egress\\.yml|pro(?![w.-]))","l":1,"o":"platform","os":"linux"},{"id":"protect-vault-files","d":"Reading or writing Cephalo's secrets vault files","t":"path","on":"any","p":"[\\/\\\\]\\.cephalo[\\/\\\\]vault[^\\/\\\\]*$","l":1,"o":"platform","os":"linux"},{"id":"protect-policy-key","d":"Reading or writing the key that signs shared policy (cephalo sync keygen)","t":"path","on":"any","p":"[\\/\\\\]\\.cephalo[\\/\\\\]policy-(signing\\.key|trusted\\.pub)[^\\/\\\\]*$","l":1,"o":"platform","os":"linux"},{"id":"no-vault-extract","d":"Changing or reading the secrets vault outside `cephalo run` (vault set/allow/remove/reveal, OS key APIs, the vault files)","t":"command","p":"(\\bcephalo(\\.cmd|\\.ps1)?|cli\\.js[\"']?)\\s+vault\\s+(set|allow|remove|rm|reveal)\\b|\\.cephalo[\\/\\\\]vault|\\.cephalo[\\/\\\\]policy-signing\\.key|\\b(ProtectedData|Unprotect)\\b|\\bsecret-tool\\s+(lookup|search|clear)\\b","l":1,"o":"platform","os":"linux"},{"id":"secret-in-command","d":"A literal API token in a command. Store it with `cephalo vault set NAME` (the user does this) and run with `cephalo run --env NAME -- ...`","t":"command","p":"(?:\\bgh[pousr]_[A-Za-z0-9]{36,}\\b)|(?:\\bgithub_pat_[A-Za-z0-9_]{50,}\\b)|(?:\\bsk-ant-[A-Za-z0-9_-]{30,})|(?:\\bsk-(?:proj-)?[A-Za-z0-9_-]{32,})|(?:\\b(?:AKIA|ASIA)[0-9A-Z]{16}\\b)|(?:\\bxox[baprs]-[A-Za-z0-9-]{10,})|(?:\\bAIza[0-9A-Za-z_-]{35}\\b)|(?:\\bglpat-[A-Za-z0-9_-]{20,})|(?:\\bnpm_[A-Za-z0-9]{36}\\b)|(?:\\b[rs]k_live_[A-Za-z0-9]{24,})|(?:-----BEGIN [A-Z ]*PRIVATE KEY-----)|(?:\\beyJ[A-Za-z0-9_-]{10,}\\.eyJ[A-Za-z0-9_-]{10,}\\.[A-Za-z0-9_-]{10,})","l":1,"o":"platform","os":"linux"},{"id":"no-self-approve","d":"An agent approving MCP servers, releasing the tripwire, changing Cephalo's settings or rules, the egress allowlist or the Pro license, itself","t":"command","p":"(\\bcephalo(\\.cmd|\\.ps1)?|cli\\.js[\"']?)\\s+(mcp\\s+(allow|approve|pin|mode|trust)|tripwire\\s+(clear|mode|reset|allow)|config\\s+set|rules\\s+reset|egress\\s+(allow|remove|mode)|pro\\s+(activate|renew|install|deactivate))\\b","l":1,"o":"platform","os":"linux"},{"id":"no-self-incident","d":"An agent adding or removing its own learned rules","t":"command","p":"(\\bcephalo(\\.cmd|\\.ps1)?|cli\\.js[\"']?)\\s+incident\\b[^\\n]*(--use|\\bundo\\b)","l":1,"o":"platform","os":"linux"},{"id":"no-secret-shell","d":"A shell command that names a .env secret file (cat, grep, awk, cp, source, ... .env). .env.example is fine","t":"command","p":"(?:^|[\\s'\"=:/\\\\<>(,])\\.env(?:\\.(?!(?:example|sample|template)\\b)[\\w.-]+)?(?=$|[\\s'\";&|)<>,])","l":1,"o":"platform","os":"linux"},{"id":"no-agent-config-tamper","d":"Changing the Claude Code or Hermes config from a shell (the file tools are already blocked)","t":"command","p":"(?:>>?|\\btee\\b|\\bsed\\s+-i|\\brm\\b|\\bdel\\b|\\berase\\b|\\btruncate\\b|\\bset-content\\b|\\bout-file\\b|\\badd-content\\b|\\bremove-item\\b|\\bclear-content\\b|\\bdd\\b|\\bperl\\s+-[a-z]*i|\\bchmod\\b|\\bchown\\b|\\btouch\\b|\\bsponge\\b)[^\\n]*(?:\\.claude[\\/\\\\]settings(?:\\.local)?\\.json|(?:\\.hermes|\\bhermes)[\\/\\\\]config\\.yaml)|\\b(?:cp|copy(?:-item)?|mv|move(?:-item)?|ren(?:ame)?(?:-item)?|install|ln|mklink|rsync)\\b[^\\n]*(?:\\.claude[\\/\\\\]settings(?:\\.local)?\\.json|(?:\\.hermes|\\bhermes)[\\/\\\\]config\\.yaml)[\"']?\\s*(?:$|[;&|])","l":1,"o":"platform","os":"linux"},{"id":"linux-mkfs","d":"Creating filesystems or wiping signatures","t":"command","p":"\\b(mkfs(\\.\\w+)?|wipefs|mkswap)\\b","o":"platform","os":"linux"},{"id":"linux-dd-device","d":"dd writing to a device","t":"command","p":"\\bdd\\b[^;&|\\n]*\\bof=/dev/(?!null\\b|zero\\b|stdout\\b|stderr\\b|tty)","o":"platform","os":"linux"},{"id":"linux-write-device","d":"Redirecting output onto a block device","t":"command","p":">\\s*/dev/(sd|nvme|hd|vd|xvd|mmcblk)\\w*","o":"platform","os":"linux"},{"id":"linux-shred-device","d":"shred on a device","t":"command","p":"\\bshred\\b[^;&|\\n]*\\s/dev/","o":"platform","os":"linux"},{"id":"linux-fork-bomb","d":"Fork bomb","t":"command","p":":\\(\\)\\s*\\{\\s*:\\s*\\|\\s*:\\s*&\\s*\\}\\s*;\\s*:","o":"platform","os":"linux"},{"id":"rm-long-flags","d":"rm with separate or long recursive+force flags","t":"command","p":"\\brm\\b(?=[^;&|\\n]*(\\s-[a-z]*r[a-z]*\\b|--recursive))(?=[^;&|\\n]*(\\s-[a-z]*f[a-z]*\\b|--force))","o":"platform","os":"linux"},{"id":"no-preserve-root","d":"rm --no-preserve-root","t":"command","p":"--no-preserve-root","o":"platform","os":"linux"},{"id":"pipe-to-shell","d":"Piping a download straight into a shell","t":"command","p":"\\b(curl|wget)\\b[^|\\n]*\\|\\s*(sudo\\s+)?(ba|z|da|k)?sh\\b","o":"platform","os":"linux"},{"id":"find-delete","d":"find -delete (recursive delete without rm)","t":"command","p":"\\bfind\\b[^;&|\\n]*\\s-delete\\b","o":"platform","os":"linux"},{"id":"find-exec-rm","d":"find -exec/-execdir rm (recursive delete without rm -rf)","t":"command","p":"\\bfind\\b[^;&|\\n]*\\s-(exec|execdir|ok|okdir)\\s+(\\S*\\/)?rm\\b","o":"platform","os":"linux"},{"id":"chmod-chown-system","d":"Recursive chmod/chown on / or a system directory","t":"command","p":"\\b(chmod|chown)\\s+(-[a-z]*R[a-z]*|--recursive)\\b[^;&|\\n]*\\s(/|/etc|/usr|/var|/bin|/sbin|/boot|/lib|/opt|/home|~)/?(\\s|$|[;&|])","o":"platform","os":"linux"}]}/*END_RULES_JSON*/;
+  var RULES=/*RULES_JSON*/{"defaults":[{"id":"no-drop","d":"Dropping tables or databases","t":"command","p":"\\bDROP\\s+(TABLE|DATABASE|SCHEMA)\\b","o":"default"},{"id":"no-truncate","d":"Truncating tables","t":"command","p":"\\bTRUNCATE\\s+(TABLE\\s+)?[\\w.\"]+","o":"default"},{"id":"no-delete-all","d":"DELETE FROM with no WHERE clause","t":"command","p":"\\bDELETE\\s+FROM\\s+[\\w.\"]+\\s*(;|\"|$)","o":"default"},{"id":"no-rm-rf","d":"Recursive forced rm","t":"command","p":"\\brm\\s+-(?=[a-z]*r)(?=[a-z]*f)[a-z]+","o":"default"},{"id":"no-win-recursive-delete","d":"Recursive delete on Windows","t":"command","p":"(Remove-Item\\b(?=.*-Recurse)(?=.*-Force))|(\\b(rd|rmdir)\\s+\\/s\\b)|(\\bdel\\s+.*\\/s\\b)","o":"default"},{"id":"no-force-push","d":"Force pushing to git remotes","t":"command","p":"\\bgit\\s+push\\b(?=.*(\\s--force(?!-with-lease)\\b|\\s-f\\b))","o":"default"},{"id":"no-force-push-refspec","d":"Force pushing with a + refspec (git push origin +main)","t":"command","p":"\\bgit(\\s+-[cC]\\s+\\S+)*\\s+push\\b[^;&|\\n]*\\s[\"']?\\+[^\\s;&|]","o":"default"},{"id":"no-pipe-to-shell","d":"Piping output into a shell, eval of a substitution, or running a substitution as a script (ask the user to run installers)","t":"command","p":"\\|&?\\s*(sudo\\s+(-\\S+\\s+)*)?(env\\s+)?(\\/(usr\\/)?bin\\/)?(ba|z|da|k)?sh(?=[\\s;&|)]|$)|\\beval\\s+[\"']?(\\$\\(|`)|\\b(ba|z|da|k)?sh\\s+(-\\S+\\s+)*<\\(|\\b(ba|z|da|k)?sh\\s+-c\\s+[\"']?\\$\\(|\\bsource\\s+<\\(","o":"default"},{"id":"no-hard-reset","d":"git reset --hard","t":"command","p":"\\bgit\\s+reset\\s+--hard\\b","o":"default"},{"id":"no-secret-read","d":"Reading .env secret files via shell","t":"command","p":"\\b(cat|type|Get-Content|gc|more|less|head|tail)\\b.*\\.env\\b(?!\\.example)","o":"default"},{"id":"no-secret-file","d":"Accessing .env secret files","t":"path","on":"any","p":"(^|[\\/\\\\])\\.env(\\.(?!example$)[\\w.-]+)?$","o":"default"},{"id":"protect-config","d":"Writing Claude Code or Hermes config","t":"path","on":"write","p":"[\\/\\\\]\\.claude[\\/\\\\]settings(\\.local)?\\.json$|[\\/\\\\]hermes[\\/\\\\]config\\.yaml$","o":"default"}],"win32":[{"id":"protect-cephalo-policy","d":"Writing Cephalo's settings (config.yml), the Pro license and egress allowlist, the Pro package, MCP allowlist, tool approvals, tripwire state, integrity markers or local-model settings","t":"path","on":"write","p":"[\\/\\\\]\\.cephalo[\\/\\\\](mcp[^\\/\\\\]*$|models\\.yml[^\\/\\\\]*$|sync\\.yml[^\\/\\\\]*$|prices\\.yml[^\\/\\\\]*$|config\\.yml[^\\/\\\\]*$|license\\.json[^\\/\\\\]*$|egress\\.yml[^\\/\\\\]*$|pro([\\/\\\\]|$)|integrity([\\/\\\\]|$)|(judge|embed)-cache\\.json$|models-check\\.json$|asks([\\/\\\\]|$)|tripwire([\\/\\\\.]|$))","l":1,"o":"platform","os":"win32"},{"id":"protect-audit-log","d":"Writing Cephalo's audit log or rules file (the record of what the agent did, and the limits on it)","t":"path","on":"write","p":"[\\/\\\\]\\.cephalo[\\/\\\\](audit\\.jsonl(\\.head)?|rules\\.yml)(\\.cephalo-backup-[\\w.-]+)?$","l":1,"o":"platform","os":"win32"},{"id":"no-audit-tamper","d":"Changing or deleting Cephalo's audit log, rules file or settings (config.yml) from a shell","t":"command","p":"(>>?|\\btee\\b|\\bsed\\s+-i|\\brm\\b|\\bdel\\b|\\berase\\b|\\bmv\\b|\\bmove(-item)?\\b|\\bcp\\b|\\bcopy(-item)?\\b|\\btruncate\\b|\\bset-content\\b|\\bout-file\\b|\\badd-content\\b|\\bremove-item\\b|\\bclear-content\\b|\\bren(ame)?(-item)?\\b|\\bdd\\b)[^\\n]*\\.cephalo[\\/\\\\](audit\\.jsonl|rules\\.yml|config\\.yml|license\\.json|egress\\.yml|pro(?![w.-]))","l":1,"o":"platform","os":"win32"},{"id":"protect-vault-files","d":"Reading or writing Cephalo's secrets vault files","t":"path","on":"any","p":"[\\/\\\\]\\.cephalo[\\/\\\\]vault[^\\/\\\\]*$","l":1,"o":"platform","os":"win32"},{"id":"protect-policy-key","d":"Reading or writing the key that signs shared policy (cephalo sync keygen)","t":"path","on":"any","p":"[\\/\\\\]\\.cephalo[\\/\\\\]policy-(signing\\.key|trusted\\.pub)[^\\/\\\\]*$","l":1,"o":"platform","os":"win32"},{"id":"no-vault-extract","d":"Changing or reading the secrets vault outside `cephalo run` (vault set/allow/remove/reveal, OS key APIs, the vault files)","t":"command","p":"(\\bcephalo(\\.cmd|\\.ps1)?|cli\\.js[\"']?)\\s+vault\\s+(set|allow|remove|rm|reveal)\\b|\\.cephalo[\\/\\\\]vault|\\.cephalo[\\/\\\\]policy-signing\\.key|\\b(ProtectedData|Unprotect)\\b|\\bsecret-tool\\s+(lookup|search|clear)\\b","l":1,"o":"platform","os":"win32"},{"id":"secret-in-command","d":"A literal API token in a command. Store it with `cephalo vault set NAME` (the user does this) and run with `cephalo run --env NAME -- ...`","t":"command","p":"(?:\\bgh[pousr]_[A-Za-z0-9]{36,}\\b)|(?:\\bgithub_pat_[A-Za-z0-9_]{50,}\\b)|(?:\\bsk-ant-[A-Za-z0-9_-]{30,})|(?:\\bsk-(?:proj-)?[A-Za-z0-9_-]{32,})|(?:\\b(?:AKIA|ASIA)[0-9A-Z]{16}\\b)|(?:\\bxox[baprs]-[A-Za-z0-9-]{10,})|(?:\\bAIza[0-9A-Za-z_-]{35}\\b)|(?:\\bglpat-[A-Za-z0-9_-]{20,})|(?:\\bnpm_[A-Za-z0-9]{36}\\b)|(?:\\b[rs]k_live_[A-Za-z0-9]{24,})|(?:-----BEGIN [A-Z ]*PRIVATE KEY-----)|(?:\\beyJ[A-Za-z0-9_-]{10,}\\.eyJ[A-Za-z0-9_-]{10,}\\.[A-Za-z0-9_-]{10,})","l":1,"o":"platform","os":"win32"},{"id":"no-self-approve","d":"An agent approving MCP servers, releasing the tripwire, changing Cephalo's settings or rules, the egress allowlist, the Pro license or Cephalo's own version, itself","t":"command","p":"(\\bcephalo(\\.cmd|\\.ps1)?|cli\\.js[\"']?)\\s+(mcp\\s+(allow|approve|pin|mode|trust)|tripwire\\s+(clear|mode|reset|allow)|config\\s+set|rules\\s+reset|egress\\s+(allow|remove|mode)|pro\\s+(activate|renew|install|deactivate)|update)\\b","l":1,"o":"platform","os":"win32"},{"id":"no-self-incident","d":"An agent adding or removing its own learned rules","t":"command","p":"(\\bcephalo(\\.cmd|\\.ps1)?|cli\\.js[\"']?)\\s+incident\\b[^\\n]*(--use|\\bundo\\b)","l":1,"o":"platform","os":"win32"},{"id":"no-secret-shell","d":"A shell command that names a .env secret file (cat, grep, awk, cp, source, ... .env). .env.example is fine","t":"command","p":"(?:^|[\\s'\"=:/\\\\<>(,])\\.env(?:\\.(?!(?:example|sample|template)\\b)[\\w.-]+)?(?=$|[\\s'\";&|)<>,])","l":1,"o":"platform","os":"win32"},{"id":"no-agent-config-tamper","d":"Changing the Claude Code or Hermes config from a shell (the file tools are already blocked)","t":"command","p":"(?:>>?|\\btee\\b|\\bsed\\s+-i|\\brm\\b|\\bdel\\b|\\berase\\b|\\btruncate\\b|\\bset-content\\b|\\bout-file\\b|\\badd-content\\b|\\bremove-item\\b|\\bclear-content\\b|\\bdd\\b|\\bperl\\s+-[a-z]*i|\\bchmod\\b|\\bchown\\b|\\btouch\\b|\\bsponge\\b)[^\\n]*(?:\\.claude[\\/\\\\]settings(?:\\.local)?\\.json|(?:\\.hermes|\\bhermes)[\\/\\\\]config\\.yaml)|\\b(?:cp|copy(?:-item)?|mv|move(?:-item)?|ren(?:ame)?(?:-item)?|install|ln|mklink|rsync)\\b[^\\n]*(?:\\.claude[\\/\\\\]settings(?:\\.local)?\\.json|(?:\\.hermes|\\bhermes)[\\/\\\\]config\\.yaml)[\"']?\\s*(?:$|[;&|])","l":1,"o":"platform","os":"win32"},{"id":"rm-long-flags","d":"rm with separate or long recursive+force flags","t":"command","p":"\\brm\\b(?=[^;&|\\n]*(\\s-[a-z]*r[a-z]*\\b|--recursive))(?=[^;&|\\n]*(\\s-[a-z]*f[a-z]*\\b|--force))","o":"platform","os":"win32"},{"id":"no-preserve-root","d":"rm --no-preserve-root","t":"command","p":"--no-preserve-root","o":"platform","os":"win32"},{"id":"find-delete","d":"find -delete (recursive delete without rm)","t":"command","p":"\\bfind\\b[^;&|\\n]*\\s-delete\\b","o":"platform","os":"win32"},{"id":"find-exec-rm","d":"find -exec/-execdir rm (recursive delete without rm -rf)","t":"command","p":"\\bfind\\b[^;&|\\n]*\\s-(exec|execdir|ok|okdir)\\s+(\\S*\\/)?rm\\b","o":"platform","os":"win32"},{"id":"win-format-drive","d":"Formatting a drive (format X:)","t":"command","p":"\\bformat(\\.com)?\\s+[a-z]:(?![\\w\\\\/])","o":"platform","os":"win32"},{"id":"win-disk-wipe","d":"Disk partitioning or wiping tools","t":"command","p":"\\b(diskpart|Clear-Disk|Remove-Partition|Format-Volume|Initialize-Disk)\\b","o":"platform","os":"win32"},{"id":"win-registry-delete","d":"Deleting registry keys or values","t":"command","p":"\\breg(\\.exe)?\\s+delete\\b|Remove-Item(Property)?\\b[^;&|\\n]*\\bHK(LM|CU|CR|U):","o":"platform","os":"win32"},{"id":"win-shadow-delete","d":"Deleting shadow copies or boot entries","t":"command","p":"\\bvssadmin(\\.exe)?\\s+delete\\b|\\bwmic\\b[^;&|\\n]*\\bshadowcopy\\s+delete\\b|\\bbcdedit(\\.exe)?\\s+/delete\\b","o":"platform","os":"win32"},{"id":"win-power","d":"Shutting down or restarting the machine","t":"command","p":"\\bshutdown(\\.exe)?\\s+/[srp]\\b|\\b(Stop|Restart)-Computer\\b","o":"platform","os":"win32"}],"darwin":[{"id":"protect-cephalo-policy","d":"Writing Cephalo's settings (config.yml), the Pro license and egress allowlist, the Pro package, MCP allowlist, tool approvals, tripwire state, integrity markers or local-model settings","t":"path","on":"write","p":"[\\/\\\\]\\.cephalo[\\/\\\\](mcp[^\\/\\\\]*$|models\\.yml[^\\/\\\\]*$|sync\\.yml[^\\/\\\\]*$|prices\\.yml[^\\/\\\\]*$|config\\.yml[^\\/\\\\]*$|license\\.json[^\\/\\\\]*$|egress\\.yml[^\\/\\\\]*$|pro([\\/\\\\]|$)|integrity([\\/\\\\]|$)|(judge|embed)-cache\\.json$|models-check\\.json$|asks([\\/\\\\]|$)|tripwire([\\/\\\\.]|$))","l":1,"o":"platform","os":"darwin"},{"id":"protect-audit-log","d":"Writing Cephalo's audit log or rules file (the record of what the agent did, and the limits on it)","t":"path","on":"write","p":"[\\/\\\\]\\.cephalo[\\/\\\\](audit\\.jsonl(\\.head)?|rules\\.yml)(\\.cephalo-backup-[\\w.-]+)?$","l":1,"o":"platform","os":"darwin"},{"id":"no-audit-tamper","d":"Changing or deleting Cephalo's audit log, rules file or settings (config.yml) from a shell","t":"command","p":"(>>?|\\btee\\b|\\bsed\\s+-i|\\brm\\b|\\bdel\\b|\\berase\\b|\\bmv\\b|\\bmove(-item)?\\b|\\bcp\\b|\\bcopy(-item)?\\b|\\btruncate\\b|\\bset-content\\b|\\bout-file\\b|\\badd-content\\b|\\bremove-item\\b|\\bclear-content\\b|\\bren(ame)?(-item)?\\b|\\bdd\\b)[^\\n]*\\.cephalo[\\/\\\\](audit\\.jsonl|rules\\.yml|config\\.yml|license\\.json|egress\\.yml|pro(?![w.-]))","l":1,"o":"platform","os":"darwin"},{"id":"protect-vault-files","d":"Reading or writing Cephalo's secrets vault files","t":"path","on":"any","p":"[\\/\\\\]\\.cephalo[\\/\\\\]vault[^\\/\\\\]*$","l":1,"o":"platform","os":"darwin"},{"id":"protect-policy-key","d":"Reading or writing the key that signs shared policy (cephalo sync keygen)","t":"path","on":"any","p":"[\\/\\\\]\\.cephalo[\\/\\\\]policy-(signing\\.key|trusted\\.pub)[^\\/\\\\]*$","l":1,"o":"platform","os":"darwin"},{"id":"no-vault-extract","d":"Changing or reading the secrets vault outside `cephalo run` (vault set/allow/remove/reveal, OS key APIs, the vault files)","t":"command","p":"(\\bcephalo(\\.cmd|\\.ps1)?|cli\\.js[\"']?)\\s+vault\\s+(set|allow|remove|rm|reveal)\\b|\\.cephalo[\\/\\\\]vault|\\.cephalo[\\/\\\\]policy-signing\\.key|\\b(ProtectedData|Unprotect)\\b|\\bsecret-tool\\s+(lookup|search|clear)\\b","l":1,"o":"platform","os":"darwin"},{"id":"secret-in-command","d":"A literal API token in a command. Store it with `cephalo vault set NAME` (the user does this) and run with `cephalo run --env NAME -- ...`","t":"command","p":"(?:\\bgh[pousr]_[A-Za-z0-9]{36,}\\b)|(?:\\bgithub_pat_[A-Za-z0-9_]{50,}\\b)|(?:\\bsk-ant-[A-Za-z0-9_-]{30,})|(?:\\bsk-(?:proj-)?[A-Za-z0-9_-]{32,})|(?:\\b(?:AKIA|ASIA)[0-9A-Z]{16}\\b)|(?:\\bxox[baprs]-[A-Za-z0-9-]{10,})|(?:\\bAIza[0-9A-Za-z_-]{35}\\b)|(?:\\bglpat-[A-Za-z0-9_-]{20,})|(?:\\bnpm_[A-Za-z0-9]{36}\\b)|(?:\\b[rs]k_live_[A-Za-z0-9]{24,})|(?:-----BEGIN [A-Z ]*PRIVATE KEY-----)|(?:\\beyJ[A-Za-z0-9_-]{10,}\\.eyJ[A-Za-z0-9_-]{10,}\\.[A-Za-z0-9_-]{10,})","l":1,"o":"platform","os":"darwin"},{"id":"no-self-approve","d":"An agent approving MCP servers, releasing the tripwire, changing Cephalo's settings or rules, the egress allowlist, the Pro license or Cephalo's own version, itself","t":"command","p":"(\\bcephalo(\\.cmd|\\.ps1)?|cli\\.js[\"']?)\\s+(mcp\\s+(allow|approve|pin|mode|trust)|tripwire\\s+(clear|mode|reset|allow)|config\\s+set|rules\\s+reset|egress\\s+(allow|remove|mode)|pro\\s+(activate|renew|install|deactivate)|update)\\b","l":1,"o":"platform","os":"darwin"},{"id":"no-self-incident","d":"An agent adding or removing its own learned rules","t":"command","p":"(\\bcephalo(\\.cmd|\\.ps1)?|cli\\.js[\"']?)\\s+incident\\b[^\\n]*(--use|\\bundo\\b)","l":1,"o":"platform","os":"darwin"},{"id":"no-secret-shell","d":"A shell command that names a .env secret file (cat, grep, awk, cp, source, ... .env). .env.example is fine","t":"command","p":"(?:^|[\\s'\"=:/\\\\<>(,])\\.env(?:\\.(?!(?:example|sample|template)\\b)[\\w.-]+)?(?=$|[\\s'\";&|)<>,])","l":1,"o":"platform","os":"darwin"},{"id":"no-agent-config-tamper","d":"Changing the Claude Code or Hermes config from a shell (the file tools are already blocked)","t":"command","p":"(?:>>?|\\btee\\b|\\bsed\\s+-i|\\brm\\b|\\bdel\\b|\\berase\\b|\\btruncate\\b|\\bset-content\\b|\\bout-file\\b|\\badd-content\\b|\\bremove-item\\b|\\bclear-content\\b|\\bdd\\b|\\bperl\\s+-[a-z]*i|\\bchmod\\b|\\bchown\\b|\\btouch\\b|\\bsponge\\b)[^\\n]*(?:\\.claude[\\/\\\\]settings(?:\\.local)?\\.json|(?:\\.hermes|\\bhermes)[\\/\\\\]config\\.yaml)|\\b(?:cp|copy(?:-item)?|mv|move(?:-item)?|ren(?:ame)?(?:-item)?|install|ln|mklink|rsync)\\b[^\\n]*(?:\\.claude[\\/\\\\]settings(?:\\.local)?\\.json|(?:\\.hermes|\\bhermes)[\\/\\\\]config\\.yaml)[\"']?\\s*(?:$|[;&|])","l":1,"o":"platform","os":"darwin"},{"id":"mac-diskutil-erase","d":"diskutil erase/partition/zero a disk","t":"command","p":"\\bdiskutil\\s+(erase\\w*|secureErase|partitionDisk|zeroDisk|randomDisk|apfs\\s+delete\\w*)\\b","o":"platform","os":"darwin"},{"id":"mac-disable-protection","d":"Disabling SIP or Gatekeeper","t":"command","p":"\\bcsrutil\\s+disable\\b|\\bspctl\\s+--master-disable\\b","o":"platform","os":"darwin"},{"id":"mac-tmutil-delete","d":"Deleting or disabling Time Machine backups","t":"command","p":"\\btmutil\\s+(delete|deletelocalsnapshots|disable)\\b","o":"platform","os":"darwin"},{"id":"mac-keychain-secrets","d":"Reading or deleting keychain secrets","t":"command","p":"\\bsecurity\\s+(dump-keychain|delete-(generic-|internet-)?(password|keychain)|find-(generic|internet)-password\\b[^;&|\\n]*\\s-[a-z]*w)","o":"platform","os":"darwin"},{"id":"rm-long-flags","d":"rm with separate or long recursive+force flags","t":"command","p":"\\brm\\b(?=[^;&|\\n]*(\\s-[a-z]*r[a-z]*\\b|--recursive))(?=[^;&|\\n]*(\\s-[a-z]*f[a-z]*\\b|--force))","o":"platform","os":"darwin"},{"id":"no-preserve-root","d":"rm --no-preserve-root","t":"command","p":"--no-preserve-root","o":"platform","os":"darwin"},{"id":"pipe-to-shell","d":"Piping a download straight into a shell","t":"command","p":"\\b(curl|wget)\\b[^|\\n]*\\|\\s*(sudo\\s+)?(ba|z|da|k)?sh\\b","o":"platform","os":"darwin"},{"id":"find-delete","d":"find -delete (recursive delete without rm)","t":"command","p":"\\bfind\\b[^;&|\\n]*\\s-delete\\b","o":"platform","os":"darwin"},{"id":"find-exec-rm","d":"find -exec/-execdir rm (recursive delete without rm -rf)","t":"command","p":"\\bfind\\b[^;&|\\n]*\\s-(exec|execdir|ok|okdir)\\s+(\\S*\\/)?rm\\b","o":"platform","os":"darwin"},{"id":"chmod-chown-system","d":"Recursive chmod/chown on / or a system directory","t":"command","p":"\\b(chmod|chown)\\s+(-[a-z]*R[a-z]*|--recursive)\\b[^;&|\\n]*\\s(/|/etc|/usr|/var|/bin|/sbin|/boot|/lib|/opt|/home|~)/?(\\s|$|[;&|])","o":"platform","os":"darwin"}],"linux":[{"id":"protect-cephalo-policy","d":"Writing Cephalo's settings (config.yml), the Pro license and egress allowlist, the Pro package, MCP allowlist, tool approvals, tripwire state, integrity markers or local-model settings","t":"path","on":"write","p":"[\\/\\\\]\\.cephalo[\\/\\\\](mcp[^\\/\\\\]*$|models\\.yml[^\\/\\\\]*$|sync\\.yml[^\\/\\\\]*$|prices\\.yml[^\\/\\\\]*$|config\\.yml[^\\/\\\\]*$|license\\.json[^\\/\\\\]*$|egress\\.yml[^\\/\\\\]*$|pro([\\/\\\\]|$)|integrity([\\/\\\\]|$)|(judge|embed)-cache\\.json$|models-check\\.json$|asks([\\/\\\\]|$)|tripwire([\\/\\\\.]|$))","l":1,"o":"platform","os":"linux"},{"id":"protect-audit-log","d":"Writing Cephalo's audit log or rules file (the record of what the agent did, and the limits on it)","t":"path","on":"write","p":"[\\/\\\\]\\.cephalo[\\/\\\\](audit\\.jsonl(\\.head)?|rules\\.yml)(\\.cephalo-backup-[\\w.-]+)?$","l":1,"o":"platform","os":"linux"},{"id":"no-audit-tamper","d":"Changing or deleting Cephalo's audit log, rules file or settings (config.yml) from a shell","t":"command","p":"(>>?|\\btee\\b|\\bsed\\s+-i|\\brm\\b|\\bdel\\b|\\berase\\b|\\bmv\\b|\\bmove(-item)?\\b|\\bcp\\b|\\bcopy(-item)?\\b|\\btruncate\\b|\\bset-content\\b|\\bout-file\\b|\\badd-content\\b|\\bremove-item\\b|\\bclear-content\\b|\\bren(ame)?(-item)?\\b|\\bdd\\b)[^\\n]*\\.cephalo[\\/\\\\](audit\\.jsonl|rules\\.yml|config\\.yml|license\\.json|egress\\.yml|pro(?![w.-]))","l":1,"o":"platform","os":"linux"},{"id":"protect-vault-files","d":"Reading or writing Cephalo's secrets vault files","t":"path","on":"any","p":"[\\/\\\\]\\.cephalo[\\/\\\\]vault[^\\/\\\\]*$","l":1,"o":"platform","os":"linux"},{"id":"protect-policy-key","d":"Reading or writing the key that signs shared policy (cephalo sync keygen)","t":"path","on":"any","p":"[\\/\\\\]\\.cephalo[\\/\\\\]policy-(signing\\.key|trusted\\.pub)[^\\/\\\\]*$","l":1,"o":"platform","os":"linux"},{"id":"no-vault-extract","d":"Changing or reading the secrets vault outside `cephalo run` (vault set/allow/remove/reveal, OS key APIs, the vault files)","t":"command","p":"(\\bcephalo(\\.cmd|\\.ps1)?|cli\\.js[\"']?)\\s+vault\\s+(set|allow|remove|rm|reveal)\\b|\\.cephalo[\\/\\\\]vault|\\.cephalo[\\/\\\\]policy-signing\\.key|\\b(ProtectedData|Unprotect)\\b|\\bsecret-tool\\s+(lookup|search|clear)\\b","l":1,"o":"platform","os":"linux"},{"id":"secret-in-command","d":"A literal API token in a command. Store it with `cephalo vault set NAME` (the user does this) and run with `cephalo run --env NAME -- ...`","t":"command","p":"(?:\\bgh[pousr]_[A-Za-z0-9]{36,}\\b)|(?:\\bgithub_pat_[A-Za-z0-9_]{50,}\\b)|(?:\\bsk-ant-[A-Za-z0-9_-]{30,})|(?:\\bsk-(?:proj-)?[A-Za-z0-9_-]{32,})|(?:\\b(?:AKIA|ASIA)[0-9A-Z]{16}\\b)|(?:\\bxox[baprs]-[A-Za-z0-9-]{10,})|(?:\\bAIza[0-9A-Za-z_-]{35}\\b)|(?:\\bglpat-[A-Za-z0-9_-]{20,})|(?:\\bnpm_[A-Za-z0-9]{36}\\b)|(?:\\b[rs]k_live_[A-Za-z0-9]{24,})|(?:-----BEGIN [A-Z ]*PRIVATE KEY-----)|(?:\\beyJ[A-Za-z0-9_-]{10,}\\.eyJ[A-Za-z0-9_-]{10,}\\.[A-Za-z0-9_-]{10,})","l":1,"o":"platform","os":"linux"},{"id":"no-self-approve","d":"An agent approving MCP servers, releasing the tripwire, changing Cephalo's settings or rules, the egress allowlist, the Pro license or Cephalo's own version, itself","t":"command","p":"(\\bcephalo(\\.cmd|\\.ps1)?|cli\\.js[\"']?)\\s+(mcp\\s+(allow|approve|pin|mode|trust)|tripwire\\s+(clear|mode|reset|allow)|config\\s+set|rules\\s+reset|egress\\s+(allow|remove|mode)|pro\\s+(activate|renew|install|deactivate)|update)\\b","l":1,"o":"platform","os":"linux"},{"id":"no-self-incident","d":"An agent adding or removing its own learned rules","t":"command","p":"(\\bcephalo(\\.cmd|\\.ps1)?|cli\\.js[\"']?)\\s+incident\\b[^\\n]*(--use|\\bundo\\b)","l":1,"o":"platform","os":"linux"},{"id":"no-secret-shell","d":"A shell command that names a .env secret file (cat, grep, awk, cp, source, ... .env). .env.example is fine","t":"command","p":"(?:^|[\\s'\"=:/\\\\<>(,])\\.env(?:\\.(?!(?:example|sample|template)\\b)[\\w.-]+)?(?=$|[\\s'\";&|)<>,])","l":1,"o":"platform","os":"linux"},{"id":"no-agent-config-tamper","d":"Changing the Claude Code or Hermes config from a shell (the file tools are already blocked)","t":"command","p":"(?:>>?|\\btee\\b|\\bsed\\s+-i|\\brm\\b|\\bdel\\b|\\berase\\b|\\btruncate\\b|\\bset-content\\b|\\bout-file\\b|\\badd-content\\b|\\bremove-item\\b|\\bclear-content\\b|\\bdd\\b|\\bperl\\s+-[a-z]*i|\\bchmod\\b|\\bchown\\b|\\btouch\\b|\\bsponge\\b)[^\\n]*(?:\\.claude[\\/\\\\]settings(?:\\.local)?\\.json|(?:\\.hermes|\\bhermes)[\\/\\\\]config\\.yaml)|\\b(?:cp|copy(?:-item)?|mv|move(?:-item)?|ren(?:ame)?(?:-item)?|install|ln|mklink|rsync)\\b[^\\n]*(?:\\.claude[\\/\\\\]settings(?:\\.local)?\\.json|(?:\\.hermes|\\bhermes)[\\/\\\\]config\\.yaml)[\"']?\\s*(?:$|[;&|])","l":1,"o":"platform","os":"linux"},{"id":"linux-mkfs","d":"Creating filesystems or wiping signatures","t":"command","p":"\\b(mkfs(\\.\\w+)?|wipefs|mkswap)\\b","o":"platform","os":"linux"},{"id":"linux-dd-device","d":"dd writing to a device","t":"command","p":"\\bdd\\b[^;&|\\n]*\\bof=/dev/(?!null\\b|zero\\b|stdout\\b|stderr\\b|tty)","o":"platform","os":"linux"},{"id":"linux-write-device","d":"Redirecting output onto a block device","t":"command","p":">\\s*/dev/(sd|nvme|hd|vd|xvd|mmcblk)\\w*","o":"platform","os":"linux"},{"id":"linux-shred-device","d":"shred on a device","t":"command","p":"\\bshred\\b[^;&|\\n]*\\s/dev/","o":"platform","os":"linux"},{"id":"linux-fork-bomb","d":"Fork bomb","t":"command","p":":\\(\\)\\s*\\{\\s*:\\s*\\|\\s*:\\s*&\\s*\\}\\s*;\\s*:","o":"platform","os":"linux"},{"id":"rm-long-flags","d":"rm with separate or long recursive+force flags","t":"command","p":"\\brm\\b(?=[^;&|\\n]*(\\s-[a-z]*r[a-z]*\\b|--recursive))(?=[^;&|\\n]*(\\s-[a-z]*f[a-z]*\\b|--force))","o":"platform","os":"linux"},{"id":"no-preserve-root","d":"rm --no-preserve-root","t":"command","p":"--no-preserve-root","o":"platform","os":"linux"},{"id":"pipe-to-shell","d":"Piping a download straight into a shell","t":"command","p":"\\b(curl|wget)\\b[^|\\n]*\\|\\s*(sudo\\s+)?(ba|z|da|k)?sh\\b","o":"platform","os":"linux"},{"id":"find-delete","d":"find -delete (recursive delete without rm)","t":"command","p":"\\bfind\\b[^;&|\\n]*\\s-delete\\b","o":"platform","os":"linux"},{"id":"find-exec-rm","d":"find -exec/-execdir rm (recursive delete without rm -rf)","t":"command","p":"\\bfind\\b[^;&|\\n]*\\s-(exec|execdir|ok|okdir)\\s+(\\S*\\/)?rm\\b","o":"platform","os":"linux"},{"id":"chmod-chown-system","d":"Recursive chmod/chown on / or a system directory","t":"command","p":"\\b(chmod|chown)\\s+(-[a-z]*R[a-z]*|--recursive)\\b[^;&|\\n]*\\s(/|/etc|/usr|/var|/bin|/sbin|/boot|/lib|/opt|/home|~)/?(\\s|$|[;&|])","o":"platform","os":"linux"}]}/*END_RULES_JSON*/;
   var HOMES={win32:'C:\\Users\\you',darwin:'/Users/you',linux:'/home/you'};
   function posixNormalize(p){
     var abs=p.charAt(0)==='/',out=[],parts=p.split('/');
@@ -1817,7 +1918,6 @@ if(typeof module!=='undefined')module.exports=CephaloEngine;
 <script src="checkout.config.js"></script>
 <script src="checkout.js" defer></script>
 <script src="stats.js" defer></script>
-<script src="countdown.js" defer></script>
 <!-- Visit counts: GoatCounter, no cookies. Opt yourself out on a device with localStorage.skipgc = "t" in the browser console. -->
 <script data-goatcounter="https://cephalo.goatcounter.com/count"
         async src="//gc.zgo.at/count.js"></script>

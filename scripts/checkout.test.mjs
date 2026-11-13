@@ -63,7 +63,7 @@ test("page copy changes only when something is really for sale, and says plainly
   assert.deepEqual(plain(C.copy(cfg(), [inert, inert])), { head: null, note: null });
   const live = C.copy(cfg({ mode: "live" }), [{ kind: "link" }, inert]);
   assert.match(live.head, /Everything in version 0\.1\.1 stays free/);
-  assert.match(live.note, /Nothing checks a licence today/);
+  assert.match(live.note, /switches the paid features on/);
   assert.match(live.note, /CEPHALO/);
   assert.match(live.note, /Lemon Squeezy/);
     assert.match(C.copy(cfg({ mode: "test" }), [{ kind: "link", test: true }]).banner, /charges nothing|charge nothing/);
@@ -87,8 +87,8 @@ test("apply: swaps only the buttons that resolve to a link, and rewrites the two
   assert.equal(team.tag, "span");
   assert.equal(team.textContent, "Not on sale yet");
   assert.equal(ent.tag, "span");
-  assert.match(d.head.textContent, /Launching Nov 10/);
-  assert.match(d.note.textContent, /Nothing checks a licence today/);
+  assert.match(d.head.textContent, /new in 0\.2\.0/);
+  assert.match(d.note.textContent, /switches the paid features on/);
   const off = fakeDoc(["pro", "team", "enterprise"]);
   C.apply(off, cfg(), "");
   assert.ok(off.parent.children.every((c) => c.tag === "span"));
@@ -103,10 +103,10 @@ test("the shipped config is valid, and the page, workflow and config line up", (
   for (const p of ["pro", "team"]) for (const k of ["test", "live"]) assert.ok(shipped.plans[p][k] === "" || C.checkoutUrl(shipped.plans[p][k]), `${p}.${k} must be empty or a lemonsqueezy.com https link`);
   assert.ok(shipped.billing === "" || C.checkoutUrl(shipped.billing));
   const html = fs.readFileSync(path.join(root, "site", "index.html"), "utf8");
-  const inertText = { pro: "Launching Nov 10", team: "Launching Nov 10", enterprise: "Not on sale yet" };
+  const inertText = { pro: "Not on sale yet", team: "Not on sale yet", enterprise: "Not on sale yet" };
   for (const p of ["pro", "team", "enterprise"]) assert.match(html, new RegExp(`class="btn soon" data-plan="${p}">${inertText[p]}</span>`), `${p} button default is inert`);
   assert.match(html, /<script src="checkout\.config\.js"><\/script>\s*<script src="checkout\.js" defer><\/script>/);
   const wf = fs.readFileSync(path.join(root, ".github", "workflows", "pages.yml"), "utf8");
   assert.match(wf, /cp [^\n]*checkout\.config\.js[^\n]*checkout\.js[^\n]* _site\//, "the Pages workflow publishes the checkout files");
-  if (shipped.mode === "off") assert.match(html, /Pro and Team are not for sale yet/);
+  if (shipped.mode === "off") assert.match(html, /There is no checkout on this page yet/);
 });

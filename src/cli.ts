@@ -42,6 +42,7 @@ import { runInit } from "./init.js";
 import { listRules, resetRules, showRule } from "./rulescmd.js";
 import { defaultRulesPath } from "./rules.js";
 import { getVersion } from "./version.js";
+import { UPDATE_USAGE, updateCommand } from "./updatecmd.js";
 import { buildBundle } from "./replay/bundle.js";
 import { DASH_USAGE, SYNC_USAGE, runDashboard, runSync } from "./synccmd.js";
 import { COST_USAGE, costReport, parseCostArgs } from "./costcmd.js";
@@ -79,6 +80,7 @@ const USAGE = `Usage:
   cephalo uninstall claude|hermes     Remove Cephalo's hook from the agent's config
   cephalo init [--yes]                Set up rules and install hooks for the agents found
   cephalo doctor                      Check rules, hooks, approvals and the audit log
+  cephalo update [--check] [--yes]    Update Cephalo to the newest version on npm (only when you run it)
   cephalo rules [list|show <id>|path|reset [--yes]]
                                       Inspect the rules file (actions, shadow mode, missing defaults), or reset it (with backup)
   cephalo config [list|get|set|path]  Settings: fail-closed, shadow mode, what 'ask' does where agents cannot ask
@@ -885,6 +887,27 @@ async function main(): Promise<number> {
       err: (l) => console.error(l),
     };
     return await run(rest, ctx);
+  }
+
+  if (cmd === "update") {
+    if (rest[0] === "--help" || rest[0] === "-h") {
+      process.stdout.write(UPDATE_USAGE);
+      return 0;
+    }
+    const r = await updateCommand(rest, {
+      confirm: process.stdin.isTTY
+        ? (question) =>
+            new Promise<boolean>((resolve) => {
+              const rl = createInterface({ input: process.stdin, output: process.stdout });
+              askQuestion(rl, question, (a) => {
+                rl.close();
+                resolve(/^y(es)?$/i.test(a.trim()));
+              });
+            })
+        : undefined,
+    });
+    for (const line of r.lines) (r.exitCode === 0 ? console.log : console.error)(line);
+    return r.exitCode;
   }
 
   if (cmd === "theme") {
