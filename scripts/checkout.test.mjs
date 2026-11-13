@@ -12,13 +12,14 @@ const sandbox = { module: { exports: {} }, URL };
 vm.runInNewContext(fs.readFileSync(path.join(root, "site", "checkout.js"), "utf8"), sandbox);
 const C = sandbox.module.exports;
 const plain = (x) => JSON.parse(JSON.stringify(x)); // objects made inside the vm have another Object prototype
-const LIVE = "https://cephalo.lemonsqueezy.com/buy/aaaa-bbbb";
-const TEST = "https://cephalo.lemonsqueezy.com/buy/test-1111";
-const cfg = (over = {}) => ({ mode: "off", provider: "Lemon Squeezy", plans: { pro: { test: TEST, live: LIVE }, team: { test: TEST, live: LIVE }, enterprise: { email: "" } }, billing: "", ...over });
+const LIVE = "https://buy.polar.sh/polar_cl_aaaabbbb";
+const TEST = "https://buy.polar.sh/polar_cl_test1111";
+const cfg = (over = {}) => ({ mode: "off", provider: "Polar", plans: { pro: { test: TEST, live: LIVE }, team: { test: TEST, live: LIVE }, enterprise: { email: "" } }, billing: "", ...over });
 
-test("only https links on the provider's own domain are accepted", () => {
+test("only https links on Polar's own hosts (buy.polar.sh, polar.sh) are accepted", () => {
   assert.equal(C.checkoutUrl(LIVE), LIVE);
-  for (const bad of ["", undefined, null, 5, "http://cephalo.lemonsqueezy.com/buy/x", "https://evil-lemonsqueezy.com/buy/x", "https://cephalo.lemonsqueezy.com.evil.com/x", "https://user:pw@cephalo.lemonsqueezy.com/x", "javascript:alert(1)", "https://lemonsqueezy.com/x", "//cephalo.lemonsqueezy.com/x", "not a url"]) {
+  assert.equal(C.checkoutUrl("https://polar.sh/nomajorconcerns/portal"), "https://polar.sh/nomajorconcerns/portal", "the customer portal");
+  for (const bad of ["", undefined, null, 5, "http://buy.polar.sh/x", "https://evil-polar.sh/x", "https://buy.polar.sh.evil.com/x", "https://evil.polar.sh/x", "https://user:pw@buy.polar.sh/x", "https://buy.polar.sh:8443/x", "javascript:alert(1)", "//buy.polar.sh/x", "https://cephalo.lemonsqueezy.com/buy/x", "not a url"]) {
     assert.equal(C.checkoutUrl(bad), null, String(bad));
   }
 });
@@ -65,7 +66,7 @@ test("page copy changes only when something is really for sale, and says plainly
   assert.match(live.head, /Everything in version 0\.1\.1 stays free/);
   assert.match(live.note, /switches the paid features on/);
   assert.match(live.note, /CEPHALO/);
-  assert.match(live.note, /Lemon Squeezy/);
+  assert.match(live.note, /Polar/);
     assert.match(C.copy(cfg({ mode: "test" }), [{ kind: "link", test: true }]).banner, /charges nothing|charge nothing/);
 });
 
@@ -100,7 +101,10 @@ test("the shipped config is valid, and the page, workflow and config line up", (
   vm.runInNewContext(fs.readFileSync(path.join(root, "site", "checkout.config.js"), "utf8"), ctx);
   const shipped = ctx.window.CEPHALO_CHECKOUT;
   assert.ok(["off", "test", "live"].includes(shipped.mode));
-  for (const p of ["pro", "team"]) for (const k of ["test", "live"]) assert.ok(shipped.plans[p][k] === "" || C.checkoutUrl(shipped.plans[p][k]), `${p}.${k} must be empty or a lemonsqueezy.com https link`);
+  for (const p of ["pro", "team"]) for (const k of ["test", "live"]) assert.ok(shipped.plans[p][k] === "" || C.checkoutUrl(shipped.plans[p][k]), `${p}.${k} must be empty or a Polar https link`);
+  assert.equal(shipped.provider, "Polar");
+  assert.equal(shipped.mode, "off", "nothing is on sale until the Polar store is set up");
+  for (const p of ["pro", "team"]) assert.deepEqual([shipped.plans[p].test, shipped.plans[p].live], ["", ""], `${p} links stay empty for now`);
   assert.ok(shipped.billing === "" || C.checkoutUrl(shipped.billing));
   const html = fs.readFileSync(path.join(root, "site", "index.html"), "utf8");
   const inertText = { pro: "Not on sale yet", team: "Not on sale yet", enterprise: "Not on sale yet" };

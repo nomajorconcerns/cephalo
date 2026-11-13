@@ -1,8 +1,25 @@
 # Changelog
 
-## Unreleased
+## 0.3.0
 
-- **`cephalo update [--check] [--yes]`.** Updates Cephalo to the newest version on npm: it looks up the latest version from the public registry (only when you run the command), shows `current -> newest`, asks, then runs `npm install -g @nomajorconcerns/cephalo@<newest>`. `--check` only looks. It refuses to replace a copy that is not in npm's global folder (a git checkout or an `npm link`), and agents cannot run it (`no-self-approve` now covers `cephalo update`). Rules, audit log, settings and license are not touched. Not in 0.2.0.
+### Pro and Team: Polar replaces Lemon Squeezy
+
+Checkout, license keys and the Pro download move to [Polar](https://polar.sh), the merchant of record (payments run on Stripe). The `cephalo pro` commands and what they do stay the same.
+
+- `cephalo pro activate` activates the key with Polar's public license-key API for this machine, labelled with its name, then validates that activation. It refuses a key unless it belongs to Cephalo's Polar organization, to the Pro or Team license-key benefit, and is granted; a key refused after activating has its activation given back. If every seat of a key is in use, the message says how to free one.
+- `cephalo pro renew` validates the stored activation. Polar answers "not found" for a key that is revoked, disabled or expired, so a cancelled subscription ends the license, as before.
+- `cephalo pro deactivate` gives the seat back.
+- `~/.cephalo/license.json` keeps its shape (plan, activation ID, last four characters of the key, dates; never the key) and gains `provider: "polar"`.
+- A `license.json` written by 0.2.0 with Lemon Squeezy still reads, but turns nothing on: `cephalo pro status`, the paid commands and `renew` say to re-activate with a Polar key, and nothing is sent anywhere for it. `cephalo pro deactivate` removes it (the Lemon Squeezy seat itself cannot be released from Cephalo any more).
+- `CEPHALO_POLAR_SANDBOX=1` uses Polar's sandbox (`sandbox-api.polar.sh`) for testing, with its own IDs from `CEPHALO_POLAR_ORG_ID`, `CEPHALO_POLAR_PRO_BENEFIT_ID` and `CEPHALO_POLAR_TEAM_BENEFIT_ID`. A record activated in one environment is not renewed or released in the other.
+- The Polar organization and the Pro and Team license-key benefit IDs are built in. If a build ever ships without them (placeholders), activation refuses with a plain message and sends nothing.
+- The install hints no longer name a fixed Pro file version: they point at the cephalo-pro `.tgz` from your Polar download.
+- The hook still never touches the network; only `cephalo pro activate | renew | deactivate` do.
+- Website: the checkout settings name Polar and accept only `https://buy.polar.sh/...` and `https://polar.sh/...` links (still off, no links). The privacy, terms and refund pages and the README name Polar.
+
+### Built-in updater and website
+
+- **`cephalo update [--check] [--yes]`.** Updates Cephalo to the newest version on npm: it looks up the latest version from the public registry (only when you run the command), shows `current -> newest`, asks, then runs `npm install -g @nomajorconcerns/cephalo@<newest>`. `--check` only looks. It refuses to replace a copy that is not in npm's global folder (a git checkout or an `npm link`), and agents cannot run it (`no-self-approve` now covers `cephalo update`). Rules, audit log, settings and license are not touched. Not in 0.2.0; new in 0.3.0.
 - Website: the pre-launch announcement and countdown are replaced by a release notice and an Install / Update section; the page has a new look based on the CLI's reef theme.
 
 ## 0.2.0

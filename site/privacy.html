@@ -7,6 +7,9 @@
 <meta name="description" content="What Cephalo and this website collect, who handles it, and your choices.">
 <meta name="color-scheme" content="dark light">
 <link rel="canonical" href="https://nomajorconcerns.github.io/cephalo/privacy.html">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="stylesheet" href="legal.css">
 </head>
 <body>
@@ -19,7 +22,7 @@
 <main id="main"><div class="wrap">
 <h1>Privacy</h1>
 <p class="upd">Last updated November 5, 2026</p>
-<p class="lede">Short version: the free Cephalo program runs on your machine and sends nothing about you anywhere. The paid package checks your license key with Lemon Squeezy. This website counts visits without cookies. If you buy a paid plan, Lemon Squeezy handles your payment details and tells us who you are.</p>
+<p class="lede">Short version: the free Cephalo program runs on your machine and sends nothing about you anywhere. The paid package checks your license key with Polar. This website counts visits without cookies. If you buy a paid plan, Polar handles your payment details and tells us who you are.</p>
 
 <h2>Who is responsible</h2>
 <p>Cephalo is run by Zuri (Cephalo, nomajorconcerns). Questions about this page: <a href="mailto:zuri77290@gmail.com">zuri77290@gmail.com</a>.</p>
@@ -28,7 +31,7 @@
 <ul>
 <li>The free program (version 0.1.1 and the free features of later versions) has no telemetry. The audit log, rules, settings and any stored secrets stay in a folder on your computer (<code>~/.cephalo</code>). We never receive them.</li>
 <li>The program makes network requests only when you ask it to: for example <code>cephalo mcp scan</code> starts MCP servers you already approved, <code>cephalo models</code> talks to an Ollama you run yourself, and <code>cephalo replay --comment</code> uses your own <code>gh</code> login.</li>
-<li><strong>Pro and Team (from version 0.2.0).</strong> When you run <code>cephalo pro activate</code>, <code>renew</code> or <code>deactivate</code>, the program sends your license key and your computer's name to Lemon Squeezy's license service so the key can be checked. The program keeps only the last four characters of the key, the plan, an activation ID and the dates of the checks, in <code>~/.cephalo/license.json</code>. The check is repeated about every 35 days when you run <code>cephalo pro renew</code>. The audit log, rules and commands are never sent.</li>
+<li><strong>Pro and Team (from version 0.2.0).</strong> When you run <code>cephalo pro activate</code>, <code>renew</code> or <code>deactivate</code>, the program sends your license key and your computer's name to Polar's license-key service (api.polar.sh) so the key can be checked. The program keeps only the last four characters of the key, the plan, an activation ID and the dates of the checks, in <code>~/.cephalo/license.json</code>. The check is repeated about every 35 days when you run <code>cephalo pro renew</code>. The audit log, rules and commands are never sent.</li>
 </ul>
 
 <h2>This website</h2>
@@ -37,17 +40,17 @@
 <li><strong>Visit counts.</strong> The site uses GoatCounter (cephalo.goatcounter.com), which counts page views without cookies and without building a profile of you. It records the page, the referrer, a coarse device and browser type, screen size and a country. It does not store your IP address. You can opt out on a device by running <code>localStorage.skipgc = "t"</code> in the browser console, or by using a blocker that stops GoatCounter.</li>
 <li><strong>Public numbers.</strong> Once an hour the site publishes totals from npm (downloads), GitHub (stars, forks, issues) and GoatCounter (visits). These are totals, not information about individuals.</li>
 <li><strong>On your device.</strong> The site remembers your light or dark choice in your browser's local storage. It never leaves your device. There are no advertising or tracking cookies.</li>
-<li><strong>Links.</strong> Links to GitHub, npm and Lemon Squeezy leave this site. Their privacy practices are their own.</li>
+<li><strong>Links.</strong> Links to GitHub, npm and Polar leave this site. Their privacy practices are their own.</li>
 </ul>
 
 <h2>Buying a paid plan</h2>
-<p>When paid plans are on sale, checkout and billing run on Lemon Squeezy, which is the seller of record. Lemon Squeezy collects what is needed to take payment and handle tax: your name, email, billing address, payment details and country. It sends us your name, email, country, the plan, the order and the license key it issued. We do not see your full card number. We use that information to deliver the plan, answer you, and keep tax and accounting records. Lemon Squeezy's own privacy policy applies to what it holds.</p>
+<p>When paid plans are on sale, checkout and billing run on Polar (polar.sh), which is the merchant of record. Polar collects what is needed to take payment and handle tax: your name, email, billing address, payment details and country. Card payments are processed by Stripe for Polar. Polar shares with us your name, email, country, the plan, the order and the license key it issued. We do not see your full card number. We use that information to deliver the plan, answer you, and keep tax and accounting records. Polar's own privacy policy applies to what it holds.</p>
 
 <h2>When you email us</h2>
 <p>If you write to <a href="mailto:zuri77290@gmail.com">zuri77290@gmail.com</a>, we keep your message and our replies so we can help you, and we delete them when they are no longer needed. Please do not send passwords, API keys or the contents of your audit log. If you need to show us a log, remove the secrets first.</p>
 
 <h2>Who we share data with</h2>
-<p>Only the services named on this page: GitHub (hosting), GoatCounter (visit counts) and Lemon Squeezy (payments and license checks). We do not sell personal data.</p>
+<p>Only the services named on this page: GitHub (hosting), GoatCounter (visit counts) and Polar (payments and license checks, with Stripe as its payment processor). We do not sell personal data.</p>
 
 <h2>How long we keep it</h2>
 <p>Email is kept while we are helping you. Order and license records are kept as long as the license is active and as long as tax and accounting rules require. Visit counts hold no personal data.</p>

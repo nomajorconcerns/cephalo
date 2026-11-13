@@ -47,7 +47,7 @@ cephalo doctor
 
 `cephalo rules` lists default rules your rules file does not have yet. Restart Claude Code after an update; it reads hooks at start.
 
-**`cephalo update`** does the lookup and the npm step for you. It is not in 0.2.0; it arrives in the next release.
+**`cephalo update`** does the lookup and the npm step for you. It is not in 0.2.0; it arrives in 0.3.0.
 
 ```
 cephalo update --check      # only look: is a newer version on npm?
@@ -100,7 +100,7 @@ and keep a backup. `cephalo doctor` warns when the installed hooks are out of da
 | `cephalo rules [list]` / `show <id>` / `path` / `reset [--yes]` | Inspect rules and where each came from; `reset` backs up `rules.yml` then rewrites it from the defaults |
 | `cephalo log [--blocked\|--shadow] [--limit N]` | Recent audit entries, newest last (default 20). `--shadow`: only what shadow-mode rules would have blocked |
 | `cephalo watch [--blocked] [--last N] [--no-color]` | Follow the audit log live, in your color scheme. Ctrl+C stops |
-| `cephalo update [--check] [--yes]` | Update Cephalo to the newest version on npm (arrives after 0.2.0). See [Update](#update) |
+| `cephalo update [--check] [--yes]` | Update Cephalo to the newest version on npm (arrives in 0.3.0). See [Update](#update) |
 | `cephalo install` / `uninstall claude\|hermes` | Add or remove Cephalo's hooks (idempotent; backs up first; uninstall removes only Cephalo's entries) |
 | `cephalo config [list\|get\|set\|path]` | Settings: fail-closed, shadow, ask-default, hook-timeout, theme. See [Settings](#settings) |
 | `cephalo theme [list\|preview\|set\|reset]` | Color scheme of the CLI. See [Themes](#themes-and-the-loading-animation) |
@@ -477,7 +477,7 @@ a `note`. Tokens are redacted before writing. Read it with `cephalo log`, follow
 
 Everything above, and everything that was in 0.1.1, is free and MIT licensed. Pro ($15 per developer per month) and Team ($25) add three features that live in a separate, private package, `@nomajorconcerns/cephalo-pro`, which is **not** in this repository and is not on npm. Early users get 20% off the first year with code `CEPHALOG`. Prices and what each plan includes are on the [website](https://nomajorconcerns.github.io/cephalo/#pricing).
 
-**Getting it.** Your Lemon Squeezy order has a license key and a download, `cephalo-pro-0.2.0.tgz`. Install the download with `npm install -g ./cephalo-pro-0.2.0.tgz` (npm fetches the package's one dependency, `yaml`, from the public registry; nothing from your order goes to npm). Then run `cephalo pro activate`; it asks for the key without echo, checks it with the Lemon Squeezy license API, and stores a small record in `~/.cephalo/license.json` (tier, activation id and the last four characters of the key; not the key). The key must belong to the Cephalo store and to the Pro or Team product; a key for anything else is refused and its seat is given back. If Cephalo itself is not a global install (a clone, `npm link`), use `cephalo pro install ./cephalo-pro-0.2.0.tgz` instead, which installs it into `~/.cephalo/pro`. About every 35 days run `cephalo pro renew` so a cancelled subscription ends; `cephalo pro deactivate` gives the seat back; `cephalo pro status` shows where things stand.
+**Getting it.** Checkout runs on [Polar](https://polar.sh), the merchant of record. Your Polar purchase has a license key and a file download, `cephalo-pro-0.2.0.tgz`; both are in Polar's email and its customer portal. Install the download with `npm install -g ./cephalo-pro-0.2.0.tgz` (npm fetches the package's one dependency, `yaml`, from the public registry; nothing from your purchase goes to npm). Then run `cephalo pro activate`; it asks for the key without echo, activates it with Polar's public license-key API for this machine (labelled with its name), checks that activation, and stores a small record in `~/.cephalo/license.json` (provider, tier, activation id and the last four characters of the key; not the key). The key must belong to Cephalo's Polar organization and to the Pro or Team license-key benefit, and be granted; anything else is refused and its activation is given back. A `license.json` from 0.2.0 (Lemon Squeezy) still reads, but turns nothing on: re-activate with a Polar key. If Cephalo itself is not a global install (a clone, `npm link`), use `cephalo pro install ./cephalo-pro-0.2.0.tgz` instead, which installs it into `~/.cephalo/pro`. About every 35 days run `cephalo pro renew` so a cancelled subscription ends; `cephalo pro deactivate` gives the seat back; `cephalo pro status` shows where things stand.
 
 Without the package, `cephalo egress`, `cephalo audit` and `cephalo bench` print a plain "this is part of Cephalo Pro" message with the pricing link and do nothing else. The hook never loads the package unless there is a current license, loads it only from beside Cephalo's own install or from `~/.cephalo/pro` (never from the current directory), and never uses the network.
 
@@ -520,7 +520,7 @@ tools.
 - **The tripwire is a heuristic; the vault is hook-based.** See their sections.
 - **Platforms.** Windows has run on a real machine, and all of 0.2.0 was developed there. macOS and Linux, and the Codex and Cursor adapters, are covered by unit tests only.
 - **Licence checks are client-side.** The free features need no licence. The Pro and Team package checks a
-  Lemon Squeezy key, but someone who edits their own files can run it without paying. See [Pro and Team](#pro-and-team).
+  Polar license key, but someone who edits their own files can run it without paying. See [Pro and Team](#pro-and-team).
 
 ## Troubleshooting
 

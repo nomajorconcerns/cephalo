@@ -4,7 +4,8 @@
 (function () {
   'use strict';
 
-  var HOST = '.lemonsqueezy.com';
+  // Polar's checkout links (buy.polar.sh) and its own site (polar.sh, e.g. the customer portal). Exact hosts only.
+  var HOSTS = ['buy.polar.sh', 'polar.sh'];
   var EMAIL = /^[^\s@<>"']+@[^\s@<>"']+\.[^\s@<>"']+$/;
 
   /** An https URL on the payment provider's domain, or null. Anything else is ignored. */
@@ -12,8 +13,8 @@
     if (typeof u !== 'string' || !u) return null;
     try {
       var x = new URL(u);
-      if (x.protocol !== 'https:' || x.username || x.password) return null;
-      if (x.hostname.slice(-HOST.length) !== HOST) return null;
+      if (x.protocol !== 'https:' || x.username || x.password || x.port) return null;
+      if (HOSTS.indexOf(x.hostname) < 0) return null;
       return x.href;
     } catch (e) {
       return null;

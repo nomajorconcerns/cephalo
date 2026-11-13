@@ -5,11 +5,11 @@
  * mode "test"  visitors still see "Not on sale yet". Open the page with ?checkout=test to see and try the test links.
  * mode "live"  visitors see working buy buttons.
  *
- * Links must be https://<your-store>.lemonsqueezy.com/... URLs (the page ignores any other host).
- * Enterprise is a contact button: set an email address and it shows in every mode. */
+ * Links must be Polar URLs: https://buy.polar.sh/... (a checkout link) or https://polar.sh/... (for example the customer
+ * portal). The page ignores any other host. Enterprise is a contact button: set an email address and it shows in every mode. */
 window.CEPHALO_CHECKOUT = {
   mode: "off",
-  provider: "Lemon Squeezy",
+  provider: "Polar",
   plans: {
     pro: { test: "", live: "" },
     team: { test: "", live: "" },
