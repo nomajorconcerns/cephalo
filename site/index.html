@@ -1091,6 +1091,43 @@ code,kbd,pre,samp{font-variant-ligatures:none}
 .checks code,.fine code,.qv-rule{white-space:nowrap}
 .hcard .pausebtn{position:static;width:36px;height:36px;background:transparent;z-index:auto}
 @media (prefers-reduced-motion:reduce){.diag .wire,.diag .node rect,.wlog .ln{transition:none}}
+
+/* ==== subtle neon glow: halos and light, never on small body text. --glow-k scales every glow (much weaker in light). ==== */
+:root{--glow-teal:63 224 197;--glow-purple:139 108 255;--glow-allow:74 222 128;--glow-block:255 122 122;--glow-k:1}
+[data-theme="light"]{--glow-k:.32;--glow-allow:22 163 74;--glow-block:200 30 30}
+/* a very faint radial glow behind the hero */
+section.hero{background:
+  radial-gradient(38% 46% at 74% 46%,rgb(var(--glow-purple) / calc(.10 * var(--glow-k))),transparent 70%),
+  radial-gradient(30% 40% at 24% 40%,rgb(var(--glow-teal) / calc(.06 * var(--glow-k))),transparent 70%),
+  radial-gradient(60% 55% at 88% -5%,var(--glow-b),transparent 70%),
+  radial-gradient(45% 45% at 4% 8%,var(--glow-a),transparent 70%)}
+/* the gradient headline word: a soft halo drawn from the rendered gradient (drop-shadow, so the text colour is untouched) */
+.hero h1 em{filter:drop-shadow(0 0 14px rgb(var(--glow-teal) / calc(.28 * var(--glow-k)))) drop-shadow(0 0 30px rgb(var(--glow-purple) / calc(.22 * var(--glow-k))))}
+.brand{filter:drop-shadow(0 0 10px rgb(var(--glow-teal) / calc(.18 * var(--glow-k))))}
+/* halos on the command boxes, the hero card and the Now card */
+.cmdbox,.bigcmd,.chipcmd{box-shadow:0 0 0 1px rgb(var(--glow-teal) / calc(.06 * var(--glow-k))),0 12px 40px -18px rgb(var(--glow-teal) / calc(.38 * var(--glow-k)));transition:box-shadow var(--dur-med) var(--ease-out),border-color var(--dur-med)}
+.cmdbox:focus-within,.cmdbox:hover{border-color:rgb(var(--glow-teal) / calc(.45 * var(--glow-k) + .1));box-shadow:0 0 0 1px rgb(var(--glow-teal) / calc(.14 * var(--glow-k))),0 14px 48px -16px rgb(var(--glow-teal) / calc(.5 * var(--glow-k)))}
+.hcard{box-shadow:0 0 0 1px rgb(var(--glow-purple) / calc(.08 * var(--glow-k))),0 24px 70px -26px rgb(var(--glow-purple) / calc(.55 * var(--glow-k))),0 0 46px -20px rgb(var(--glow-teal) / calc(.3 * var(--glow-k)))}
+.ba-now{box-shadow:0 18px 56px -28px rgb(var(--glow-teal) / calc(.45 * var(--glow-k)))}
+/* primary buttons: a halo on hover and keyboard focus */
+.btn.primary{transition:transform var(--dur-fast) var(--ease-out),box-shadow var(--dur-med) var(--ease-out)}
+.btn.primary:hover,.btn.primary:focus-visible{box-shadow:0 10px 28px -8px rgb(var(--glow-purple) / calc(.8 * var(--glow-k))),0 0 26px -2px rgb(var(--glow-teal) / calc(.45 * var(--glow-k)))}
+nav.top .links a.cta:hover,nav.top .links a.cta:focus-visible{box-shadow:0 0 22px -4px rgb(var(--glow-teal) / calc(.55 * var(--glow-k)))}
+/* glowing focus rings: the outline stays the visible ring, the glow sits outside it */
+:focus-visible{box-shadow:0 0 0 4px rgb(var(--glow-teal) / calc(.18 * var(--glow-k))),0 0 18px rgb(var(--glow-teal) / calc(.35 * var(--glow-k)))}
+/* the diagram: the active connection glows in its colour, briefly brighter as it lights up (a one-off, not a loop) */
+.diag .wire.lit-allow{filter:drop-shadow(0 0 3px rgb(var(--glow-allow) / calc(.7 * var(--glow-k))));animation:glow-allow .9s var(--ease-out) both}
+.diag .wire.lit-block{filter:drop-shadow(0 0 3px rgb(var(--glow-block) / calc(.7 * var(--glow-k))));animation:glow-block .9s var(--ease-out) both}
+.diag .node.lit-allow rect{filter:drop-shadow(0 0 6px rgb(var(--glow-allow) / calc(.45 * var(--glow-k))))}
+.diag .node.lit-block rect{filter:drop-shadow(0 0 6px rgb(var(--glow-block) / calc(.45 * var(--glow-k))))}
+.diag .gate.lit-allow .gring{filter:drop-shadow(0 0 8px rgb(var(--glow-allow) / calc(.5 * var(--glow-k))))}
+.diag .gate.lit-block .gring{filter:drop-shadow(0 0 8px rgb(var(--glow-block) / calc(.5 * var(--glow-k))))}
+@keyframes glow-allow{from{filter:drop-shadow(0 0 9px rgb(var(--glow-allow) / var(--glow-k)))}to{filter:drop-shadow(0 0 3px rgb(var(--glow-allow) / calc(.7 * var(--glow-k))))}}
+@keyframes glow-block{from{filter:drop-shadow(0 0 9px rgb(var(--glow-block) / var(--glow-k)))}to{filter:drop-shadow(0 0 3px rgb(var(--glow-block) / calc(.7 * var(--glow-k))))}}
+/* the current watch-log row */
+.wlog .ln.cur{box-shadow:inset 2px 0 0 #5eead4,0 0 18px -8px rgb(63 224 197 / .45)}
+/* reduced motion: the glows stay, the transitions and the one-off pulse go */
+@media (prefers-reduced-motion:reduce){.cmdbox,.bigcmd,.chipcmd,.btn.primary{transition:none}.diag .wire.lit-allow,.diag .wire.lit-block{animation:none}}
 </style>
 </head>
 <body>
@@ -1117,7 +1154,7 @@ code,kbd,pre,samp{font-variant-ligatures:none}
 <aside class="released" id="released" aria-label="Release notice">
   <div class="wrap">
     <span class="rel-pill">v0.3.0</span>
-    <span class="rel-text"><b>Cephalo now updates itself.</b> Released <span class="ph">[PLACEHOLDER: release date]</span>.</span>
+    <span class="rel-text"><b>Cephalo now updates itself.</b> Released November 13, 2026.</span>
     <span class="chipcmd"><code>cephalo update</code><button class="copy mini" data-copy="cephalo update" type="button" aria-label="Copy cephalo update">Copy</button></span>
     <span class="rel-links"><a href="https://github.com/nomajorconcerns/cephalo/blob/master/CHANGELOG.md#030" rel="noopener">What&rsquo;s new &rarr;</a></span>
   </div>
