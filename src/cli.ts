@@ -24,6 +24,7 @@ import { askQuestion, cliPainter } from "./term.js";
 import { formatAuditColored, formatVerdict } from "./render.js";
 import { THEME_USAGE, themeCommand } from "./themecmd.js";
 import { runWatch } from "./watch.js";
+import { startWatchHeader } from "./watchheader.js";
 import { applyAllow, applyMode, listMcp, planAllow, planMode, planPin, planWrap, runScan } from "./mcpcmd.js";
 import { runProxy } from "./mcp/proxy.js";
 import { INCIDENT_USAGE, parseIncidentArgs, planIncident } from "./incidentcmd.js";
@@ -267,15 +268,25 @@ async function main(): Promise<number> {
     const ac = new AbortController();
     process.once("SIGINT", () => ac.abort());
     process.once("SIGTERM", () => ac.abort());
-    await runWatch({
-      blocked: rest.includes("--blocked"),
-      last,
-      color,
-      painter,
-      width: process.stdout.isTTY ? process.stdout.columns : undefined,
-      write: (line) => console.log(line),
-      signal: ac.signal,
-    });
+    // The octopus header, where the loading animation would play (a terminal with color; never with --no-color).
+    // Everywhere else it prints each line exactly as before.
+    const header = color
+      ? startWatchHeader({ painter, file: auditPath() })
+      : { write: (line: string) => console.log(line), entry: () => {}, stop: () => {}, animated: false };
+    try {
+      await runWatch({
+        blocked: rest.includes("--blocked"),
+        last,
+        color,
+        painter,
+        width: process.stdout.isTTY ? process.stdout.columns : undefined,
+        write: (line) => header.write(line),
+        onEntry: (e) => header.entry(e),
+        signal: ac.signal,
+      });
+    } finally {
+      header.stop();
+    }
     return 0;
   }
 
