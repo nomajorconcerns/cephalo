@@ -91,6 +91,8 @@ export interface WatchOptions {
   width?: number;
   intervalMs?: number;
   write: (line: string) => void;
+  /** Called with each entry after its line is written (the live header counts them). */
+  onEntry?: (e: AuditEntry) => void;
   /** Abort to stop watching (Ctrl+C in the CLI). */
   signal?: AbortSignal;
 }
@@ -101,10 +103,12 @@ export function runWatch(o: WatchOptions): Promise<void> {
   const show = (e: AuditEntry) => {
     if (o.blocked && e.decision !== "block") return;
     o.write(formatWatchLine(e, { color: o.color, width: o.width, painter: o.painter }));
+    o.onEntry?.(e);
   };
   o.write(`Watching ${file}${o.blocked ? " (blocked only)" : ""}  -  Ctrl+C to stop`);
   for (const e of readAudit({ blocked: o.blocked, limit: o.last ?? 10 }, file)) {
     o.write(formatWatchLine(e, { color: o.color, width: o.width, painter: o.painter }));
+    o.onEntry?.(e);
   }
   // Start following from the current end of file so history is not printed twice.
   let size = 0;
