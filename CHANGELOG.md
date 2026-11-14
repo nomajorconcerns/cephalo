@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+### `cephalo watch`: the octopus heads the live log
+
+- **An animated header.** On a terminal, `cephalo watch` keeps the pixel octopus (the same poses and timing as the loading animation) at the top, beside "cephalo watch", the log file and a running count of calls, blocks and agents. The log lines scroll underneath it. The octopus waves while idle; when a BLOCK appears it flinches for about a second and a half and the header shows the rule.
+- **Only where the loading animation would play.** Not when stdout is not a terminal, with `--no-color`, `NO_COLOR`, `TERM=dumb`, in CI, with `CEPHALO_NO_ANIMATION=1` or reduced motion, nor on a terminal narrower than 40 columns or shorter than 13 rows. There, watch prints exactly what it printed before, so piped output is unchanged. A resize below those sizes stops the header for the rest of the session.
+- **Leaves the terminal as it found it.** The header is drawn with the cursor saved and restored, so it never lands inside a log line. On Ctrl+C or exit the scroll region is reset and the cursor shown again. The watch clears the screen once when the header starts.
+
 ## 0.3.0
 
 ### Pro and Team: Polar replaces Lemon Squeezy
