@@ -1,0 +1,6 @@
+# Cephalo website. Note: this is a GitHub Pages project site (/cephalo/), so crawlers read robots.txt only at the
+# domain root, not here. The sitemap is submitted in Google Search Console and Bing Webmaster Tools instead.
+User-agent: *
+Allow: /
+
+Sitemap: https://nomajorconcerns.github.io/cephalo/sitemap.xml
