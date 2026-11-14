@@ -1,6 +1,7 @@
 name: pages
 
-# Publishes the static website (site/index.html, commands.js, stats.js, og.png, the icons and logos, and the legal pages) to GitHub Pages.
+# Publishes the static website (site/index.html, its JS modules and rules.json, commands.js, stats.js, og.png, the font, the icons and logos,
+# and the legal pages) to GitHub Pages.
 # It copies only the site files, so the backup folder and the rest of the repository are never uploaded.
 # Every hour it also rebuilds stats.json (public numbers from npm, GitHub and GoatCounter) with scripts/stats.mjs.
 
@@ -10,6 +11,12 @@ on:
     paths:
       - "site/index.html"
       - "site/commands.js"
+      - "site/main.js"
+      - "site/engine.js"
+      - "site/app.js"
+      - "site/home.js"
+      - "site/rules.json"
+      - "site/fonts/**"
       - "site/og.png"
       - "site/legal.css"
       - "site/privacy.html"
@@ -58,7 +65,9 @@ jobs:
       - name: Collect the site files
         run: |
           mkdir _site
-          cp site/index.html site/commands.js site/stats.js site/checkout.config.js site/checkout.js site/legal.css site/privacy.html site/terms.html site/refunds.html site/contact.html site/og.png site/favicon.svg site/favicon.ico site/apple-touch-icon.png site/logo.svg site/logo-mark.svg _site/
+          cp site/index.html site/main.js site/engine.js site/app.js site/home.js site/rules.json site/commands.js site/stats.js site/checkout.config.js site/checkout.js site/legal.css site/privacy.html site/terms.html site/refunds.html site/contact.html site/og.png site/favicon.svg site/favicon.ico site/apple-touch-icon.png site/logo.svg site/logo-mark.svg _site/
+          mkdir _site/fonts
+          cp site/fonts/inter-800-latin.woff2 site/fonts/OFL.txt _site/fonts/
       - name: Build the public numbers (stats.json)
         env:
           GITHUB_TOKEN: ${{ github.token }}
