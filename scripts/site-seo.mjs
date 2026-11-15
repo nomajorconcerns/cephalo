@@ -97,9 +97,11 @@ export function buildJsonLd(html, version) {
   return [app, faq];
 }
 
-/** The exact markup placed between the markers: one script tag per object, "<" escaped so it cannot close the tag. */
+/** The exact markup placed between the markers: one script tag per object, "<" escaped so it cannot close the tag.
+ *  All on one line: a line break here would become CRLF in a Windows checkout (core.autocrlf) and the byte check
+ *  against the generated markup would fail there while passing on Linux. */
 export function render(objects) {
-  return objects.map((o) => `<script type="application/ld+json">${JSON.stringify(o).replace(/</g, "\\u003c")}</script>`).join("\n");
+  return objects.map((o) => `<script type="application/ld+json">${JSON.stringify(o).replace(/</g, "\\u003c")}</script>`).join("");
 }
 
 export function embedded(html) {
