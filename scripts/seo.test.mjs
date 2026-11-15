@@ -89,3 +89,14 @@ test("sitemap.xml lists the home page and the legal pages, each a real deployed 
   }
   assert.match(fs.readFileSync(path.join(root, "site", "robots.txt"), "utf8"), new RegExp(`^Sitemap: ${SITE_URL}sitemap\\.xml$`, "m"));
 });
+
+test("the Google Search Console verification file is exactly what Google issued, deployed, LF, and not in the sitemap", () => {
+  const name = "googlecc7b0a59e198f98b.html";
+  const bytes = fs.readFileSync(path.join(root, "site", name));
+  assert.equal(bytes.toString("utf8"), `google-site-verification: ${name}\n`, "one line, no markup, LF");
+  const wf = fs.readFileSync(path.join(root, ".github", "workflows", "pages.yml"), "utf8");
+  assert.ok(new RegExp(`cp [^\\n]*site/${name.replace(".", "\\.")}[^\\n]* _site/`).test(wf), "pages.yml copies it");
+  assert.ok(wf.includes(`- "site/${name}"`), "pages.yml paths lists it");
+  assert.match(fs.readFileSync(path.join(root, ".gitattributes"), "utf8"), /^site\/google\*\.html text eol=lf$/m, "kept LF on every checkout");
+  assert.ok(!fs.readFileSync(path.join(root, "site", "sitemap.xml"), "utf8").includes(name), "a verification file is not a page to index");
+});
