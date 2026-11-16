@@ -111,7 +111,7 @@ test("Get Cephalo: exactly one card, the $3 agent guard skill on Agensi; Cephalo
   assert.deepEqual(buy, ['<a class="btn primary" href="https://www.agensi.io/skills/cephalo-agent-guard" rel="noopener" data-skill="cephalo-agent-guard">Buy on Agensi</a>']);
   assert.match(get, /Cephalo is free and open source \(MIT\) on npm/, "the $3 cannot be read as the price of Cephalo");
   assert.match(get, /<a class="btn" href="#install">Install Cephalo free<\/a>/);
-  assert.match(get, /<div class="oc-stage" aria-hidden="true">/, "the octopus is decoration");
+  assert.match(get, /<div class="ac-stage" aria-hidden="true">/, "the turning collectible card (with the octopus) is decoration");
   assert.doesNotMatch(html, /Not on sale|CEPHALOG|\/ dev \/ month|id="seats"/, "no trace of the removed plans anywhere on the page");
   assert.match(html, /<a href="#pricing">Get it<\/a>/);
   assert.doesNotMatch(html, />Pricing<\/a>|>Plans<\/a>/);
