@@ -1139,83 +1139,123 @@ nav.top .links a.cta:hover,nav.top .links a.cta:focus-visible{box-shadow:0 0 22p
 @media (prefers-reduced-motion:reduce){.cmdbox,.bigcmd,.chipcmd,.btn.primary{transition:none}.diag .wire.lit-allow,.diag .wire.lit-block{animation:none}}
 
 
-/* ==== Get Cephalo: one card (the agent guard skill on Agensi) with the pixel octopus ==== */
-/* --octo-run pauses the octopus and its ring while the card is off screen: a scroll-driven (view timeline) animation
-   sets it to running only while the card is in view. Without view timelines it simply stays running. CSS only. */
+/* ==== Get Cephalo: the agent guard skill as a collectible card (foil frame, holo sheen, a slow turn) ==== */
+/* --octo-run pauses everything here while the card is off screen: a view-timeline animation sets it to running only
+   while the card is in view (#7). --ac-t (0..1) is the card's turn; the face and its holo sheen both read it. */
 @property --octo-run{syntax:"running | paused";inherits:true;initial-value:running}
 @keyframes oc-onscreen{from,to{--octo-run:running}}
-.getcard{position:relative;display:grid;grid-template-columns:auto minmax(0,1fr);gap:26px 42px;align-items:center;max-width:880px;padding:30px 36px;
+@property --ac-t{syntax:"<number>";inherits:true;initial-value:0}
+@keyframes ac-spin{to{--ac-t:1}}
+.getcard{position:relative;display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-areas:"col head" "col more";gap:6px 48px;align-items:start;max-width:920px;padding:30px 36px 34px;
   border:1px solid color-mix(in srgb,var(--g2) 35%,var(--hairline-2));border-radius:18px;
   background:linear-gradient(155deg,color-mix(in srgb,var(--g1) 8%,var(--panel)),var(--panel) 52%,color-mix(in srgb,var(--g2) 9%,var(--panel)));
   box-shadow:0 0 0 1px rgb(var(--glow-teal) / calc(.06 * var(--glow-k))),0 28px 70px -34px rgb(var(--glow-purple) / calc(.6 * var(--glow-k))),0 0 50px -28px rgb(var(--glow-teal) / calc(.35 * var(--glow-k)))}
 .getcard::before{content:"";position:absolute;left:20px;right:20px;top:-1px;height:2px;border-radius:2px;background:var(--grad)}
-.oc-stage{--ob:#f472b6;--ol:#f9a8d4;--ow:#ffffff;--ok:#1a1a2e;position:relative;width:176px;height:176px;display:grid;place-items:center;isolation:isolate}
-.oc-halo{position:absolute;inset:18px;border-radius:50%;background:radial-gradient(circle,rgb(var(--glow-purple) / calc(.24 * var(--glow-k) + .04)),rgb(var(--glow-teal) / calc(.12 * var(--glow-k) + .03)) 52%,transparent 72%)}
-.oc-ring{position:absolute;inset:4px;border-radius:50%;background:conic-gradient(from 0deg,var(--g1),var(--g2) 32%,transparent 58%,transparent 70%,var(--g1));
-  -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 2.5px));mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 2.5px));
-  filter:drop-shadow(0 0 6px rgb(var(--glow-teal) / calc(.5 * var(--glow-k))));opacity:.9}
-.oc-stage .octo-anim{position:relative;width:112px;height:84px;filter:drop-shadow(0 0 16px rgb(244 114 182 / calc(.32 * var(--glow-k) + .08)))}
+.gc-head{grid-area:head;align-self:end;padding-top:24px}
+.gc-more{grid-area:more;align-self:start}
+.ac-col{grid-area:col;display:flex;flex-direction:column;align-items:center}
+.gc-kick{margin:0;font:600 12px/1.3 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+.getcard h3{font-size:26px;margin-top:8px}
+.gc-price{margin:12px 0 0;font:800 54px/1 var(--sans-display);letter-spacing:-.03em;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;width:max-content}
+.gc-line{margin:14px 0 0;color:var(--muted);font-size:16.5px;max-width:52ch}
+.gc-stats{margin-top:18px;border:1px solid var(--line);border-radius:12px;background:var(--bg2);max-width:52ch}
+.gc-stats summary{cursor:pointer;padding:10px 14px;font:600 14px var(--sans);color:var(--text)}
+.gc-stats dl{display:grid;grid-template-columns:auto 1fr;gap:6px 18px;margin:0;padding:4px 14px 14px;font-size:14.5px}
+.gc-stats dt{color:var(--muted)}.gc-stats dd{margin:0;color:var(--text);font-weight:600}
+.gc-note{margin:14px 0 0;font-size:13.5px;color:var(--faint)}
+#pricing .sec-head p a,.gc-note a{text-decoration:underline;text-underline-offset:2px}
+@media(max-width:760px){.getcard{grid-template-columns:minmax(0,1fr);grid-template-areas:"head" "col" "more";padding:24px 18px 26px;gap:6px}.gc-head{padding-top:0}.gc-price{font-size:46px}}
+
+/* the pool: the card stands above its water line; whatever is dragged below the line is hidden */
+.ac-col{--s:1;--pm:40px}
+.ac-pool{position:relative;width:calc(300px * var(--s) + 2 * var(--pm));height:calc(420px * var(--s) + 44px);overflow:clip}
+.ac-stage{position:absolute;left:50%;top:30px;width:300px;height:420px;margin-left:-150px;transform-origin:50% 0;scale:var(--s);perspective:1300px}
+.ac-card{position:relative;width:100%;height:100%;transform-style:preserve-3d;transform:rotateY(calc(var(--ac-t) * 360deg))}
+.ac-face{position:absolute;inset:0;border-radius:18px;padding:9px;backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  background:linear-gradient(135deg,#f5d77a,#b8860b 14%,#3fe0c5 30%,#8b6cff 70%,#b8860b 86%,#f5d77a);
+  box-shadow:inset 0 0 0 2px #f5d77a,0 30px 60px -26px rgb(139 108 255 / .65)}
+.ac-back{transform:rotateY(180deg)}
+.ac-inner{position:relative;height:100%;border-radius:12px;overflow:hidden;background:#070d1a;box-shadow:inset 0 0 0 2px rgb(245 215 122 / .9)}
+.ac-art{--ob:#f472b6;--ol:#f9a8d4;--ow:#ffffff;--ok:#1a1a2e;position:absolute;inset:0 0 88px;display:grid;place-items:center;
+  background:radial-gradient(70% 40% at 50% 100%,rgb(139 108 255 / .5),transparent 70%),
+    conic-gradient(from 142deg at 16% -4%,transparent 0deg,rgb(255 255 255 / .2) 9deg,rgb(160 240 230 / .12) 16deg,transparent 24deg),
+    conic-gradient(from 194deg at 84% -4%,transparent 0deg,rgb(160 240 230 / .12) 8deg,rgb(255 255 255 / .2) 15deg,transparent 24deg),
+    radial-gradient(circle at 16% 0,#fff 0 5px,rgb(255 255 255 / .35) 9px,transparent 22px),
+    radial-gradient(circle at 84% 0,#fff 0 5px,rgb(255 255 255 / .35) 9px,transparent 22px),
+    linear-gradient(180deg,#0f1b38,#0b1220 62%,#160f30)}
+.ac-art .octo-anim{width:176px;height:132px;margin-top:22px;filter:drop-shadow(0 0 24px rgb(244 114 182 / .55))}
+.ac-pos{position:absolute;top:12px;left:12px;font:800 11px/1 var(--mono);letter-spacing:.16em;padding:6px 8px;border-radius:6px;background:rgb(7 13 26 / .8);color:#5eead4;border:1px solid rgb(94 234 212 / .55)}
+.ac-price{position:absolute;top:9px;right:9px;width:60px;height:60px;border-radius:50%;display:grid;place-items:center;font:800 23px/1 var(--sans-display);color:#1a1300;
+  background:radial-gradient(circle at 35% 30%,#fff6d1,#f5c84b 45%,#b8860b);box-shadow:inset 0 0 0 2px #fff3c4,0 6px 16px rgb(0 0 0 / .45)}
+.ac-ed{position:absolute;left:0;right:0;bottom:96px;text-align:center;font:700 11px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:#f1f5f9;text-shadow:0 1px 3px #000}
+.ac-plate{position:absolute;left:10px;right:10px;bottom:12px;height:70px;border-radius:10px;background:linear-gradient(180deg,#16224a,#0b1220);border:2px solid #d4af37;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+.ac-name{font:800 31px/1 var(--sans-display);letter-spacing:.2em;margin-right:-.2em;color:#fff}
+.ac-sub{font:600 11.5px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:#5eead4}
+.ac-holo{position:absolute;inset:0;border-radius:inherit;pointer-events:none;mix-blend-mode:color-dodge;opacity:.5;
+  background:linear-gradient(115deg,transparent 22%,rgb(63 224 197 / .55) 33%,rgb(255 255 255 / .55) 39%,rgb(139 108 255 / .55) 45%,rgb(245 200 75 / .5) 51%,transparent 62%);
+  background-size:300% 100%;background-position:calc((1 - var(--ac-t)) * 100%) 0}
+.ac-binner{display:flex;flex-direction:column;gap:10px;padding:16px 16px 14px;color:#e6edf7;background:linear-gradient(180deg,#101a33,#0b1220)}
+.ac-bhead{--ob:#f472b6;--ol:#f9a8d4;--ow:#ffffff;--ok:#1a1a2e;display:flex;align-items:center;gap:10px;padding-bottom:10px;border-bottom:2px solid #d4af37}
+.ac-bhead .ac-mini{width:48px;height:36px}
+.ac-bhead b{display:block;font:800 20px/1 var(--sans-display);letter-spacing:.16em;color:#fff}
+.ac-bhead small{display:block;margin-top:4px;font:600 10.5px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:#5eead4}
+.ac-bline{margin:0;font:500 13px/1.45 var(--sans);color:#cbd5e1}
+.ac-stats{margin:0;display:grid;grid-template-columns:auto 1fr}
+.ac-stats dt,.ac-stats dd{margin:0;padding:6px 0;border-bottom:1px solid rgb(255 255 255 / .1)}
+.ac-stats dt{font:700 10.5px/1.3 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:#a3b3c9;padding-right:10px}
+.ac-stats dd{font:700 12.5px/1.3 var(--mono);color:#fff;text-align:right}
+.ac-binner .ac-holo{opacity:.22} /* softer over the text on the back */
+.ac-bfoot{margin:auto 0 0;text-align:center;font:800 11px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:#f5c84b}
 @media (prefers-reduced-motion:no-preference){
-  .oc-ring{animation:oc-spin 18s linear infinite}
-  .oc-stage .octo-anim .of{animation-duration:1s}
-  .oc-ring,.oc-stage .octo-anim .of{animation-play-state:var(--octo-run)}
+  .ac-card{animation:ac-spin 10s linear infinite;animation-play-state:var(--octo-run)}
+  .ac-art .octo-anim .of,.ac-mini .of{animation-play-state:var(--octo-run)}
   @supports (animation-timeline:view()){
     .getcard{--octo-run:paused;animation:oc-onscreen linear none;animation-timeline:view()}
   }
 }
-@keyframes oc-spin{to{transform:rotate(1turn)}}
-.gc-kick{margin:0;font:600 12px/1.3 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
-.getcard h3{font-size:26px;margin-top:8px}
-.gc-price{margin:12px 0 0;font:800 54px/1 var(--sans-display);letter-spacing:-.03em;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;width:max-content}
-.gc-line{margin:14px 0 0;color:var(--muted);font-size:16.5px;max-width:54ch}
-.gc-buy{display:flex;gap:12px;flex-wrap:wrap;margin-top:20px}
-.gc-note{margin:14px 0 0;font-size:13.5px;color:var(--faint)}
-@media(max-width:700px){.getcard{grid-template-columns:minmax(0,1fr);padding:24px 20px;gap:18px}.oc-stage{width:136px;height:136px}.oc-stage .octo-anim{width:88px;height:66px}.gc-price{font-size:46px}}
+@media(max-width:480px){.ac-col{--s:.72;--pm:22px}}
 
-/* ==== the card's tentacle: a slow 3D tilt, a turning glow on the border, a tentacle from the water on Buy, and the snatch ==== */
-/* links inside running text in this section are underlined, so they do not rely on colour alone */
-#pricing .sec-head p a,.gc-note a{text-decoration:underline;text-underline-offset:2px}
-@property --gc-a{syntax:"<angle>";inherits:false;initial-value:0deg}
-.getcard{transform-style:preserve-3d}
-.getcard::after{content:"";position:absolute;inset:-1px;border-radius:inherit;padding:1.5px;pointer-events:none;
-  background:conic-gradient(from var(--gc-a),transparent 0 60%,var(--g1) 72%,var(--g2) 84%,transparent 94%);
-  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);
-  filter:drop-shadow(0 0 6px rgb(var(--glow-teal) / calc(.55 * var(--glow-k))));opacity:.85}
-@keyframes gc-turn{to{--gc-a:360deg}}
-@media (prefers-reduced-motion:no-preference){
-  .getcard{transition:transform .7s var(--ease-out)}
-  .getcard:hover,.getcard:focus-within{transform:perspective(1200px) rotateY(-5deg) rotateX(2deg)}
-  .getcard::after{animation:gc-turn 14s linear infinite;animation-play-state:var(--octo-run)}
-}
-/* Buy: a tentacle rises from the water line beside the button on hover and keyboard focus */
-.gc-buywrap{position:relative;display:inline-flex}
-.gc-buy{gap:12px 58px} /* room beside Buy for the tentacle, so it never covers the next button */
-.gc-sea{position:absolute;left:-14px;right:-46px;bottom:-14px;height:96px;pointer-events:none}
-.gc-water{position:absolute;left:0;right:0;bottom:0;width:100%;height:12px;opacity:0;transition:opacity .25s}
-.gc-tent{position:absolute;right:4px;bottom:9px;width:32px;height:84px;overflow:hidden}
+/* the water line under the card, the tentacle that rises from it on Buy (hover or keyboard focus), and the splash */
+.gc-sea{position:relative;display:block;width:calc(300px * var(--s) + 2 * var(--pm));height:14px;margin-top:-10px;pointer-events:none;z-index:2}
+.gc-water{position:absolute;left:0;right:0;bottom:0;width:100%;height:12px;opacity:.55;transition:opacity .25s}
+.gc-tent{position:absolute;right:calc(var(--pm) - 30px);bottom:9px;width:32px;height:84px;overflow:hidden}
 .gc-tent>svg:last-child{position:absolute;left:0;bottom:0;width:32px;height:80px;transform:translateY(100%);transition:transform .45s steps(6,end)}
 .gc-splash{position:absolute;left:-8px;bottom:0;width:48px;height:20px;opacity:0}
 .gtf-b{opacity:0}
-.gc-buywrap:hover .gc-water,.gc-buywrap:has(a:focus-visible) .gc-water{opacity:1}
-.gc-buywrap:hover .gc-tent>svg:last-child,.gc-buywrap:has(a:focus-visible) .gc-tent>svg:last-child{transform:translateY(0)}
+.getcard:has(.gc-buywrap a:hover) .gc-water,.getcard:has(.gc-buywrap a:focus-visible) .gc-water,.getcard.snatched .gc-water{opacity:1}
+.getcard:has(.gc-buywrap a:hover) .gc-tent>svg:last-child,.getcard:has(.gc-buywrap a:focus-visible) .gc-tent>svg:last-child,.getcard.snatched .gc-tent>svg:last-child{transform:translateY(0)}
 @media (prefers-reduced-motion:no-preference){
-  .gc-buywrap:hover .gc-splash,.gc-buywrap:has(a:focus-visible) .gc-splash{animation:gc-splash .55s steps(4,end) .1s both}
-  .gc-buywrap:hover .gtf-a,.gc-buywrap:has(a:focus-visible) .gtf-a{animation:gc-sway-a 1s steps(1,end) .45s infinite}
-  .gc-buywrap:hover .gtf-b,.gc-buywrap:has(a:focus-visible) .gtf-b{animation:gc-sway-b 1s steps(1,end) .45s infinite}
+  .getcard:has(.gc-buywrap a:hover) .gc-splash,.getcard:has(.gc-buywrap a:focus-visible) .gc-splash{animation:gc-splash .55s steps(4,end) .1s both}
+  .getcard:has(.gc-buywrap a:hover) .gtf-a,.getcard:has(.gc-buywrap a:focus-visible) .gtf-a,.gc-grab .gtf-a{animation:gc-sway-a 1s steps(1,end) .45s infinite}
+  .getcard:has(.gc-buywrap a:hover) .gtf-b,.getcard:has(.gc-buywrap a:focus-visible) .gtf-b,.gc-grab .gtf-b{animation:gc-sway-b 1s steps(1,end) .45s infinite}
 }
 @keyframes gc-splash{0%{opacity:1;transform:translateY(4px)}70%{opacity:1;transform:translateY(-8px)}100%{opacity:0;transform:translateY(-10px)}}
 @keyframes gc-sway-a{0%{opacity:1}50%,100%{opacity:0}}
 @keyframes gc-sway-b{0%{opacity:0}50%{opacity:1}100%{opacity:1}}
-/* the snatch (checkout.js adds .snatched on a plain click; it never runs under reduced motion) */
-.gc-grab{position:absolute;left:clamp(16px,22%,190px);bottom:-36px;width:56px;height:140px;pointer-events:none;transform:scaleY(0);transform-origin:50% 100%}
-.gc-grab svg{width:100%;height:100%}
+.gc-buy{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:16px}
+.gc-buywrap{position:relative;display:inline-flex}
+
+/* the snatch (checkout.js turns the card to the front, then adds .snatched; never under reduced motion):
+   a big tentacle rises from the water and wraps the card, drags it under, and the water splashes */
+.gc-grab{position:absolute;left:52%;bottom:-8px;width:64px;height:170px;z-index:3;pointer-events:none;transform:scaleY(0);transform-origin:50% 100%}
+.gc-grab svg{width:100%;height:100%;filter:drop-shadow(0 0 10px rgb(244 114 182 / .5))}
+.ac-splash{position:absolute;left:50%;bottom:6px}
+.ac-splash i{position:absolute;left:-4px;bottom:0;width:8px;height:8px;background:#3fe0c5;opacity:0}
+.ac-splash i:nth-child(3n){background:#fff;width:6px;height:6px}
+.ac-splash i:nth-child(1){--dx:-120px;--dy:-70px}.ac-splash i:nth-child(2){--dx:-84px;--dy:-112px}.ac-splash i:nth-child(3){--dx:-52px;--dy:-138px}
+.ac-splash i:nth-child(4){--dx:-24px;--dy:-96px}.ac-splash i:nth-child(5){--dx:-8px;--dy:-150px}.ac-splash i:nth-child(6){--dx:14px;--dy:-120px}
+.ac-splash i:nth-child(7){--dx:30px;--dy:-80px}.ac-splash i:nth-child(8){--dx:56px;--dy:-132px}.ac-splash i:nth-child(9){--dx:80px;--dy:-100px}
+.ac-splash i:nth-child(10){--dx:108px;--dy:-62px}.ac-splash i:nth-child(11){--dx:-100px;--dy:-30px}.ac-splash i:nth-child(12){--dx:120px;--dy:-34px}
+.ac-ripple{position:absolute;left:50%;bottom:0;width:60px;height:12px;margin-left:-30px;border:3px solid #3fe0c5;border-radius:50%;opacity:0}
 #pricing.gc-snatching{overflow:clip}
-.getcard.snatched{--octo-run:running;animation:gc-snatch .84s cubic-bezier(.55,-.3,.85,.45) both;animation-timeline:auto}
-.getcard.snatched .gc-grab{animation:gc-grab .3s steps(5,end) both}
-.getcard.snatched .gc-tent>svg:last-child{transform:translateY(0)}
+.getcard.snatched .gc-grab{animation:gc-grab .3s steps(5,end) .18s both}
+.getcard.snatched .ac-stage{animation:gc-snatch .78s cubic-bezier(.45,-.2,.65,.85) .4s both}
+.getcard.snatched .ac-splash i{animation:ac-drop .5s cubic-bezier(.2,.7,.3,1) .82s both}
+.getcard.snatched .ac-ripple{animation:ac-ripple .55s ease-out .8s both}
 @keyframes gc-grab{from{transform:scaleY(0)}to{transform:scaleY(1)}}
-@keyframes gc-snatch{0%,30%{transform:none}42%{transform:translateY(-10px) rotate(-1.5deg)}100%{transform:translateY(120vh) rotate(6deg) scale(.92)}}
-@media(max-width:700px){.gc-grab{width:44px;height:110px;bottom:-28px}}
+@keyframes gc-snatch{0%{transform:none}14%{transform:translateY(-12px) rotate(-1.5deg)}100%{transform:translateY(600px) rotate(5deg)}}
+@keyframes ac-drop{0%{opacity:1;transform:translate(0,0)}60%{opacity:1}100%{opacity:0;transform:translate(var(--dx),var(--dy))}}
+@keyframes ac-ripple{0%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(5.5,3)}}
 
 /* ==== SentryKit: a separate product, in the page's own colours, with each edition's accent ==== */
 /* not skipped by content-visibility: its height changes with the tabs and the lazy images, and a stale placeholder size made it overlap the sections after it */
@@ -1956,16 +1996,42 @@ rules:
       <p>Cephalo is free and open source (MIT) on npm, and it stays that way: <a href="#install">install it yourself</a> in about five minutes. If you would rather your agent did the setup, the Cephalo agent guard skill on Agensi teaches it how.</p>
     </div>
     <article class="getcard" aria-labelledby="getName">
-      <div class="oc-stage" aria-hidden="true"><span class="oc-halo"></span><span class="oc-ring"></span><svg class="octo-anim" viewBox="0 0 16 12" shape-rendering="crispEdges" aria-hidden="true" focusable="false"><g class="of of1"><path class="ob" d="M6 0h4v1h-4zM3 1h10v1h-10zM2 2h2v1h-2zM6 2h8v1h-8zM1 3h2v1h-2zM4 3h11v1h-11zM1 4h3v1h-3zM6 4h4v1h-4zM12 4h3v1h-3zM1 5h3v1h-3zM6 5h4v1h-4zM12 5h3v1h-3zM1 6h14v1h-14zM2 7h12v1h-12zM1 8h2v1h-2zM4 8h2v1h-2zM7 8h2v1h-2zM10 8h2v1h-2zM13 8h2v1h-2zM2 9h2v1h-2zM5 9h2v1h-2zM8 9h2v1h-2zM11 9h2v1h-2zM14 9h2v1h-2zM1 10h2v1h-2zM4 10h2v1h-2zM7 10h2v1h-2zM10 10h2v1h-2zM13 10h2v1h-2zM0 11h2v1h-2zM3 11h2v1h-2zM6 11h2v1h-2zM9 11h2v1h-2zM12 11h2v1h-2z"/><path class="ol" d="M4 2h2v1h-2zM3 3h1v1h-1z"/><path class="ow" d="M4 4h2v1h-2zM10 4h2v1h-2zM4 5h1v1h-1zM10 5h1v1h-1z"/><path class="ok" d="M5 5h1v1h-1zM11 5h1v1h-1z"/></g><g class="of of2"><path class="ob" d="M6 0h4v1h-4zM3 1h10v1h-10zM2 2h2v1h-2zM6 2h8v1h-8zM1 3h2v1h-2zM4 3h11v1h-11zM1 4h3v1h-3zM6 4h4v1h-4zM12 4h3v1h-3zM1 5h3v1h-3zM6 5h4v1h-4zM12 5h3v1h-3zM1 6h14v1h-14zM2 7h12v1h-12zM1 8h2v1h-2zM4 8h2v1h-2zM7 8h2v1h-2zM10 8h2v1h-2zM13 8h2v1h-2zM1 9h2v1h-2zM4 9h2v1h-2zM7 9h2v1h-2zM10 9h2v1h-2zM13 9h2v1h-2zM0 10h2v1h-2zM3 10h2v1h-2zM6 10h2v1h-2zM9 10h2v1h-2zM12 10h2v1h-2zM1 11h2v1h-2zM4 11h2v1h-2zM7 11h2v1h-2zM10 11h2v1h-2zM13 11h2v1h-2z"/><path class="ol" d="M4 2h2v1h-2zM3 3h1v1h-1z"/><path class="ow" d="M4 4h2v1h-2zM10 4h2v1h-2zM4 5h1v1h-1zM10 5h1v1h-1z"/><path class="ok" d="M5 5h1v1h-1zM11 5h1v1h-1z"/></g><g class="of of3"><path class="ob" d="M6 0h4v1h-4zM3 1h10v1h-10zM2 2h2v1h-2zM6 2h8v1h-8zM1 3h2v1h-2zM4 3h11v1h-11zM1 4h3v1h-3zM6 4h4v1h-4zM12 4h3v1h-3zM1 5h3v1h-3zM6 5h4v1h-4zM12 5h3v1h-3zM1 6h14v1h-14zM2 7h12v1h-12zM1 8h2v1h-2zM4 8h2v1h-2zM7 8h2v1h-2zM10 8h2v1h-2zM13 8h2v1h-2zM0 9h2v1h-2zM3 9h2v1h-2zM6 9h2v1h-2zM9 9h2v1h-2zM12 9h2v1h-2zM1 10h2v1h-2zM4 10h2v1h-2zM7 10h2v1h-2zM10 10h2v1h-2zM13 10h2v1h-2zM2 11h2v1h-2zM5 11h2v1h-2zM8 11h2v1h-2zM11 11h2v1h-2zM14 11h2v1h-2z"/><path class="ol" d="M4 2h2v1h-2zM3 3h1v1h-1z"/><path class="ow" d="M4 4h2v1h-2zM10 4h2v1h-2zM4 5h1v1h-1zM10 5h1v1h-1z"/><path class="ok" d="M5 5h1v1h-1zM11 5h1v1h-1z"/></g><g class="of of4"><path class="ob" d="M6 0h4v1h-4zM3 1h10v1h-10zM2 2h2v1h-2zM6 2h8v1h-8zM1 3h2v1h-2zM4 3h11v1h-11zM1 4h3v1h-3zM6 4h4v1h-4zM12 4h3v1h-3zM1 5h3v1h-3zM6 5h4v1h-4zM12 5h3v1h-3zM1 6h14v1h-14zM2 7h12v1h-12zM1 8h2v1h-2zM4 8h2v1h-2zM7 8h2v1h-2zM10 8h2v1h-2zM13 8h2v1h-2zM1 9h2v1h-2zM4 9h2v1h-2zM7 9h2v1h-2zM10 9h2v1h-2zM13 9h2v1h-2zM2 10h2v1h-2zM5 10h2v1h-2zM8 10h2v1h-2zM11 10h2v1h-2zM14 10h2v1h-2zM1 11h2v1h-2zM4 11h2v1h-2zM7 11h2v1h-2zM10 11h2v1h-2zM13 11h2v1h-2z"/><path class="ol" d="M4 2h2v1h-2zM3 3h1v1h-1z"/><path class="ow" d="M4 4h2v1h-2zM10 4h2v1h-2zM4 5h1v1h-1zM10 5h1v1h-1z"/><path class="ok" d="M5 5h1v1h-1zM11 5h1v1h-1z"/></g></svg></div>
-      <div class="gc-body">
+      <div class="gc-head">
         <p class="gc-kick">Sold on Agensi</p>
         <h3 id="getName">Cephalo agent guard skill</h3>
         <p class="gc-price">$3</p>
         <p class="gc-line">It helps your agent install, check and tune Cephalo, which is free and open source. It includes no Pro features or license key.</p>
-        <div class="gc-buy"><span class="gc-buywrap"><a class="btn primary" href="https://www.agensi.io/skills/cephalo-agent-guard" rel="noopener" data-skill="cephalo-agent-guard">Buy on Agensi</a><span class="gc-sea" aria-hidden="true"><svg class="gc-water" viewBox="0 0 64 4" preserveAspectRatio="xMinYMax slice" shape-rendering="crispEdges" focusable="false"><path fill="var(--g1)" d="M0 2h6v1h-6zM8 2h7v1h-7zM17 2h6v1h-6zM25 2h7v1h-7zM34 2h6v1h-6zM42 2h7v1h-7zM51 2h6v1h-6zM59 2h5v1h-5z"/><path fill="var(--g1)" d="M6 1h2v1h-2zM15 1h2v1h-2zM23 1h2v1h-2zM32 1h2v1h-2zM40 1h2v1h-2zM49 1h2v1h-2zM57 1h2v1h-2z"/><path fill="var(--g1)" opacity=".45" d="M3 3h4v1h-4zM12 3h5v1h-5zM20 3h4v1h-4zM29 3h5v1h-5zM37 3h4v1h-4zM46 3h5v1h-5zM54 3h4v1h-4z"/></svg><span class="gc-tent"><svg class="gc-splash" viewBox="0 0 12 5" shape-rendering="crispEdges" focusable="false"><path fill="var(--g1)" d="M1 3h1v1h-1zM3 1h1v1h-1zM8 0h1v1h-1zM10 2h1v1h-1zM5 4h2v1h-2z"/></svg><svg viewBox="0 0 8 20" shape-rendering="crispEdges" focusable="false"><g class="gtf gtf-a"><path fill="#f472b6" d="M2 0h3v1h-3zM1 1h1v1h-1zM5 1h1v1h-1zM5 2h1v1h-1zM4 3h2v1h-2zM4 4h2v1h-2zM3 5h2v1h-2zM3 6h2v1h-2zM2 7h3v1h-3zM2 8h3v1h-3zM2 9h3v1h-3zM3 10h3v1h-3zM3 11h3v1h-3zM3 12h3v1h-3zM2 13h4v1h-4zM2 14h4v1h-4zM2 15h4v1h-4zM1 16h5v1h-5zM1 17h5v1h-5zM1 18h6v1h-6zM0 19h7v1h-7z"/><path fill="#f9a8d4" d="M2 8h1v1h-1zM3 11h1v1h-1zM2 14h1v1h-1zM1 17h1v1h-1z"/></g><g class="gtf gtf-b"><path fill="#f472b6" d="M1 0h3v1h-3zM0 1h1v1h-1zM4 1h1v1h-1zM4 2h1v1h-1zM3 3h2v1h-2zM3 4h2v1h-2zM2 5h2v1h-2zM3 6h2v1h-2zM2 7h3v1h-3zM2 8h3v1h-3zM2 9h3v1h-3zM3 10h3v1h-3zM3 11h3v1h-3zM3 12h3v1h-3zM2 13h4v1h-4zM2 14h4v1h-4zM2 15h4v1h-4zM1 16h5v1h-5zM1 17h5v1h-5zM1 18h6v1h-6zM0 19h7v1h-7z"/><path fill="#f9a8d4" d="M2 8h1v1h-1zM3 11h1v1h-1zM2 14h1v1h-1zM1 17h1v1h-1z"/></g></svg></span></span></span><a class="btn" href="#install">Install Cephalo free</a></div>
+      </div>
+      <div class="ac-col">
+        <div class="ac-pool">
+          <div class="ac-stage" aria-hidden="true">
+            <div class="ac-card">
+              <div class="ac-face ac-front"><div class="ac-inner">
+                <div class="ac-art"><svg class="octo-anim" viewBox="0 0 16 12" shape-rendering="crispEdges" aria-hidden="true" focusable="false"><g class="of of1"><path class="ob" d="M6 0h4v1h-4zM3 1h10v1h-10zM2 2h2v1h-2zM6 2h8v1h-8zM1 3h2v1h-2zM4 3h11v1h-11zM1 4h3v1h-3zM6 4h4v1h-4zM12 4h3v1h-3zM1 5h3v1h-3zM6 5h4v1h-4zM12 5h3v1h-3zM1 6h14v1h-14zM2 7h12v1h-12zM1 8h2v1h-2zM4 8h2v1h-2zM7 8h2v1h-2zM10 8h2v1h-2zM13 8h2v1h-2zM2 9h2v1h-2zM5 9h2v1h-2zM8 9h2v1h-2zM11 9h2v1h-2zM14 9h2v1h-2zM1 10h2v1h-2zM4 10h2v1h-2zM7 10h2v1h-2zM10 10h2v1h-2zM13 10h2v1h-2zM0 11h2v1h-2zM3 11h2v1h-2zM6 11h2v1h-2zM9 11h2v1h-2zM12 11h2v1h-2z"/><path class="ol" d="M4 2h2v1h-2zM3 3h1v1h-1z"/><path class="ow" d="M4 4h2v1h-2zM10 4h2v1h-2zM4 5h1v1h-1zM10 5h1v1h-1z"/><path class="ok" d="M5 5h1v1h-1zM11 5h1v1h-1z"/></g><g class="of of2"><path class="ob" d="M6 0h4v1h-4zM3 1h10v1h-10zM2 2h2v1h-2zM6 2h8v1h-8zM1 3h2v1h-2zM4 3h11v1h-11zM1 4h3v1h-3zM6 4h4v1h-4zM12 4h3v1h-3zM1 5h3v1h-3zM6 5h4v1h-4zM12 5h3v1h-3zM1 6h14v1h-14zM2 7h12v1h-12zM1 8h2v1h-2zM4 8h2v1h-2zM7 8h2v1h-2zM10 8h2v1h-2zM13 8h2v1h-2zM1 9h2v1h-2zM4 9h2v1h-2zM7 9h2v1h-2zM10 9h2v1h-2zM13 9h2v1h-2zM0 10h2v1h-2zM3 10h2v1h-2zM6 10h2v1h-2zM9 10h2v1h-2zM12 10h2v1h-2zM1 11h2v1h-2zM4 11h2v1h-2zM7 11h2v1h-2zM10 11h2v1h-2zM13 11h2v1h-2z"/><path class="ol" d="M4 2h2v1h-2zM3 3h1v1h-1z"/><path class="ow" d="M4 4h2v1h-2zM10 4h2v1h-2zM4 5h1v1h-1zM10 5h1v1h-1z"/><path class="ok" d="M5 5h1v1h-1zM11 5h1v1h-1z"/></g><g class="of of3"><path class="ob" d="M6 0h4v1h-4zM3 1h10v1h-10zM2 2h2v1h-2zM6 2h8v1h-8zM1 3h2v1h-2zM4 3h11v1h-11zM1 4h3v1h-3zM6 4h4v1h-4zM12 4h3v1h-3zM1 5h3v1h-3zM6 5h4v1h-4zM12 5h3v1h-3zM1 6h14v1h-14zM2 7h12v1h-12zM1 8h2v1h-2zM4 8h2v1h-2zM7 8h2v1h-2zM10 8h2v1h-2zM13 8h2v1h-2zM0 9h2v1h-2zM3 9h2v1h-2zM6 9h2v1h-2zM9 9h2v1h-2zM12 9h2v1h-2zM1 10h2v1h-2zM4 10h2v1h-2zM7 10h2v1h-2zM10 10h2v1h-2zM13 10h2v1h-2zM2 11h2v1h-2zM5 11h2v1h-2zM8 11h2v1h-2zM11 11h2v1h-2zM14 11h2v1h-2z"/><path class="ol" d="M4 2h2v1h-2zM3 3h1v1h-1z"/><path class="ow" d="M4 4h2v1h-2zM10 4h2v1h-2zM4 5h1v1h-1zM10 5h1v1h-1z"/><path class="ok" d="M5 5h1v1h-1zM11 5h1v1h-1z"/></g><g class="of of4"><path class="ob" d="M6 0h4v1h-4zM3 1h10v1h-10zM2 2h2v1h-2zM6 2h8v1h-8zM1 3h2v1h-2zM4 3h11v1h-11zM1 4h3v1h-3zM6 4h4v1h-4zM12 4h3v1h-3zM1 5h3v1h-3zM6 5h4v1h-4zM12 5h3v1h-3zM1 6h14v1h-14zM2 7h12v1h-12zM1 8h2v1h-2zM4 8h2v1h-2zM7 8h2v1h-2zM10 8h2v1h-2zM13 8h2v1h-2zM1 9h2v1h-2zM4 9h2v1h-2zM7 9h2v1h-2zM10 9h2v1h-2zM13 9h2v1h-2zM2 10h2v1h-2zM5 10h2v1h-2zM8 10h2v1h-2zM11 10h2v1h-2zM14 10h2v1h-2zM1 11h2v1h-2zM4 11h2v1h-2zM7 11h2v1h-2zM10 11h2v1h-2zM13 11h2v1h-2z"/><path class="ol" d="M4 2h2v1h-2zM3 3h1v1h-1z"/><path class="ow" d="M4 4h2v1h-2zM10 4h2v1h-2zM4 5h1v1h-1zM10 5h1v1h-1z"/><path class="ok" d="M5 5h1v1h-1zM11 5h1v1h-1z"/></g></svg></div>
+                <span class="ac-pos">GUARD</span>
+                <span class="ac-price">$3</span>
+                <span class="ac-ed">v0.3.0 edition</span>
+                <div class="ac-plate"><span class="ac-name">CEPHALO</span><span class="ac-sub">agent guard skill</span></div>
+                <span class="ac-holo"></span>
+              </div></div>
+              <div class="ac-face ac-back"><div class="ac-inner ac-binner">
+                <div class="ac-bhead"><svg class="octo-anim ac-mini" viewBox="0 0 16 12" shape-rendering="crispEdges" aria-hidden="true" focusable="false"><g class="of of1"><path class="ob" d="M6 0h4v1h-4zM3 1h10v1h-10zM2 2h2v1h-2zM6 2h8v1h-8zM1 3h2v1h-2zM4 3h11v1h-11zM1 4h3v1h-3zM6 4h4v1h-4zM12 4h3v1h-3zM1 5h3v1h-3zM6 5h4v1h-4zM12 5h3v1h-3zM1 6h14v1h-14zM2 7h12v1h-12zM1 8h2v1h-2zM4 8h2v1h-2zM7 8h2v1h-2zM10 8h2v1h-2zM13 8h2v1h-2zM2 9h2v1h-2zM5 9h2v1h-2zM8 9h2v1h-2zM11 9h2v1h-2zM14 9h2v1h-2zM1 10h2v1h-2zM4 10h2v1h-2zM7 10h2v1h-2zM10 10h2v1h-2zM13 10h2v1h-2zM0 11h2v1h-2zM3 11h2v1h-2zM6 11h2v1h-2zM9 11h2v1h-2zM12 11h2v1h-2z"/><path class="ol" d="M4 2h2v1h-2zM3 3h1v1h-1z"/><path class="ow" d="M4 4h2v1h-2zM10 4h2v1h-2zM4 5h1v1h-1zM10 5h1v1h-1z"/><path class="ok" d="M5 5h1v1h-1zM11 5h1v1h-1z"/></g><g class="of of2"><path class="ob" d="M6 0h4v1h-4zM3 1h10v1h-10zM2 2h2v1h-2zM6 2h8v1h-8zM1 3h2v1h-2zM4 3h11v1h-11zM1 4h3v1h-3zM6 4h4v1h-4zM12 4h3v1h-3zM1 5h3v1h-3zM6 5h4v1h-4zM12 5h3v1h-3zM1 6h14v1h-14zM2 7h12v1h-12zM1 8h2v1h-2zM4 8h2v1h-2zM7 8h2v1h-2zM10 8h2v1h-2zM13 8h2v1h-2zM1 9h2v1h-2zM4 9h2v1h-2zM7 9h2v1h-2zM10 9h2v1h-2zM13 9h2v1h-2zM0 10h2v1h-2zM3 10h2v1h-2zM6 10h2v1h-2zM9 10h2v1h-2zM12 10h2v1h-2zM1 11h2v1h-2zM4 11h2v1h-2zM7 11h2v1h-2zM10 11h2v1h-2zM13 11h2v1h-2z"/><path class="ol" d="M4 2h2v1h-2zM3 3h1v1h-1z"/><path class="ow" d="M4 4h2v1h-2zM10 4h2v1h-2zM4 5h1v1h-1zM10 5h1v1h-1z"/><path class="ok" d="M5 5h1v1h-1zM11 5h1v1h-1z"/></g><g class="of of3"><path class="ob" d="M6 0h4v1h-4zM3 1h10v1h-10zM2 2h2v1h-2zM6 2h8v1h-8zM1 3h2v1h-2zM4 3h11v1h-11zM1 4h3v1h-3zM6 4h4v1h-4zM12 4h3v1h-3zM1 5h3v1h-3zM6 5h4v1h-4zM12 5h3v1h-3zM1 6h14v1h-14zM2 7h12v1h-12zM1 8h2v1h-2zM4 8h2v1h-2zM7 8h2v1h-2zM10 8h2v1h-2zM13 8h2v1h-2zM0 9h2v1h-2zM3 9h2v1h-2zM6 9h2v1h-2zM9 9h2v1h-2zM12 9h2v1h-2zM1 10h2v1h-2zM4 10h2v1h-2zM7 10h2v1h-2zM10 10h2v1h-2zM13 10h2v1h-2zM2 11h2v1h-2zM5 11h2v1h-2zM8 11h2v1h-2zM11 11h2v1h-2zM14 11h2v1h-2z"/><path class="ol" d="M4 2h2v1h-2zM3 3h1v1h-1z"/><path class="ow" d="M4 4h2v1h-2zM10 4h2v1h-2zM4 5h1v1h-1zM10 5h1v1h-1z"/><path class="ok" d="M5 5h1v1h-1zM11 5h1v1h-1z"/></g><g class="of of4"><path class="ob" d="M6 0h4v1h-4zM3 1h10v1h-10zM2 2h2v1h-2zM6 2h8v1h-8zM1 3h2v1h-2zM4 3h11v1h-11zM1 4h3v1h-3zM6 4h4v1h-4zM12 4h3v1h-3zM1 5h3v1h-3zM6 5h4v1h-4zM12 5h3v1h-3zM1 6h14v1h-14zM2 7h12v1h-12zM1 8h2v1h-2zM4 8h2v1h-2zM7 8h2v1h-2zM10 8h2v1h-2zM13 8h2v1h-2zM1 9h2v1h-2zM4 9h2v1h-2zM7 9h2v1h-2zM10 9h2v1h-2zM13 9h2v1h-2zM2 10h2v1h-2zM5 10h2v1h-2zM8 10h2v1h-2zM11 10h2v1h-2zM14 10h2v1h-2zM1 11h2v1h-2zM4 11h2v1h-2zM7 11h2v1h-2zM10 11h2v1h-2zM13 11h2v1h-2z"/><path class="ol" d="M4 2h2v1h-2zM3 3h1v1h-1z"/><path class="ow" d="M4 4h2v1h-2zM10 4h2v1h-2zM4 5h1v1h-1zM10 5h1v1h-1z"/><path class="ok" d="M5 5h1v1h-1zM11 5h1v1h-1z"/></g></svg><span><b>CEPHALO</b><small>agent guard skill</small></span></div>
+                <p class="ac-bline">It helps your agent install, check and tune Cephalo, which is free and open source. It includes no Pro features or license key.</p>
+                <dl class="ac-stats"><dt>Default rules</dt><dd>12</dd><dt>Agents</dt><dd>Claude Code &middot; Hermes</dd><dt>Runs</dt><dd>On your machine</dd><dt>License</dt><dd>MIT</dd><dt>Cephalo</dt><dd>Free on npm</dd><dt>This skill</dt><dd>$3</dd></dl>
+                <p class="ac-bfoot">Sold on Agensi</p>
+                <span class="ac-holo"></span>
+              </div></div>
+            </div>
+            <span class="gc-grab" aria-hidden="true"><svg viewBox="0 0 8 20" class="gc-grab-svg" shape-rendering="crispEdges" focusable="false"><g class="gtf gtf-a"><path fill="#f472b6" d="M2 0h3v1h-3zM1 1h1v1h-1zM5 1h1v1h-1zM5 2h1v1h-1zM4 3h2v1h-2zM4 4h2v1h-2zM3 5h2v1h-2zM3 6h2v1h-2zM2 7h3v1h-3zM2 8h3v1h-3zM2 9h3v1h-3zM3 10h3v1h-3zM3 11h3v1h-3zM3 12h3v1h-3zM2 13h4v1h-4zM2 14h4v1h-4zM2 15h4v1h-4zM1 16h5v1h-5zM1 17h5v1h-5zM1 18h6v1h-6zM0 19h7v1h-7z"/><path fill="#f9a8d4" d="M2 8h1v1h-1zM3 11h1v1h-1zM2 14h1v1h-1zM1 17h1v1h-1z"/></g><g class="gtf gtf-b"><path fill="#f472b6" d="M1 0h3v1h-3zM0 1h1v1h-1zM4 1h1v1h-1zM4 2h1v1h-1zM3 3h2v1h-2zM3 4h2v1h-2zM2 5h2v1h-2zM3 6h2v1h-2zM2 7h3v1h-3zM2 8h3v1h-3zM2 9h3v1h-3zM3 10h3v1h-3zM3 11h3v1h-3zM3 12h3v1h-3zM2 13h4v1h-4zM2 14h4v1h-4zM2 15h4v1h-4zM1 16h5v1h-5zM1 17h5v1h-5zM1 18h6v1h-6zM0 19h7v1h-7z"/><path fill="#f9a8d4" d="M2 8h1v1h-1zM3 11h1v1h-1zM2 14h1v1h-1zM1 17h1v1h-1z"/></g></svg></span>
+          </div>
+        </div>
+        <span class="gc-sea" aria-hidden="true"><svg class="gc-water" viewBox="0 0 64 4" preserveAspectRatio="xMinYMax slice" shape-rendering="crispEdges" focusable="false"><path fill="var(--g1)" d="M0 2h6v1h-6zM8 2h7v1h-7zM17 2h6v1h-6zM25 2h7v1h-7zM34 2h6v1h-6zM42 2h7v1h-7zM51 2h6v1h-6zM59 2h5v1h-5z"/><path fill="var(--g1)" d="M6 1h2v1h-2zM15 1h2v1h-2zM23 1h2v1h-2zM32 1h2v1h-2zM40 1h2v1h-2zM49 1h2v1h-2zM57 1h2v1h-2z"/><path fill="var(--g1)" opacity=".45" d="M3 3h4v1h-4zM12 3h5v1h-5zM20 3h4v1h-4zM29 3h5v1h-5zM37 3h4v1h-4zM46 3h5v1h-5zM54 3h4v1h-4z"/></svg><span class="gc-tent"><svg class="gc-splash" viewBox="0 0 12 5" shape-rendering="crispEdges" focusable="false"><path fill="var(--g1)" d="M1 3h1v1h-1zM3 1h1v1h-1zM8 0h1v1h-1zM10 2h1v1h-1zM5 4h2v1h-2z"/></svg><svg viewBox="0 0 8 20" shape-rendering="crispEdges" focusable="false"><g class="gtf gtf-a"><path fill="#f472b6" d="M2 0h3v1h-3zM1 1h1v1h-1zM5 1h1v1h-1zM5 2h1v1h-1zM4 3h2v1h-2zM4 4h2v1h-2zM3 5h2v1h-2zM3 6h2v1h-2zM2 7h3v1h-3zM2 8h3v1h-3zM2 9h3v1h-3zM3 10h3v1h-3zM3 11h3v1h-3zM3 12h3v1h-3zM2 13h4v1h-4zM2 14h4v1h-4zM2 15h4v1h-4zM1 16h5v1h-5zM1 17h5v1h-5zM1 18h6v1h-6zM0 19h7v1h-7z"/><path fill="#f9a8d4" d="M2 8h1v1h-1zM3 11h1v1h-1zM2 14h1v1h-1zM1 17h1v1h-1z"/></g><g class="gtf gtf-b"><path fill="#f472b6" d="M1 0h3v1h-3zM0 1h1v1h-1zM4 1h1v1h-1zM4 2h1v1h-1zM3 3h2v1h-2zM3 4h2v1h-2zM2 5h2v1h-2zM3 6h2v1h-2zM2 7h3v1h-3zM2 8h3v1h-3zM2 9h3v1h-3zM3 10h3v1h-3zM3 11h3v1h-3zM3 12h3v1h-3zM2 13h4v1h-4zM2 14h4v1h-4zM2 15h4v1h-4zM1 16h5v1h-5zM1 17h5v1h-5zM1 18h6v1h-6zM0 19h7v1h-7z"/><path fill="#f9a8d4" d="M2 8h1v1h-1zM3 11h1v1h-1zM2 14h1v1h-1zM1 17h1v1h-1z"/></g></svg></span><span class="ac-splash"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span class="ac-ripple"></span></span>
+        <div class="gc-buy"><span class="gc-buywrap"><a class="btn primary" href="https://www.agensi.io/skills/cephalo-agent-guard" rel="noopener" data-skill="cephalo-agent-guard">Buy on Agensi</a></span><a class="btn" href="#install">Install Cephalo free</a></div>
+      </div>
+      <div class="gc-more">
+        <details class="gc-stats"><summary>The card&rsquo;s stats</summary><dl><dt>Default rules</dt><dd>12</dd><dt>Agents</dt><dd>Claude Code &middot; Hermes</dd><dt>Runs</dt><dd>On your machine</dd><dt>License</dt><dd>MIT</dd><dt>Cephalo</dt><dd>Free on npm</dd><dt>This skill</dt><dd>$3</dd></dl></details>
         <p class="gc-note">Agensi takes the payment, and <a href="refunds.html#agensi">its refund policy</a> applies.</p>
       </div>
-      <span class="gc-grab" aria-hidden="true"><svg viewBox="0 0 8 20" class="gc-grab-svg" shape-rendering="crispEdges" focusable="false"><g class="gtf gtf-a"><path fill="#f472b6" d="M2 0h3v1h-3zM1 1h1v1h-1zM5 1h1v1h-1zM5 2h1v1h-1zM4 3h2v1h-2zM4 4h2v1h-2zM3 5h2v1h-2zM3 6h2v1h-2zM2 7h3v1h-3zM2 8h3v1h-3zM2 9h3v1h-3zM3 10h3v1h-3zM3 11h3v1h-3zM3 12h3v1h-3zM2 13h4v1h-4zM2 14h4v1h-4zM2 15h4v1h-4zM1 16h5v1h-5zM1 17h5v1h-5zM1 18h6v1h-6zM0 19h7v1h-7z"/><path fill="#f9a8d4" d="M2 8h1v1h-1zM3 11h1v1h-1zM2 14h1v1h-1zM1 17h1v1h-1z"/></g><g class="gtf gtf-b"><path fill="#f472b6" d="M1 0h3v1h-3zM0 1h1v1h-1zM4 1h1v1h-1zM4 2h1v1h-1zM3 3h2v1h-2zM3 4h2v1h-2zM2 5h2v1h-2zM3 6h2v1h-2zM2 7h3v1h-3zM2 8h3v1h-3zM2 9h3v1h-3zM3 10h3v1h-3zM3 11h3v1h-3zM3 12h3v1h-3zM2 13h4v1h-4zM2 14h4v1h-4zM2 15h4v1h-4zM1 16h5v1h-5zM1 17h5v1h-5zM1 18h6v1h-6zM0 19h7v1h-7z"/><path fill="#f9a8d4" d="M2 8h1v1h-1zM3 11h1v1h-1zM2 14h1v1h-1zM1 17h1v1h-1z"/></g></svg></span>
     </article>
   </div>
 </section>

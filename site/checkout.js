@@ -48,13 +48,36 @@
     return !!skillUrl(a.getAttribute('href'));
   }
 
-  /** The Get Cephalo card's Buy link: a tentacle snatches the card (CSS, .snatched), then the browser follows the link.
-   *  The link stays a real <a href>; this only delays a plain click. Navigates once, on animationend or after a timeout. */
+  /** The Get Cephalo card: the collectible (.ac-card, turned by the CSS variable --ac-t) faces front while you hover or
+   *  focus the card, and on a plain click on Buy a tentacle drags it under the water (CSS, .snatched), then the browser
+   *  follows the link. The link stays a real <a href>; this only delays a plain click. Navigates once, on the drag's
+   *  animationend or after a 1.5 s timeout. Back from Agensi (bfcache) resets the card. */
   function tentacle(doc, win) {
     var card = doc.querySelector('.getcard');
     var a = card && card.querySelector('a[data-skill]');
     if (!a) return null;
+    var spin = card.querySelector('.ac-card');
     var sec = card.parentNode && card.parentNode.parentNode, timer = 0, gone = false;
+    var turning = !!(spin && spin !== a && win.getComputedStyle);
+    function front(ms) { // ease from wherever the turn is to the nearest front-facing position, and hold it there
+      if (!turning) return;
+      var t = parseFloat(win.getComputedStyle(spin).getPropertyValue('--ac-t')) || 0;
+      t -= Math.floor(t);
+      spin.style.transition = 'none';
+      spin.style.animation = 'none';
+      spin.style.setProperty('--ac-t', t);
+      void spin.offsetWidth;
+      spin.style.transition = '--ac-t ' + ms + 'ms cubic-bezier(.2,.8,.2,1)';
+      spin.style.setProperty('--ac-t', t > 0.5 ? 1 : 0);
+    }
+    function resume() { // the turn starts again from the front
+      if (!turning || card.classList.contains('snatched')) return;
+      spin.style.transition = '';
+      spin.style.removeProperty('--ac-t');
+      spin.style.animation = 'none';
+      void spin.offsetWidth;
+      spin.style.animation = '';
+    }
     function go() {
       if (gone) return;
       gone = true;
@@ -66,17 +89,23 @@
       gone = false;
       card.classList.remove('snatched');
       if (sec && sec.classList) sec.classList.remove('gc-snatching');
+      resume();
     }
+    card.addEventListener('mouseenter', function () { front(450); });
+    card.addEventListener('mouseleave', function () { resume(); });
+    card.addEventListener('focusin', function () { front(450); });
+    card.addEventListener('focusout', function (e) { if (!card.contains || !card.contains(e.relatedTarget)) resume(); });
     a.addEventListener('click', function (e) {
       var reduce = !!(win.matchMedia && win.matchMedia('(prefers-reduced-motion: reduce)').matches);
       if (!shouldSnatch(e, a, reduce)) return;
       e.preventDefault();
       if (card.classList.contains('snatched')) return; // a second click while it runs
+      front(200);
       card.classList.add('snatched');
       if (sec && sec.classList) sec.classList.add('gc-snatching');
-      timer = win.setTimeout(go, 1100);
+      timer = win.setTimeout(go, 1500);
     });
-    card.addEventListener('animationend', function (e) { if (e.target === card && e.animationName === 'gc-snatch') go(); });
+    card.addEventListener('animationend', function (e) { if (e.animationName === 'gc-snatch') go(); });
     win.addEventListener('pageshow', function (e) { if (e.persisted) reset(); });
     return { go: go, reset: reset };
   }
