@@ -3,7 +3,7 @@
   --sans:Inter,"Inter var",system-ui,"Segoe UI Variable Text","Segoe UI","Helvetica Neue",Arial,sans-serif;
   --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
   --mono:"Cascadia Code","SF Mono","JetBrains Mono",ui-monospace,Consolas,"Liberation Mono",monospace}
-@media (prefers-color-scheme:light){:root{color-scheme:light;--bg:#f5f7fa;--surface:#fff;--ink:#0b1220;--muted:#475569;--faint:#64748b;--mint:#0f766e;--line:rgb(11 18 32 / .14);--code:#eef2f7}}
+@media (prefers-color-scheme:light){:root{color-scheme:light;--bg:#f5f7fa;--surface:#fff;--ink:#0b1220;--muted:#475569;--faint:#5b6b84;--mint:#0f766e;--line:rgb(11 18 32 / .14);--code:#eef2f7}}
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.65 var(--sans)}
