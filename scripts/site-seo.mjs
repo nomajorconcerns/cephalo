@@ -2,7 +2,7 @@
 // Keeps the structured data (JSON-LD) in site/index.html identical to what the page itself says.
 //   node scripts/site-seo.mjs           rewrite the JSON-LD between <!--JSONLD--> and <!--END_JSONLD-->
 //   node scripts/site-seo.mjs --check   exit 1 if it is out of date (used by the tests)
-// The FAQPage comes from the page's FAQ section, the offers from its plan cards, the version from package.json.
+// The FAQPage comes from the page's FAQ section, the free offer from its Get Cephalo section, the version from package.json.
 // Nothing is typed in by hand, so the markup cannot claim more than the page does.
 import fs from "node:fs";
 import path from "node:path";
@@ -39,37 +39,15 @@ export function faqEntries(html) {
     .map((m) => ({ q: text(m[1]), a: text(m[2]) }));
 }
 
-/** {Free: "$0", Pro: "$15 / dev / month", ...} as the plan cards show them, plus each card's button text. */
-export function plans(html) {
-  const out = {};
-  for (const m of section(html, "pricing").matchAll(/<div class="tier(?: hl)?">([\s\S]*?)(?=<div class="tier|<div class="calc|$)/g)) {
-    const name = text((m[1].match(/<h3[^>]*>([\s\S]*?)<\/h3>/) || [])[1] || "");
-    const price = text((m[1].match(/class="price[^"]*"[^>]*>([\s\S]*?)<\/(?:div|p|span)>/) || [])[1] || "");
-    const soon = /<span class="btn soon"[^>]*>([\s\S]*?)<\/span>/.exec(m[1]);
-    if (name) out[name] = { price, note: soon ? text(soon[1]) : "" };
-  }
-  return out;
-}
-
-function offer(name, p) {
-  const m = /^\$(\d+(?:\.\d+)?)\s*(?:\/\s*dev\s*\/\s*month)?$/.exec(p.price);
-  if (!m) return null; // "Annual contract" has no list price: left out rather than guessed
-  const perDevMonth = /\/\s*dev\s*\/\s*month/.test(p.price);
-  return {
-    "@type": "Offer",
-    name,
-    price: m[1],
-    priceCurrency: "USD",
-    ...(perDevMonth
-      ? { priceSpecification: { "@type": "UnitPriceSpecification", price: m[1], priceCurrency: "USD", unitText: "per developer per month", billingDuration: "P1M" } }
-      : {}),
-    ...(p.note ? { description: p.note } : {}),
-    url: `${SITE_URL}#pricing`,
-  };
+/** The one offer for Cephalo itself: free. It is generated only while the page says so in its Get Cephalo section, so the
+ *  markup cannot claim a price the page does not show. (The $3 skill on Agensi is a separate product, not a Cephalo offer.) */
+export function freeOffer(html) {
+  const get = text(section(html, "pricing"));
+  if (!/Cephalo is free and open source/.test(get)) throw new Error("the Get Cephalo section no longer says Cephalo is free");
+  return { "@type": "Offer", name: "Free", price: "0", priceCurrency: "USD", url: `${SITE_URL}#install` };
 }
 
 export function buildJsonLd(html, version) {
-  const p = plans(html);
   const app = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
@@ -87,7 +65,7 @@ export function buildJsonLd(html, version) {
     isAccessibleForFree: true,
     image: `${SITE_URL}og.png`,
     sameAs: ["https://github.com/nomajorconcerns/cephalo", "https://www.npmjs.com/package/@nomajorconcerns/cephalo"],
-    offers: Object.entries(p).map(([name, v]) => offer(name, v)).filter(Boolean),
+    offers: [freeOffer(html)],
   };
   const faq = {
     "@context": "https://schema.org",

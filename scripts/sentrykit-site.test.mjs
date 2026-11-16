@@ -40,7 +40,7 @@ test("skill links: only https Agensi skill pages on agensi.io / www.agensi.io; l
     "javascript:alert(1)", "//www.agensi.io/skills/x", "https://buy.polar.sh/polar_cl_x", "not a url"]) {
     assert.equal(C.skillUrl(bad), null, String(bad));
   }
-  assert.equal(C.checkoutUrl(AGENSI["sentrykit-pro"]), null, "an Agensi link can never become a Pro or Team checkout");
+  assert.equal(C.checkoutUrl, undefined, "there is no plan checkout any more, so nothing else can turn into a buy link");
 });
 
 test("applySkills points each skill link at its configured Agensi page and switches off anything else", () => {
@@ -53,7 +53,7 @@ test("applySkills points each skill link at its configured Agensi page and switc
   assert.equal(links[2].attrs["aria-disabled"], "true");
 });
 
-test("the shipped config and the page hold the same four Agensi links; plans stay Polar-only and off", () => {
+test("the shipped config and the page hold the same four Agensi links, and nothing else", () => {
   assert.deepEqual({ ...cfg.skills }, AGENSI);
   for (const [name, url] of Object.entries(AGENSI)) {
     const links = [...html.matchAll(new RegExp(`<a [^>]*data-skill="${name}"[^>]*>`, "g"))].map((m) => m[0]);
@@ -61,18 +61,7 @@ test("the shipped config and the page hold the same four Agensi links; plans sta
     assert.match(links[0], new RegExp(`href="${url.replace(/[./]/g, "\\$&")}"`));
     assert.match(links[0], /rel="noopener"/);
   }
-  assert.equal(cfg.mode, "off");
-  assert.equal(cfg.provider, "Polar");
-});
-
-test("the agent guard card: $3 one-time, says what it is and is not, and never looks like Pro", () => {
-  const pricing = html.slice(html.indexOf('<section id="pricing">'), html.indexOf("<!-- INSTALL -->"));
-  const card = pricing.slice(pricing.indexOf('<div class="skillcard"'));
-  assert.match(card, /<h3>Cephalo agent guard skill on Agensi<\/h3>/);
-  assert.match(card, /<div class="sc-price">\$3<small> one-time<\/small><\/div>/);
-  assert.match(card, /helps your agent install, check and tune the free Cephalo\. It does not include Pro features or a license key\./);
-  assert.doesNotMatch(card, /class="tier|class="btn primary"|class="reco"|CEPHALOG|data-plan/, "not styled or labelled as a plan");
-  for (const p of ["pro", "team"]) assert.match(pricing, new RegExp(`<span class="btn soon" data-plan="${p}">Not on sale yet</span>`));
+  assert.deepEqual(Object.keys(cfg), ["skills"]);
 });
 
 test("SentryKit tabs follow the WAI-ARIA tabs pattern", () => {
@@ -154,7 +143,7 @@ test("refunds and terms: skills bought on Agensi follow Agensi's refund policy a
     assert.match(page, /<h2 id="agensi">Skills (bought|sold) on Agensi<\/h2>/, f);
     assert.ok(page.includes('href="https://www.agensi.io/terms#refunds"'), `${f} links Agensi's refund section`);
     assert.ok(page.includes('href="https://www.agensi.io/terms"'), `${f} links Agensi's terms`);
-    assert.match(page, /does not include Cephalo Pro, Team or a license key/);
+    assert.match(page, /does not include a Cephalo license key or any paid Cephalo feature/);
+    assert.doesNotMatch(page, /Pro and Team|Pro or Team|Polar|14 days|CEPHALOG/, `${f}: no terms for plans that are not sold`);
   }
-  assert.doesNotMatch(site("terms.html"), /The site shows no buy button until a plan is really available/, "the old blanket statement is gone");
 });
