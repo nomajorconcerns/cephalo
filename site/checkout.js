@@ -1,11 +1,17 @@
 /* Turns the inert "Not on sale yet" plan buttons into real checkout links, driven by checkout.config.js.
  * No network requests, no tracking: it only sets link targets. With JavaScript off, or an empty config, the
- * page keeps the honest default ("Not on sale yet"). */
+ * page keeps the honest default ("Not on sale yet").
+ * It also checks the skill links (a[data-skill]: the Cephalo agent guard skill and SentryKit, sold on Agensi): each
+ * points at its Agensi page from the config, and a link that is not an Agensi skill page is switched off. */
 (function () {
   'use strict';
 
   // Polar's checkout links (buy.polar.sh) and its own site (polar.sh, e.g. the customer portal). Exact hosts only.
   var HOSTS = ['buy.polar.sh', 'polar.sh'];
+  // Agensi, the marketplace that sells the skills. Exact hosts only: agensi.io.evil.com or evil-agensi.io never match.
+  // Kept apart from HOSTS on purpose: an Agensi purchase is a skill download, never a Pro or Team license.
+  var SKILL_HOSTS = ['www.agensi.io', 'agensi.io'];
+  var SKILL_PATH = /^\/skills\/[a-z0-9]+(?:-[a-z0-9]+)*\/?$/;
   var EMAIL = /^[^\s@<>"']+@[^\s@<>"']+\.[^\s@<>"']+$/;
 
   /** An https URL on the payment provider's domain, or null. Anything else is ignored. */
@@ -19,6 +25,37 @@
     } catch (e) {
       return null;
     }
+  }
+
+  /** An https link to a skill page on Agensi (https://www.agensi.io/skills/<name>), or null. */
+  function skillUrl(u) {
+    if (typeof u !== 'string' || !u) return null;
+    try {
+      var x = new URL(u);
+      if (x.protocol !== 'https:' || x.username || x.password || x.port) return null;
+      if (SKILL_HOSTS.indexOf(x.hostname) < 0 || !SKILL_PATH.test(x.pathname)) return null;
+      return x.href;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /** Points each a[data-skill] at its Agensi page from cfg.skills; a link that is not an Agensi skill page is switched off. */
+  function applySkills(doc, cfg) {
+    var skills = (cfg && cfg.skills) || {};
+    var out = [];
+    Array.prototype.forEach.call(doc.querySelectorAll('a[data-skill]'), function (a) {
+      var name = a.getAttribute('data-skill');
+      var href = skillUrl(skills[name]) || skillUrl(a.getAttribute('href'));
+      if (href) {
+        a.setAttribute('href', href);
+      } else {
+        a.removeAttribute('href');
+        a.setAttribute('aria-disabled', 'true');
+      }
+      out.push({ skill: name, href: href });
+    });
+    return out;
   }
 
   function wantsTest(search) {
@@ -104,10 +141,10 @@
     return results;
   }
 
-  var api = { checkoutUrl: checkoutUrl, resolve: resolve, copy: copy, apply: apply };
+  var api = { checkoutUrl: checkoutUrl, skillUrl: skillUrl, resolve: resolve, copy: copy, apply: apply, applySkills: applySkills };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (typeof document !== 'undefined' && typeof window !== 'undefined') {
-    var run = function () { apply(document, window.CEPHALO_CHECKOUT, window.location.search); };
+    var run = function () { apply(document, window.CEPHALO_CHECKOUT, window.location.search); applySkills(document, window.CEPHALO_CHECKOUT); };
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
     else run();
   }
