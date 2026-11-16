@@ -14,8 +14,8 @@ const sandbox = { module: { exports: {} }, URL };
 vm.runInNewContext(site("checkout.js"), sandbox);
 const C = sandbox.module.exports;
 
-test("checkout.js only checks skill links: no plan checkout, no Polar, no 'Not on sale' code left", () => {
-  assert.deepEqual(Object.keys(C).sort(), ["applySkills", "skillUrl"]);
+test("checkout.js only handles skill links (checking them, and the card's tentacle): no plan checkout, no Polar, no 'Not on sale' code left", () => {
+  assert.deepEqual(Object.keys(C).sort(), ["applySkills", "shouldSnatch", "skillUrl", "tentacle"]);
   const js = site("checkout.js");
   assert.doesNotMatch(js, /polar|data-plan|Not on sale|Subscribe|mailto|plans/i);
 });
