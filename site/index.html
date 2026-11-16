@@ -1172,6 +1172,51 @@ nav.top .links a.cta:hover,nav.top .links a.cta:focus-visible{box-shadow:0 0 22p
 .gc-note{margin:14px 0 0;font-size:13.5px;color:var(--faint)}
 @media(max-width:700px){.getcard{grid-template-columns:minmax(0,1fr);padding:24px 20px;gap:18px}.oc-stage{width:136px;height:136px}.oc-stage .octo-anim{width:88px;height:66px}.gc-price{font-size:46px}}
 
+/* ==== the card's tentacle: a slow 3D tilt, a turning glow on the border, a tentacle from the water on Buy, and the snatch ==== */
+/* links inside running text in this section are underlined, so they do not rely on colour alone */
+#pricing .sec-head p a,.gc-note a{text-decoration:underline;text-underline-offset:2px}
+@property --gc-a{syntax:"<angle>";inherits:false;initial-value:0deg}
+.getcard{transform-style:preserve-3d}
+.getcard::after{content:"";position:absolute;inset:-1px;border-radius:inherit;padding:1.5px;pointer-events:none;
+  background:conic-gradient(from var(--gc-a),transparent 0 60%,var(--g1) 72%,var(--g2) 84%,transparent 94%);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);
+  filter:drop-shadow(0 0 6px rgb(var(--glow-teal) / calc(.55 * var(--glow-k))));opacity:.85}
+@keyframes gc-turn{to{--gc-a:360deg}}
+@media (prefers-reduced-motion:no-preference){
+  .getcard{transition:transform .7s var(--ease-out)}
+  .getcard:hover,.getcard:focus-within{transform:perspective(1200px) rotateY(-5deg) rotateX(2deg)}
+  .getcard::after{animation:gc-turn 14s linear infinite;animation-play-state:var(--octo-run)}
+}
+/* Buy: a tentacle rises from the water line beside the button on hover and keyboard focus */
+.gc-buywrap{position:relative;display:inline-flex}
+.gc-buy{gap:12px 58px} /* room beside Buy for the tentacle, so it never covers the next button */
+.gc-sea{position:absolute;left:-14px;right:-46px;bottom:-14px;height:96px;pointer-events:none}
+.gc-water{position:absolute;left:0;right:0;bottom:0;width:100%;height:12px;opacity:0;transition:opacity .25s}
+.gc-tent{position:absolute;right:4px;bottom:9px;width:32px;height:84px;overflow:hidden}
+.gc-tent>svg:last-child{position:absolute;left:0;bottom:0;width:32px;height:80px;transform:translateY(100%);transition:transform .45s steps(6,end)}
+.gc-splash{position:absolute;left:-8px;bottom:0;width:48px;height:20px;opacity:0}
+.gtf-b{opacity:0}
+.gc-buywrap:hover .gc-water,.gc-buywrap:has(a:focus-visible) .gc-water{opacity:1}
+.gc-buywrap:hover .gc-tent>svg:last-child,.gc-buywrap:has(a:focus-visible) .gc-tent>svg:last-child{transform:translateY(0)}
+@media (prefers-reduced-motion:no-preference){
+  .gc-buywrap:hover .gc-splash,.gc-buywrap:has(a:focus-visible) .gc-splash{animation:gc-splash .55s steps(4,end) .1s both}
+  .gc-buywrap:hover .gtf-a,.gc-buywrap:has(a:focus-visible) .gtf-a{animation:gc-sway-a 1s steps(1,end) .45s infinite}
+  .gc-buywrap:hover .gtf-b,.gc-buywrap:has(a:focus-visible) .gtf-b{animation:gc-sway-b 1s steps(1,end) .45s infinite}
+}
+@keyframes gc-splash{0%{opacity:1;transform:translateY(4px)}70%{opacity:1;transform:translateY(-8px)}100%{opacity:0;transform:translateY(-10px)}}
+@keyframes gc-sway-a{0%{opacity:1}50%,100%{opacity:0}}
+@keyframes gc-sway-b{0%{opacity:0}50%{opacity:1}100%{opacity:1}}
+/* the snatch (checkout.js adds .snatched on a plain click; it never runs under reduced motion) */
+.gc-grab{position:absolute;left:clamp(16px,22%,190px);bottom:-36px;width:56px;height:140px;pointer-events:none;transform:scaleY(0);transform-origin:50% 100%}
+.gc-grab svg{width:100%;height:100%}
+#pricing.gc-snatching{overflow:clip}
+.getcard.snatched{--octo-run:running;animation:gc-snatch .84s cubic-bezier(.55,-.3,.85,.45) both;animation-timeline:auto}
+.getcard.snatched .gc-grab{animation:gc-grab .3s steps(5,end) both}
+.getcard.snatched .gc-tent>svg:last-child{transform:translateY(0)}
+@keyframes gc-grab{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+@keyframes gc-snatch{0%,30%{transform:none}42%{transform:translateY(-10px) rotate(-1.5deg)}100%{transform:translateY(120vh) rotate(6deg) scale(.92)}}
+@media(max-width:700px){.gc-grab{width:44px;height:110px;bottom:-28px}}
+
 /* ==== SentryKit: a separate product, in the page's own colours, with each edition's accent ==== */
 /* not skipped by content-visibility: its height changes with the tabs and the lazy images, and a stale placeholder size made it overlap the sections after it */
 main>section#sentrykit:not(.hero){content-visibility:visible}
@@ -1437,7 +1482,7 @@ html:not(.js) .skpanel[hidden]{display:block!important;border-top:1px solid var(
         <p class="lim"><b>Limit:</b> only on an interactive terminal. Never in hook output, in CI, with <code>NO_COLOR</code>, or with <code>CEPHALO_NO_ANIMATION=1</code>.</p>
       </div>
     </div>
-    <p class="subhead">Pro in 0.2.0 (Team includes Pro)</p>
+    <p class="subhead">In the separate Pro package (not sold at the moment)</p>
     <div class="feat" id="newpaid">
       <div class="fcard new">
         <div class="fmeta"><span class="badge new">New in 0.2.0</span><span class="badge">Pro</span></div>
@@ -1917,9 +1962,10 @@ rules:
         <h3 id="getName">Cephalo agent guard skill</h3>
         <p class="gc-price">$3</p>
         <p class="gc-line">It helps your agent install, check and tune Cephalo, which is free and open source. It includes no Pro features or license key.</p>
-        <div class="gc-buy"><a class="btn primary" href="https://www.agensi.io/skills/cephalo-agent-guard" rel="noopener" data-skill="cephalo-agent-guard">Buy on Agensi</a><a class="btn" href="#install">Install Cephalo free</a></div>
+        <div class="gc-buy"><span class="gc-buywrap"><a class="btn primary" href="https://www.agensi.io/skills/cephalo-agent-guard" rel="noopener" data-skill="cephalo-agent-guard">Buy on Agensi</a><span class="gc-sea" aria-hidden="true"><svg class="gc-water" viewBox="0 0 64 4" preserveAspectRatio="xMinYMax slice" shape-rendering="crispEdges" focusable="false"><path fill="var(--g1)" d="M0 2h6v1h-6zM8 2h7v1h-7zM17 2h6v1h-6zM25 2h7v1h-7zM34 2h6v1h-6zM42 2h7v1h-7zM51 2h6v1h-6zM59 2h5v1h-5z"/><path fill="var(--g1)" d="M6 1h2v1h-2zM15 1h2v1h-2zM23 1h2v1h-2zM32 1h2v1h-2zM40 1h2v1h-2zM49 1h2v1h-2zM57 1h2v1h-2z"/><path fill="var(--g1)" opacity=".45" d="M3 3h4v1h-4zM12 3h5v1h-5zM20 3h4v1h-4zM29 3h5v1h-5zM37 3h4v1h-4zM46 3h5v1h-5zM54 3h4v1h-4z"/></svg><span class="gc-tent"><svg class="gc-splash" viewBox="0 0 12 5" shape-rendering="crispEdges" focusable="false"><path fill="var(--g1)" d="M1 3h1v1h-1zM3 1h1v1h-1zM8 0h1v1h-1zM10 2h1v1h-1zM5 4h2v1h-2z"/></svg><svg viewBox="0 0 8 20" shape-rendering="crispEdges" focusable="false"><g class="gtf gtf-a"><path fill="#f472b6" d="M2 0h3v1h-3zM1 1h1v1h-1zM5 1h1v1h-1zM5 2h1v1h-1zM4 3h2v1h-2zM4 4h2v1h-2zM3 5h2v1h-2zM3 6h2v1h-2zM2 7h3v1h-3zM2 8h3v1h-3zM2 9h3v1h-3zM3 10h3v1h-3zM3 11h3v1h-3zM3 12h3v1h-3zM2 13h4v1h-4zM2 14h4v1h-4zM2 15h4v1h-4zM1 16h5v1h-5zM1 17h5v1h-5zM1 18h6v1h-6zM0 19h7v1h-7z"/><path fill="#f9a8d4" d="M2 8h1v1h-1zM3 11h1v1h-1zM2 14h1v1h-1zM1 17h1v1h-1z"/></g><g class="gtf gtf-b"><path fill="#f472b6" d="M1 0h3v1h-3zM0 1h1v1h-1zM4 1h1v1h-1zM4 2h1v1h-1zM3 3h2v1h-2zM3 4h2v1h-2zM2 5h2v1h-2zM3 6h2v1h-2zM2 7h3v1h-3zM2 8h3v1h-3zM2 9h3v1h-3zM3 10h3v1h-3zM3 11h3v1h-3zM3 12h3v1h-3zM2 13h4v1h-4zM2 14h4v1h-4zM2 15h4v1h-4zM1 16h5v1h-5zM1 17h5v1h-5zM1 18h6v1h-6zM0 19h7v1h-7z"/><path fill="#f9a8d4" d="M2 8h1v1h-1zM3 11h1v1h-1zM2 14h1v1h-1zM1 17h1v1h-1z"/></g></svg></span></span></span><a class="btn" href="#install">Install Cephalo free</a></div>
         <p class="gc-note">Agensi takes the payment, and <a href="refunds.html#agensi">its refund policy</a> applies.</p>
       </div>
+      <span class="gc-grab" aria-hidden="true"><svg viewBox="0 0 8 20" class="gc-grab-svg" shape-rendering="crispEdges" focusable="false"><g class="gtf gtf-a"><path fill="#f472b6" d="M2 0h3v1h-3zM1 1h1v1h-1zM5 1h1v1h-1zM5 2h1v1h-1zM4 3h2v1h-2zM4 4h2v1h-2zM3 5h2v1h-2zM3 6h2v1h-2zM2 7h3v1h-3zM2 8h3v1h-3zM2 9h3v1h-3zM3 10h3v1h-3zM3 11h3v1h-3zM3 12h3v1h-3zM2 13h4v1h-4zM2 14h4v1h-4zM2 15h4v1h-4zM1 16h5v1h-5zM1 17h5v1h-5zM1 18h6v1h-6zM0 19h7v1h-7z"/><path fill="#f9a8d4" d="M2 8h1v1h-1zM3 11h1v1h-1zM2 14h1v1h-1zM1 17h1v1h-1z"/></g><g class="gtf gtf-b"><path fill="#f472b6" d="M1 0h3v1h-3zM0 1h1v1h-1zM4 1h1v1h-1zM4 2h1v1h-1zM3 3h2v1h-2zM3 4h2v1h-2zM2 5h2v1h-2zM3 6h2v1h-2zM2 7h3v1h-3zM2 8h3v1h-3zM2 9h3v1h-3zM3 10h3v1h-3zM3 11h3v1h-3zM3 12h3v1h-3zM2 13h4v1h-4zM2 14h4v1h-4zM2 15h4v1h-4zM1 16h5v1h-5zM1 17h5v1h-5zM1 18h6v1h-6zM0 19h7v1h-7z"/><path fill="#f9a8d4" d="M2 8h1v1h-1zM3 11h1v1h-1zM2 14h1v1h-1zM1 17h1v1h-1z"/></g></svg></span>
     </article>
   </div>
 </section>
@@ -2030,14 +2076,14 @@ cephalo watch</pre><button class="copy" data-copy='cephalo doctor&#10;cephalo te
               <td><span class="g" aria-hidden="true">&minus;</span>See inside a script file, or a command assembled from data at run time. It is still pattern and parser based, not a sandbox.</td></tr>
           <tr><td><span class="g" aria-hidden="true">+</span><span class="badge new">New in 0.2.0</span> Offer an optional fail-closed mode and check that its own hook and files are intact.</td>
               <td><span class="g" aria-hidden="true">&minus;</span>Fail closed by default (it stays off unless you turn it on), or stop someone who can edit both the files and the recorded hashes.</td></tr>
-          <tr><td><span class="g" aria-hidden="true">+</span><span class="badge new">New in 0.2.0</span> Chain each audit line to the one before it (Pro and Team), so edited, removed or reordered lines are reported.</td>
+          <tr><td><span class="g" aria-hidden="true">+</span><span class="badge new">New in 0.2.0</span> Chain each audit line to the one before it (Pro package), so edited, removed or reordered lines are reported.</td>
               <td><span class="g" aria-hidden="true">&minus;</span>Prevent tampering, or prove who did it. A log rewritten from the start can still verify unless you keep the latest hash somewhere else.</td></tr>
-          <tr><td><span class="g" aria-hidden="true">+</span><span class="badge new">New in 0.2.0</span> Block shell commands, web fetches and MCP calls that would reach a domain you have not listed (Pro and Team).</td>
+          <tr><td><span class="g" aria-hidden="true">+</span><span class="badge new">New in 0.2.0</span> Block shell commands, web fetches and MCP calls that would reach a domain you have not listed (Pro package).</td>
               <td><span class="g" aria-hidden="true">&minus;</span>Act as a firewall. It cannot see inside a script file, a program the agent just wrote, a host built at run time, or an MCP server's own traffic.</td></tr>
-          <tr><td><span class="g" aria-hidden="true">+</span><span class="badge new">New in 0.2.0</span> Run about 100 known bypass attempts through your rules and report how many are stopped and which got through (Pro and Team).</td>
+          <tr><td><span class="g" aria-hidden="true">+</span><span class="badge new">New in 0.2.0</span> Run about 100 known bypass attempts through your rules and report how many are stopped and which got through (Pro package).</td>
               <td><span class="g" aria-hidden="true">&minus;</span>Prove that nothing gets through. A pass means those cases are handled. The gaps it knows about are listed and never counted in the rate.</td></tr>
-          <tr><td><span class="g" aria-hidden="true">+</span><span class="badge new">New in 0.3.0</span> Check a Polar license key for the paid package, and ask the server again about every 35 days.</td>
-              <td><span class="g" aria-hidden="true">&minus;</span>Stop someone who edits their own files from running the paid package. The check is client-side: it keeps honest customers honest and is not copy protection.</td></tr>
+          <tr><td><span class="g" aria-hidden="true">+</span><span class="badge new">New in 0.3.0</span> Check a license key for the Pro package with Polar's license server, and ask it again about every 35 days. The Pro package is not sold at the moment.</td>
+              <td><span class="g" aria-hidden="true">&minus;</span>Stop someone who edits their own files from running the paid package. The check is client-side: it keeps honest users honest and is not copy protection.</td></tr>
         </tbody>
       </table>
     </div>
