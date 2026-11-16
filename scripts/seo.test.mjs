@@ -5,7 +5,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { buildJsonLd, embedded, faqEntries, plans, render, SITE_URL } from "./site-seo.mjs";
+import { buildJsonLd, embedded, faqEntries, freeOffer, render, SITE_URL } from "./site-seo.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const html = fs.readFileSync(path.join(root, "site", "index.html"), "utf8");
@@ -17,23 +17,17 @@ test("the JSON-LD in the page is exactly what the page's own content generates (
   assert.deepEqual(ld.map((o) => o["@type"]), ["SoftwareApplication", "FAQPage"], "every block is valid JSON");
 });
 
-test("SoftwareApplication: free core, Pro and Team at the prices the plan cards show, the current version, npm download", () => {
+test("SoftwareApplication: Cephalo is free ($0, one offer), the current version, npm download; no plan offers", () => {
   const app = ld[0];
   assert.equal(app.applicationCategory, "DeveloperApplication");
   assert.equal(app.softwareVersion, version);
   assert.equal(app.operatingSystem, "Windows, macOS, Linux");
   assert.equal(app.downloadUrl, "https://www.npmjs.com/package/@nomajorconcerns/cephalo");
-  const offers = Object.fromEntries(app.offers.map((o) => [o.name, o]));
-  assert.deepEqual(Object.keys(offers), ["Free", "Pro", "Team"], "Enterprise has no list price, so it is left out");
-  assert.equal(offers.Free.price, "0");
-  const cards = plans(html); // the visible text of the plan cards
-  assert.equal(cards.Pro.price, "$15 / dev / month");
-  assert.equal(cards.Team.price, "$25 / dev / month");
-  for (const [name, price] of [["Pro", "15"], ["Team", "25"]]) {
-    assert.equal(offers[name].price, price);
-    assert.equal(offers[name].priceSpecification.unitText, "per developer per month");
-    assert.equal(offers[name].description, "Not on sale yet", "the markup says what the page says: not on sale yet");
-  }
+  assert.equal(app.isAccessibleForFree, true);
+  assert.deepEqual(app.offers, [{ "@type": "Offer", name: "Free", price: "0", priceCurrency: "USD", url: `${SITE_URL}#install` }]);
+  assert.doesNotMatch(JSON.stringify(ld), /Not on sale|"Pro"|"Team"|dev per month|"price":"3"/, "no removed plans, and the $3 skill is not a Cephalo offer");
+  // the offer exists only because the page says Cephalo is free; if that sentence goes, generating fails
+  assert.throws(() => freeOffer(html.replace("Cephalo is free and open source (MIT) on npm", "Cephalo is on npm")), /no longer says Cephalo is free/);
 });
 
 test("FAQPage holds every FAQ entry on the page, word for word", () => {

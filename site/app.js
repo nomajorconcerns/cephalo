@@ -616,20 +616,6 @@ $('#feat').addEventListener('click',function(e){
   $('#commands').scrollIntoView({behavior:reduce?'auto':'smooth',block:'start'});
 });
 
-/* ---------- plan calculator ---------- */
-function renderSeats(){
-  var inp=$('#seats'),n=parseInt(inp.value,10);
-  if(!(n>=1))n=1;if(n>1000)n=1000;
-  var o=$('#seatOut');o.textContent='';
-  function money(x){return '$'+x.toLocaleString('en-US');}
-  [['Free','$0'],['Pro',money(15*n)],['Team',money(25*n)]].forEach(function(r,i){
-    if(i)o.appendChild(document.createTextNode('   ·   '));
-    o.appendChild(document.createTextNode(r[0]+' '));o.appendChild(el('b',null,r[1]+(r[0]==='Free'?'':' / month')));
-  });
-  o.appendChild(document.createTextNode('   ·   Enterprise: annual contract'));
-}
-$('#seats').addEventListener('input',renderSeats);
-
 /* ---------- platforms ---------- */
 var PLAT={
   win32:{name:'Windows',claude:'%USERPROFILE%\\.claude\\settings.json',hermes:'%LOCALAPPDATA%\\hermes\\config.yaml',data:'%USERPROFILE%\\.cephalo',spawn:'through the shell (finds hermes.cmd)',
@@ -858,7 +844,7 @@ function idle(f){if(window.requestIdleCallback)requestIdleCallback(f,{timeout:60
 function endInstant(){instant=false;}
 /* run fn once when el comes within 800px of the screen (sections far below the fold are only built when needed) */
 function near(node,fn){if(!node||!('IntersectionObserver' in window))return fn();var io=new IntersectionObserver(function(es){if(es.some(function(x){return x.isIntersecting;})){io.disconnect();fn();}},{rootMargin:'800px 0px'});io.observe(node);}
-var later=[function(){fillTools();buildChips();$('#input').value='psql -c "DROP TABLE users;"';linked=fromUrl();quickVerdict();},buildRuleList,function(){renderPlug('boot');},renderPlat,renderNormer,renderInstall,renderSeats,function(){
+var later=[function(){fillTools();buildChips();$('#input').value='psql -c "DROP TABLE users;"';linked=fromUrl();quickVerdict();},buildRuleList,function(){renderPlug('boot');},renderPlat,renderNormer,renderInstall,function(){
   near($('#commands'),function(){if(!$('#exTerm').childNodes.length)showEx(exCur);});
 },function(){
   /* show a finished result as the playground nears the screen (at once for a shared link), then replay it animated the first time it is in view */

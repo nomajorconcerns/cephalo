@@ -1,6 +1,6 @@
 // The 0.3.0 page: no countdown or pre-launch wording left, the 0.3.0 announcement, install/update commands that are
-// exact, an update section that claims only what `cephalo update` does, honest labels, plans exactly as specified,
-// and limits and FAQ that match.
+// exact, an update section that claims only what `cephalo update` does, honest labels, one Get Cephalo card (the $3
+// skill on Agensi; Cephalo itself free), and limits and FAQ that match.
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
@@ -99,39 +99,34 @@ test("honest labels: ONE free card holds everything in 0.1.1; the new work is un
   assert.match(whatsnew, /preview drawn for this page, not output from the CLI/);
 });
 
-test("plans hold exactly what was specified and nothing invented", () => {
-  const pricing = html.slice(html.indexOf('<section id="pricing">'), html.indexOf("<!-- INSTALL -->"));
-  const tiers = pricing.split(/<div class="tier(?: hl)?">/).slice(1);
-  assert.equal(tiers.length, 4);
-  const items = (t) => [...t.matchAll(/<li[^>]*><span>(.*?)<\/span><\/li>/g)].map((m) => m[1].replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim());
-  const [free, pro, team, ent] = tiers;
-  assert.match(free, /\$0/);
-  assert.deepEqual(items(free), ["Everything from 0.1.1 (the full list)", "Every free 0.2.0 feature New in 0.2.0 (list)"]);
-  assert.match(pro, /\$15/);
-  assert.deepEqual(items(pro), ["Everything in Free", "Network egress allowlist New in 0.2.0", "Tamper-evident audit log New in 0.2.0", "Bypass benchmark New in 0.2.0"]);
-  assert.match(team, /\$25/);
-  assert.deepEqual(items(team), ["Everything in Pro", "Dashboard (a local HTML file)", "Shared policy through a shared folder", "Audit log sync with user and time, through a shared folder", "Hosted dashboard Planned"]);
-  assert.deepEqual(items(ent), ["Everything in Team", "Single sign-on Planned", "On-prem deployment Planned", "Support SLA Planned", "Signed policy bundles"], "Enterprise is unchanged");
-  for (const t of [pro, team]) {
-    assert.match(t, /20% off your first year with code <code>CEPHALOG<\/code>/);
-    assert.match(t, /<span class="btn soon" data-plan="(pro|team)">Not on sale yet<\/span>/);
-    assert.doesNotMatch(t, /<a class="btn primary"/);
-  }
-  assert.doesNotMatch(free + ent.split('<div class="calc">')[0], /CEPHALOG/);
-  assert.doesNotMatch(pricing, /Email support|Updates first/);
-  assert.match(fs.readFileSync(path.join(root, "site", "checkout.config.js"), "utf8"), /mode: "off"/);
+test("Get Cephalo: exactly one card, the $3 agent guard skill on Agensi; Cephalo itself is said to be free", () => {
+  const get = html.slice(html.indexOf('<section id="pricing"'), html.indexOf("<!-- INSTALL -->"));
+  assert.equal((get.match(/<article class="getcard"/g) || []).length, 1, "one card");
+  assert.doesNotMatch(get, /class="tier|class="calc"|class="skillcard"|data-plan=/, "no plan cards, seat calculator or second card");
+  assert.match(get, /<h3 id="getName">Cephalo agent guard skill<\/h3>/);
+  assert.match(get, /<article class="getcard" aria-labelledby="getName">/, "the card is named by its heading");
+  assert.match(get, /<p class="gc-price">\$3<\/p>/, "just $3: the listing does not say one-time");
+  assert.match(get, /It helps your agent install, check and tune Cephalo, which is free and open source\. It includes no Pro features or license key\./);
+  const buy = [...get.matchAll(/<a [^>]*>[^<]*<\/a>/g)].map((m) => m[0]).filter((a) => a.includes("data-skill"));
+  assert.deepEqual(buy, ['<a class="btn primary" href="https://www.agensi.io/skills/cephalo-agent-guard" rel="noopener" data-skill="cephalo-agent-guard">Buy on Agensi</a>']);
+  assert.match(get, /Cephalo is free and open source \(MIT\) on npm/, "the $3 cannot be read as the price of Cephalo");
+  assert.match(get, /<a class="btn" href="#install">Install Cephalo free<\/a>/);
+  assert.match(get, /<div class="oc-stage" aria-hidden="true">/, "the octopus is decoration");
+  assert.doesNotMatch(html, /Not on sale|CEPHALOG|\/ dev \/ month|id="seats"/, "no trace of the removed plans anywhere on the page");
+  assert.match(html, /<a href="#pricing">Get it<\/a>/);
+  assert.doesNotMatch(html, />Pricing<\/a>|>Plans<\/a>/);
 });
 
-test("the limits table and FAQ match the new plans", () => {
+test("the limits table and FAQ match the page: no plan questions left", () => {
   const limits = html.slice(html.indexOf('<section id="limits">'), html.indexOf("<!-- FAQ -->"));
   assert.match(limits, /what 0\.2\.0 added/);
   assert.match(limits, /fail-closed mode/);
   assert.match(limits, /Chain each audit line/);
-  const faq = html.slice(html.indexOf('<section id="faq">'));
+  const faq = html.slice(html.indexOf('<section id="faq">'), html.indexOf("</section>", html.indexOf('<section id="faq">')));
   assert.match(faq, /Will version 0\.1\.1 stay free\?/);
-  assert.match(faq, /What is the CEPHALOG code\?/);
-  assert.match(faq, /There is no checkout on this page yet/);
   assert.match(faq, /How do I update Cephalo\?/);
+  assert.doesNotMatch(faq, /What is in Pro and Team\?|CEPHALOG|checkout on this page/);
+  assert.match(faq, /What is the \$3 Cephalo skill on Agensi\?<\/summary>\s*<div class="ans"><p>It is a skill sold on Agensi for \$3 that teaches your agent[^<]*Cephalo itself is free and open source/);
 });
 
 test("every local file the page loads is copied by the Pages workflow and listed in its paths filter", () => {
